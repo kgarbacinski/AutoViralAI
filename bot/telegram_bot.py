@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /start command."""
     await update.message.reply_text(
-        "Threads Agent Bot active.\n\n"
+        "AutoViralAI Bot active.\n\n"
         "Commands:\n"
         "/status - Check agent status\n\n"
         "I'll send you posts for approval when they're ready."

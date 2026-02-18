@@ -69,8 +69,8 @@ jobs:
       SSH_HOST: patryk176.mikrus.xyz
       SSH_PORT: "10176"
       SSH_USER: root
-      REMOTE_DIR: /root/threads-agent
-      IMAGE_NAME: threads-agent
+      REMOTE_DIR: /root/autoviralai
+      IMAGE_NAME: autoviralai
 
     steps:
       - uses: actions/checkout@v4
@@ -101,12 +101,12 @@ jobs:
         run: |
           ssh -p $SSH_PORT $SSH_USER@$SSH_HOST bash -s << 'EOF'
           set -e
-          COMPOSE_FILE=/root/threads-agent/docker-compose.yml
+          COMPOSE_FILE=/root/autoviralai/docker-compose.yml
           echo "Loading Docker image..."
-          zcat /tmp/threads-agent.tar.gz | docker load
-          rm -f /tmp/threads-agent.tar.gz
+          zcat /tmp/autoviralai.tar.gz | docker load
+          rm -f /tmp/autoviralai.tar.gz
           set -a
-          source /root/threads-agent/agent.env
+          source /root/autoviralai/agent.env
           set +a
           docker compose -f $COMPOSE_FILE down || true
           docker compose -f $COMPOSE_FILE up -d

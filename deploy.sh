@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# One-time server initialization for threads-agent on Mikrus
+# One-time server initialization for AutoViralAI on Mikrus
 # Continuous deployment is handled by GitHub Actions (push to main)
 #
 # Usage: ./deploy.sh
@@ -14,7 +14,7 @@ set -e
 SSH_HOST="patryk176.mikrus.xyz"
 SSH_USER="root"
 SSH_PORT="10176"
-REMOTE_DIR="/root/threads-agent"
+REMOTE_DIR="/root/autoviralai"
 
 # --- Preflight checks ---
 if [ ! -f ".env" ]; then

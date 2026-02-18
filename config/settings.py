@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     postgres_uri: str = "postgresql://user:password@localhost:5432/agent_db"
 
     langsmith_api_key: str = ""
-    langsmith_project: str = "threads-agent"
+    langsmith_project: str = "autoviralai"
 
     account_id: str = "default"
     target_followers: int = 100

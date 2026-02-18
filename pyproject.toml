@@ -1,5 +1,5 @@
 [project]
-name = "self-learning-viral-agent-ai"
+name = "autoviralai"
 version = "0.1.0"
 description = "AI agent that learns what goes viral and posts it for you. Researches content, generates posts, publishes, measures engagement, and adapts strategy automatically."
 readme = "README.md"

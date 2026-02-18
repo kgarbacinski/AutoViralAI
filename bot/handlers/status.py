@@ -7,7 +7,7 @@ from telegram.ext import ContextTypes
 async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /status command - show agent status."""
     status_text = (
-        "**Threads Agent Status**\n\n"
+        "**AutoViralAI Status**\n\n"
         "Status: Running\n"
         "Environment: Development\n"
         "Pipeline: Idle\n\n"

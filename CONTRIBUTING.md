@@ -1,4 +1,4 @@
-# Contributing to self-learning-viral-agent-ai
+# Contributing to AutoViralAI
 
 Thanks for your interest in contributing! This guide will help you get started.
 
@@ -13,8 +13,8 @@ Thanks for your interest in contributing! This guide will help you get started.
 
 ```bash
 # Fork and clone the repo
-git clone https://github.com/YOUR_USERNAME/self-learning-viral-agent-ai.git
-cd self-learning-viral-agent-ai
+git clone https://github.com/YOUR_USERNAME/AutoViralAI.git
+cd AutoViralAI
 
 # Install all dependencies (including dev)
 uv sync --dev
@@ -121,7 +121,7 @@ Tests live in `tests/` and mirror the `src/` structure. If you add a new node or
 
 ## Good First Issues
 
-Look for issues labeled [`good first issue`](https://github.com/kgarbacinski/self-learning-viral-agent-ai/labels/good%20first%20issue). Some ideas:
+Look for issues labeled [`good first issue`](https://github.com/kgarbacinski/AutoViralAI/labels/good%20first%20issue). Some ideas:
 
 - Add more content pattern templates
 - Improve error handling with retry logic

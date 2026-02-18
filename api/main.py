@@ -1,7 +1,7 @@
 """FastAPI application - webhook + status endpoints."""
 
 import logging
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 import yaml
 from fastapi import FastAPI
@@ -14,7 +14,12 @@ from bot.webhook import router as webhook_router, set_bot_app
 from config.settings import get_settings
 from src.models.strategy import AccountNiche, AudienceConfig, ContentPillar, VoiceConfig
 from src.orchestrator import PipelineOrchestrator
-from src.persistence import create_checkpointer, create_store
+from src.persistence import (
+    create_checkpointer,
+    create_postgres_checkpointer,
+    create_postgres_store,
+    create_store,
+)
 from src.store.knowledge_base import KnowledgeBase
 
 logging.basicConfig(level=logging.INFO)
@@ -73,66 +78,71 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     logger.info(f"Starting agent in {settings.env} mode")
 
-    # 1. Persistence setup
-    store = create_store(settings)
-    checkpointer = create_checkpointer(settings)
+    async with AsyncExitStack() as exit_stack:
+        # 1. Persistence setup
+        if settings.is_production:
+            store = await exit_stack.enter_async_context(
+                create_postgres_store(settings.postgres_uri)
+            )
+            checkpointer = await exit_stack.enter_async_context(
+                create_postgres_checkpointer(settings.postgres_uri)
+            )
+            logger.info("Postgres store and checkpointer tables created")
+        else:
+            store = create_store(settings)
+            checkpointer = create_checkpointer(settings)
 
-    if settings.is_production:
-        await store.setup()
-        await checkpointer.setup()
-        logger.info("Postgres store and checkpointer tables created")
+        # 2. Niche config → Knowledge Base
+        kb = KnowledgeBase(store=store, account_id=settings.account_id)
+        await _init_niche_config(kb)
 
-    # 2. Niche config → Knowledge Base
-    kb = KnowledgeBase(store=store, account_id=settings.account_id)
-    await _init_niche_config(kb)
+        # 3. Telegram bot
+        bot_app = None
+        if settings.telegram_bot_token:
+            bot_app = create_bot(settings.telegram_bot_token)
+            await bot_app.initialize()
+            set_bot_app(bot_app)
+            logger.info("Telegram bot initialized")
 
-    # 3. Telegram bot
-    bot_app = None
-    if settings.telegram_bot_token:
-        bot_app = create_bot(settings.telegram_bot_token)
-        await bot_app.initialize()
-        set_bot_app(bot_app)
-        logger.info("Telegram bot initialized")
+            if settings.telegram_webhook_url:
+                webhook_url = f"{settings.telegram_webhook_url.rstrip('/')}/webhook/telegram"
+                await bot_app.bot.set_webhook(url=webhook_url)
+                logger.info(f"Telegram webhook set to {webhook_url}")
+        else:
+            logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled")
 
-        if settings.telegram_webhook_url:
-            webhook_url = f"{settings.telegram_webhook_url.rstrip('/')}/webhook/telegram"
-            await bot_app.bot.set_webhook(url=webhook_url)
-            logger.info(f"Telegram webhook set to {webhook_url}")
-    else:
-        logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled")
+        # 4. Orchestrator
+        orchestrator = PipelineOrchestrator(
+            settings=settings,
+            store=store,
+            checkpointer=checkpointer,
+            bot_app=bot_app,
+            telegram_chat_id=settings.telegram_chat_id,
+        )
+        set_orchestrator(orchestrator)
+        orchestrator.start()
 
-    # 4. Orchestrator
-    orchestrator = PipelineOrchestrator(
-        settings=settings,
-        store=store,
-        checkpointer=checkpointer,
-        bot_app=bot_app,
-        telegram_chat_id=settings.telegram_chat_id,
-    )
-    set_orchestrator(orchestrator)
-    orchestrator.start()
+        # Expose on app.state for status endpoint
+        app.state.orchestrator = orchestrator
 
-    # Expose on app.state for status endpoint
-    app.state.orchestrator = orchestrator
+        logger.info("Agent fully started")
 
-    logger.info("Agent fully started")
+        yield
 
-    yield
+        # Shutdown
+        logger.info("Shutting down agent...")
+        orchestrator.stop()
 
-    # Shutdown
-    logger.info("Shutting down agent...")
-    orchestrator.stop()
+        if bot_app:
+            await bot_app.shutdown()
+            logger.info("Telegram bot shut down")
 
-    if bot_app:
-        await bot_app.shutdown()
-        logger.info("Telegram bot shut down")
-
-    logger.info("Agent stopped")
+        logger.info("Agent stopped")
 
 
 app = FastAPI(
-    title="Threads Agent API",
-    description="API for the autonomous Threads growth agent",
+    title="AutoViralAI API",
+    description="API for the autonomous viral content growth agent",
     version="0.1.0",
     lifespan=lifespan,
 )

@@ -1,6 +1,6 @@
 <div align="center">
 
-# self-learning-viral-agent-ai
+# AutoViralAI
 
 ### AI agent that learns what goes viral — and posts it for you
 
@@ -9,7 +9,7 @@ Give it your niche. It researches viral content, generates posts,<br/>
 learns from engagement data, and <strong>gets better every day</strong>.
 </p>
 
-[![CI](https://github.com/kgarbacinski/self-learning-viral-agent-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/kgarbacinski/self-learning-viral-agent-ai/actions/workflows/ci.yml)
+[![CI](https://github.com/kgarbacinski/AutoViralAI/actions/workflows/ci.yml/badge.svg)](https://github.com/kgarbacinski/AutoViralAI/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.3+-orange.svg)](https://github.com/langchain-ai/langgraph)
@@ -46,8 +46,8 @@ Day 14: Agent learned contrarian hooks work 3x    → adapts strategy automatica
 
 ```bash
 # Clone
-git clone https://github.com/kgarbacinski/self-learning-viral-agent-ai.git
-cd self-learning-viral-agent-ai
+git clone https://github.com/kgarbacinski/AutoViralAI.git
+cd AutoViralAI
 
 # Install dependencies
 uv sync
@@ -208,7 +208,7 @@ The agent uses this config in every generation cycle to stay on-brand and on-top
 ## Architecture
 
 ```
-self-learning-viral-agent-ai/
+AutoViralAI/
 ├── config/
 │   ├── account_niche.yaml       # Your niche, voice, audience, content pillars
 │   └── settings.py              # Environment config (pydantic-settings)

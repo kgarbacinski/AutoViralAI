@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
 
   agent:
-    image: threads-agent:latest
+    image: autoviralai:latest
     environment:
       ENV: production
       POSTGRES_URI: postgresql://agent:agent_password@postgres:5432/agent_db
@@ -27,7 +27,7 @@ services:
       THREADS_USER_ID: ${THREADS_USER_ID:-}
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
       LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
-      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-threads-agent}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-autoviralai}
       ACCOUNT_ID: ${ACCOUNT_ID:-default}
       TARGET_FOLLOWERS: ${TARGET_FOLLOWERS:-100}
     depends_on:
