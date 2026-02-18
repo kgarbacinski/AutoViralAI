@@ -105,6 +105,9 @@ jobs:
           echo "Loading Docker image..."
           zcat /tmp/threads-agent.tar.gz | docker load
           rm -f /tmp/threads-agent.tar.gz
+          set -a
+          source /root/threads-agent/agent.env
+          set +a
           docker compose -f $COMPOSE_FILE down || true
           docker compose -f $COMPOSE_FILE up -d
           docker image prune -f
