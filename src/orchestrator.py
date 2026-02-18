@@ -202,9 +202,7 @@ class PipelineOrchestrator:
             logger.error(f"Failed to resume creation pipeline thread={thread_id}: {e}")
             raise
 
-    def _schedule_delayed_publish(
-        self, thread_id: str, decision: dict, publish_at: str
-    ) -> None:
+    def _schedule_delayed_publish(self, thread_id: str, decision: dict, publish_at: str) -> None:
         """Schedule a one-shot APScheduler job to publish at a specific time."""
         run_date = datetime.fromisoformat(publish_at)
         # Remove publish_at so the actual resume just approves
@@ -270,9 +268,7 @@ class PipelineOrchestrator:
             "errors": [],
         }
 
-        result = await research_viral_content(
-            minimal_state, hn=hn, scraper=scraper, kb=self.kb
-        )
+        result = await research_viral_content(minimal_state, hn=hn, scraper=scraper, kb=self.kb)
         return result.get("viral_posts", [])
 
     @property

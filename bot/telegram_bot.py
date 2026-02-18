@@ -106,9 +106,7 @@ def create_bot(token: str) -> Application:
     return app
 
 
-async def _handle_text_message(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def _handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Route text messages to the appropriate handler (edit or reject feedback)."""
     if context.user_data.get("awaiting_reject_feedback"):
         await handle_reject_feedback_text(update, context)
@@ -125,9 +123,7 @@ async def _handle_text_message(
 # ---------------------------------------------------------------------------
 
 
-async def send_pipeline_report(
-    app: Application, chat_id: str, state_values: dict
-) -> None:
+async def send_pipeline_report(app: Application, chat_id: str, state_values: dict) -> None:
     """Send a detailed pipeline report showing what each agent did."""
     sections = []
 
@@ -172,9 +168,7 @@ def _build_research_section(viral_posts: list[dict]) -> str:
     lines.append(f"Sources: {hn_count} from HackerNews, {threads_count} from Threads")
 
     # Top 3 by engagement
-    sorted_posts = sorted(
-        viral_posts, key=lambda p: p.get("engagement_rate", 0), reverse=True
-    )
+    sorted_posts = sorted(viral_posts, key=lambda p: p.get("engagement_rate", 0), reverse=True)
     lines.append("Top 3 by engagement:")
     for i, post in enumerate(sorted_posts[:3], 1):
         content = post.get("content", "")[:80]
@@ -229,10 +223,7 @@ def _build_ranking_section(ranked: list[dict]) -> str:
         pillar = post.get("pillar", "?")
         reasoning = post.get("reasoning", "")[:100]
         star = " *" if i == 1 else ""
-        lines.append(
-            f"  #{i}{star} {composite:.1f}/10  "
-            f"[AI:{ai:.1f} H:{hist:.1f} N:{novelty:.1f}]"
-        )
+        lines.append(f"  #{i}{star} {composite:.1f}/10  [AI:{ai:.1f} H:{hist:.1f} N:{novelty:.1f}]")
         lines.append(f"     Pattern: {pattern} | Pillar: {pillar}")
         if reasoning:
             lines.append(f'     "{reasoning}"')
@@ -324,9 +315,7 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
         # Benchmark: current score vs average of last 10 posts
         recent_posts = await kb.get_recent_posts(limit=10)
         if recent_posts:
-            avg_score = (
-                sum(p.composite_score for p in recent_posts) / len(recent_posts)
-            )
+            avg_score = sum(p.composite_score for p in recent_posts) / len(recent_posts)
             enrichment["avg_score"] = avg_score
     except Exception as e:
         logger.warning(f"Failed to fetch recent posts for benchmark: {e}")
@@ -407,9 +396,7 @@ async def send_approval_request(
         ],
         [
             InlineKeyboardButton("Edit", callback_data=f"edit:{thread_id}"),
-            InlineKeyboardButton(
-                "Publish Later", callback_data=f"later:{thread_id}"
-            ),
+            InlineKeyboardButton("Publish Later", callback_data=f"later:{thread_id}"),
         ],
     ]
 

@@ -19,9 +19,7 @@ REJECT_REASONS = {
 }
 
 
-async def handle_approval_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle inline button callbacks for Approve/Edit/Reject/Later/Feedback."""
     query = update.callback_query
     await query.answer()
@@ -48,9 +46,7 @@ async def handle_approval_callback(
     elif action == "reject":
         keyboard = []
         for code, label in REJECT_REASONS.items():
-            keyboard.append(
-                [InlineKeyboardButton(label, callback_data=f"rjfb:{thread_id}:{code}")]
-            )
+            keyboard.append([InlineKeyboardButton(label, callback_data=f"rjfb:{thread_id}:{code}")])
         await query.edit_message_text(
             f"{query.message.text}\n\n--- Why reject? ---",
             reply_markup=InlineKeyboardMarkup(keyboard),
@@ -124,9 +120,7 @@ async def handle_approval_callback(
         await query.edit_message_text("Unknown action.")
 
 
-async def handle_edit_message(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle text messages — used when user sends edited post content after clicking Edit."""
     thread_id = context.user_data.get("awaiting_edit")
     if not thread_id:
@@ -141,9 +135,7 @@ async def handle_edit_message(
     await _resume_graph(thread_id, decision)
 
 
-async def handle_reject_feedback_text(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_reject_feedback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle typed rejection feedback after selecting 'Other'."""
     thread_id = context.user_data.get("awaiting_reject_feedback")
     if not thread_id:

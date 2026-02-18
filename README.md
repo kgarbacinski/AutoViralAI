@@ -100,56 +100,112 @@ The system runs **two independent pipelines** that share a knowledge base:
 
 ```mermaid
 graph TB
-    subgraph "Creation Pipeline · runs 3x/day"
-        A[Goal Check] -->|not reached| B[Research Viral Content]
-        A -->|target reached| Z[Done!]
-        B --> C[Extract Patterns]
-        C --> D[Generate 5 Post Variants]
-        D --> E[Multi-Signal Ranking]
-        E --> F{Human Approval<br/>via Telegram}
-        F -->|Approve/Edit| G[Publish]
-        F -->|Reject| D
-        G --> H[Schedule Metrics Check]
+    subgraph creation ["Content Creation Pipeline · runs 3x/day"]
+        direction TB
+        A["Goal Check"]
+        B["Research Viral Content\n(HackerNews + Threads)"]
+        C["Extract Patterns\n(hooks, structures, triggers)"]
+        D["Generate Post Variants"]
+        E["Multi-Signal Ranking\n(AI + History + Novelty)"]
+        F{"Human Approval\nvia Telegram"}
+        G["Publish to Threads"]
+        H["Schedule Metrics Check"]
+        Z(["Target Reached"])
+
+        A -->|not reached| B
+        A -->|target reached| Z
+        B --> C --> D --> E --> F
+        F -->|"Approve / Edit"| G --> H
+        F -->|Reject + Feedback| D
     end
 
-    subgraph "Learning Pipeline · runs daily"
-        I[Collect Metrics] --> J[Analyze Performance]
-        J --> K[Update Pattern Scores]
-        K --> L[Adjust Strategy]
+    subgraph learning ["Learning Pipeline · runs daily"]
+        direction TB
+        I["Collect Engagement Metrics"] --> J["Analyze Performance"]
+        J --> K["Update Pattern Scores"] --> L["Adjust Strategy"]
     end
 
-    H -.->|shared knowledge base| I
-    L -.->|improved strategy| B
+    subgraph store ["Shared Knowledge Base"]
+        direction LR
+        KB[("Patterns · Strategy\nMetrics · Posts")]
+    end
 
-    style A fill:#4A90D9,stroke:#333,color:#fff
-    style F fill:#E8A838,stroke:#333,color:#fff
-    style G fill:#50C878,stroke:#333,color:#fff
-    style L fill:#9B59B6,stroke:#333,color:#fff
-    style Z fill:#50C878,stroke:#333,color:#fff
+    H -. "post data" .-> KB
+    KB -. "metrics" .-> I
+    L -. "improved strategy" .-> KB
+    KB -. "patterns + strategy" .-> B
+
+    style creation fill:transparent,stroke:#4A90D9,stroke-width:2px,color:#fff
+    style learning fill:transparent,stroke:#9B59B6,stroke-width:2px,color:#fff
+    style store fill:transparent,stroke:#50C878,stroke-width:2px,color:#fff
+
+    style A fill:#4A90D9,stroke:#2C6FA0,color:#fff
+    style B fill:#4A90D9,stroke:#2C6FA0,color:#fff
+    style C fill:#5BA0E0,stroke:#2C6FA0,color:#fff
+    style D fill:#5BA0E0,stroke:#2C6FA0,color:#fff
+    style E fill:#5BA0E0,stroke:#2C6FA0,color:#fff
+    style F fill:#E8A838,stroke:#C4872A,color:#fff
+    style G fill:#50C878,stroke:#3A9A5C,color:#fff
+    style H fill:#50C878,stroke:#3A9A5C,color:#fff
+    style Z fill:#2ECC71,stroke:#27AE60,color:#fff
+
+    style I fill:#9B59B6,stroke:#7D3C98,color:#fff
+    style J fill:#9B59B6,stroke:#7D3C98,color:#fff
+    style K fill:#AF7AC5,stroke:#7D3C98,color:#fff
+    style L fill:#AF7AC5,stroke:#7D3C98,color:#fff
+
+    style KB fill:#50C878,stroke:#3A9A5C,color:#fff
 ```
 
 **Why two pipelines?** Posts need 24-48 hours to accumulate meaningful engagement data. The creation pipeline runs multiple times per day, while the learning pipeline runs once daily on yesterday's data — then feeds the improved strategy back into creation.
 
 ### The Self-Learning Loop
 
-```
-Research     →  What's going viral right now?
-Extract      →  Why is it going viral? (patterns, hooks, structures)
-Generate     →  Create posts using those patterns
-Rank         →  AI score + historical data + novelty
-Publish      →  Post the winner
-Measure      →  Wait 24h, collect engagement data
-Learn        →  What worked? What didn't? Why?
-Adapt        →  Update strategy, adjust weights
-                 └── Feed back into Research ──→
+```mermaid
+graph LR
+    R["Research\nWhat's viral?"] --> E["Extract\nWhy it works"]
+    E --> G["Generate\nUsing patterns"]
+    G --> K["Rank\nAI + History + Novelty"]
+    K --> P["Publish\nPost the winner"]
+    P --> M["Measure\nWait 24h, collect data"]
+    M --> L["Learn\nWhat worked & why"]
+    L --> A["Adapt\nUpdate strategy"]
+    A -->|"feed back"| R
+
+    style R fill:#4A90D9,stroke:#2C6FA0,color:#fff
+    style E fill:#5BA0E0,stroke:#2C6FA0,color:#fff
+    style G fill:#5BA0E0,stroke:#2C6FA0,color:#fff
+    style K fill:#E8A838,stroke:#C4872A,color:#fff
+    style P fill:#50C878,stroke:#3A9A5C,color:#fff
+    style M fill:#9B59B6,stroke:#7D3C98,color:#fff
+    style L fill:#AF7AC5,stroke:#7D3C98,color:#fff
+    style A fill:#AF7AC5,stroke:#7D3C98,color:#fff
 ```
 
 ### Multi-Signal Ranking
 
 Each variant gets a **composite score** from three independent signals:
 
-```
-composite = 0.4 × ai_score + 0.3 × pattern_history + 0.3 × novelty
+```mermaid
+graph LR
+    subgraph signals [" "]
+        direction TB
+        AI["AI Score\n(0–10)\nweight: 0.4"]
+        PH["Pattern History\n(0–10)\nweight: 0.3"]
+        NV["Novelty\n(0–10)\nweight: 0.3"]
+    end
+
+    AI --> C(["Composite Score"])
+    PH --> C
+    NV --> C
+    C --> W{"Select\nWinner"}
+
+    style AI fill:#4A90D9,stroke:#2C6FA0,color:#fff
+    style PH fill:#E8A838,stroke:#C4872A,color:#fff
+    style NV fill:#9B59B6,stroke:#7D3C98,color:#fff
+    style C fill:#50C878,stroke:#3A9A5C,color:#fff
+    style W fill:#2ECC71,stroke:#27AE60,color:#fff
+    style signals fill:transparent,stroke:transparent
 ```
 
 | Signal | What it measures | How |
@@ -252,18 +308,45 @@ AutoViralAI/
 
 Both pipelines share a persistent knowledge base via [LangGraph Store](https://langchain-ai.github.io/langgraph/concepts/persistence/#store):
 
-```
-┌──────────────────────────────────────────┐
-│            LangGraph Store               │
-│                                          │
-│  config/              Niche & voice      │
-│  strategy/            Content strategy   │
-│  pattern_performance/ What patterns work │
-│  published_posts/     Post history       │
-│  pending_metrics/     Awaiting check     │
-│  metrics_history/     Engagement data    │
-│  research_cache/      Viral content 24h  │
-└──────────────────────────────────────────┘
+```mermaid
+graph LR
+    subgraph store ["LangGraph Store"]
+        direction TB
+
+        subgraph config_ns ["Configuration"]
+            C1["config/\nNiche & voice"]
+            C2["strategy/\nContent strategy"]
+        end
+
+        subgraph perf_ns ["Performance"]
+            P1["pattern_performance/\nWhat patterns work"]
+            P2["metrics_history/\nEngagement data"]
+        end
+
+        subgraph content_ns ["Content"]
+            T1["published_posts/\nPost history"]
+            T2["pending_metrics/\nAwaiting check"]
+        end
+    end
+
+    CP["Creation\nPipeline"] --> store
+    store --> LP["Learning\nPipeline"]
+    LP --> store
+
+    style store fill:transparent,stroke:#50C878,stroke-width:2px
+    style config_ns fill:#EBF5FB,stroke:#4A90D9,color:#333
+    style perf_ns fill:#F5EEF8,stroke:#9B59B6,color:#333
+    style content_ns fill:#EAFAF1,stroke:#50C878,color:#333
+
+    style C1 fill:#fff,stroke:#4A90D9,color:#333
+    style C2 fill:#fff,stroke:#4A90D9,color:#333
+    style P1 fill:#fff,stroke:#9B59B6,color:#333
+    style P2 fill:#fff,stroke:#9B59B6,color:#333
+    style T1 fill:#fff,stroke:#50C878,color:#333
+    style T2 fill:#fff,stroke:#50C878,color:#333
+
+    style CP fill:#4A90D9,stroke:#2C6FA0,color:#fff
+    style LP fill:#9B59B6,stroke:#7D3C98,color:#fff
 ```
 
 Dev: `InMemoryStore` · Prod: `AsyncPostgresStore` with embedding support.
@@ -323,7 +406,7 @@ docker compose up -d
 - [x] Remote config via Telegram — `/config` to change tone, language, hashtags, posting schedule
 - [x] Live `/status` — running/paused state, cycles, pending approvals, next run
 - [x] Standalone `/research` — see what virals the agent finds without running the full pipeline
-- [ ] Real Threads API integration
+- [x] Real Threads API integration
 - [ ] LangSmith observability dashboard
 - [ ] A/B testing (publish two variants, compare)
 - [ ] Multi-platform support (X, Bluesky, LinkedIn)

@@ -11,9 +11,7 @@ from bot.dependencies import get_knowledge_base, get_orchestrator
 logger = logging.getLogger(__name__)
 
 
-async def handle_metrics_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /metrics — show performance metrics and top patterns."""
     kb = get_knowledge_base()
     if not kb:
@@ -51,9 +49,7 @@ async def handle_metrics_command(
     try:
         patterns = await kb.get_all_pattern_performances()
         if patterns:
-            sorted_patterns = sorted(
-                patterns, key=lambda p: p.effectiveness_score, reverse=True
-            )
+            sorted_patterns = sorted(patterns, key=lambda p: p.effectiveness_score, reverse=True)
             lines.append("\n*Top Patterns:*")
             for i, p in enumerate(sorted_patterns[:3], 1):
                 lines.append(
@@ -77,9 +73,7 @@ async def handle_metrics_command(
     await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
 
-async def handle_pause_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_pause_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /pause — pause all scheduled pipelines."""
     orchestrator = get_orchestrator()
     if not orchestrator:
@@ -94,9 +88,7 @@ async def handle_pause_command(
     await update.message.reply_text("All scheduled pipelines paused. Use /resume to restart.")
 
 
-async def handle_resume_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_resume_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /resume — resume all scheduled pipelines."""
     orchestrator = get_orchestrator()
     if not orchestrator:
@@ -111,9 +103,7 @@ async def handle_resume_command(
     await update.message.reply_text("All scheduled pipelines resumed.")
 
 
-async def handle_schedule_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /schedule — show scheduled jobs and optimal times."""
     orchestrator = get_orchestrator()
     kb = get_knowledge_base()
@@ -146,9 +136,7 @@ async def handle_schedule_command(
     await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
 
-async def handle_history_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /history — last 10 published posts."""
     kb = get_knowledge_base()
     if not kb:
@@ -193,9 +181,7 @@ async def handle_history_command(
     await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
 
-async def handle_force_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /force — trigger creation pipeline immediately."""
     orchestrator = get_orchestrator()
     if not orchestrator:
@@ -212,9 +198,7 @@ async def handle_force_command(
     asyncio.create_task(orchestrator.run_creation_pipeline())
 
 
-async def handle_learn_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /learn — manually trigger the learning pipeline."""
     orchestrator = get_orchestrator()
     if not orchestrator:
@@ -259,9 +243,7 @@ async def handle_learn_command(
     asyncio.create_task(_run_and_notify())
 
 
-async def handle_research_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /research — run standalone viral research."""
     orchestrator = get_orchestrator()
     if not orchestrator:
@@ -280,7 +262,9 @@ async def handle_research_command(
                 hn_count = sum(1 for p in viral_posts if p.get("platform") == "hackernews")
                 threads_count = sum(1 for p in viral_posts if p.get("platform") == "threads")
 
-                lines = [f"Found {len(viral_posts)} viral posts ({hn_count} HN, {threads_count} Threads)"]
+                lines = [
+                    f"Found {len(viral_posts)} viral posts ({hn_count} HN, {threads_count} Threads)"
+                ]
                 lines.append("\nTop by engagement:")
 
                 sorted_posts = sorted(
@@ -293,9 +277,7 @@ async def handle_research_command(
                     content = post.get("content", "")[:80]
                     er = post.get("engagement_rate", 0)
                     likes = post.get("likes", 0)
-                    lines.append(
-                        f'  {i}. [{platform}] "{content}..." - {er:.1%} ER, {likes} likes'
-                    )
+                    lines.append(f'  {i}. [{platform}] "{content}..." - {er:.1%} ER, {likes} likes')
 
                 text = "\n".join(lines)
 
@@ -314,9 +296,7 @@ async def handle_research_command(
     asyncio.create_task(_run_and_notify())
 
 
-async def handle_config_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /config — show current config with edit buttons."""
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -336,7 +316,9 @@ async def handle_config_command(
         await update.message.reply_text("No configuration found. Run setup first.")
         return
 
-    posting_times = ", ".join(niche.preferred_posting_times) if niche.preferred_posting_times else "default"
+    posting_times = (
+        ", ".join(niche.preferred_posting_times) if niche.preferred_posting_times else "default"
+    )
 
     lines = [
         "*Current Configuration*\n",
