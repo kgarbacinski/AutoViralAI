@@ -15,7 +15,7 @@ set -e
 SSH_HOST="patryk176.mikrus.xyz"
 SSH_USER="root"
 SSH_PORT="10176"
-REMOTE_DIR="/opt/threads-agent"
+REMOTE_DIR="/root/threads-agent"
 
 # --- Preflight checks ---
 if [ ! -f ".env" ]; then
