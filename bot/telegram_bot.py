@@ -3,9 +3,16 @@
 import logging
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
+from telegram.ext import (
+    Application,
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
-from bot.handlers.approval import handle_approval_callback
+from bot.handlers.approval import handle_approval_callback, handle_edit_message
 from bot.handlers.status import handle_status_command
 
 logger = logging.getLogger(__name__)
@@ -28,6 +35,7 @@ def create_bot(token: str) -> Application:
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("status", handle_status_command))
     app.add_handler(CallbackQueryHandler(handle_approval_callback))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_edit_message))
 
     return app
 

@@ -125,7 +125,13 @@ class RealRedditResearcher(RedditResearcher):
 
 
 def get_reddit_researcher(settings) -> RedditResearcher:
-    if settings.reddit_client_id and settings.env == "production":
+    """Factory: returns real client in production, mock in development."""
+    if settings.is_production:
+        if not settings.reddit_client_id:
+            raise ValueError(
+                "REDDIT_CLIENT_ID is required in production. "
+                "Get it from https://www.reddit.com/prefs/apps"
+            )
         return RealRedditResearcher(
             client_id=settings.reddit_client_id,
             client_secret=settings.reddit_client_secret,

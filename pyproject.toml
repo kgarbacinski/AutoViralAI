@@ -22,7 +22,6 @@ dependencies = [
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
     "pyyaml>=6.0",
-    "praw>=7.7",
     "apify-client>=1.6",
     "apscheduler>=3.10",
     "python-telegram-bot>=21.0",

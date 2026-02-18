@@ -68,6 +68,21 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         await _resume_graph(thread_id, decision)
 
 
+async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle text messages — used when user sends edited post content after clicking Edit."""
+    thread_id = context.user_data.get("awaiting_edit")
+    if not thread_id:
+        return
+
+    edited_content = update.message.text.strip()
+    del context.user_data["awaiting_edit"]
+
+    await update.message.reply_text(f"Edited post received. Publishing...")
+
+    decision = {"decision": "edit", "edited_content": edited_content}
+    await _resume_graph(thread_id, decision)
+
+
 async def _resume_graph(thread_id: str, decision: dict) -> None:
     """Resume the paused graph with the human's decision via the orchestrator."""
     if _orchestrator is None:

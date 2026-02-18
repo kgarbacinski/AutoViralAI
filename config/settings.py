@@ -24,10 +24,6 @@ class Settings(BaseSettings):
     threads_access_token: str = ""
     threads_user_id: str = ""
 
-    reddit_client_id: str = ""
-    reddit_client_secret: str = ""
-    reddit_user_agent: str = "threads-agent/0.1"
-
     apify_api_token: str = ""
 
     telegram_bot_token: str = ""

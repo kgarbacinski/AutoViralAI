@@ -282,15 +282,11 @@ uv run ruff check .
 
 ## Production Deployment
 
-```bash
-# Start Postgres + agent via Docker Compose
-docker compose up -d
+Push to `main` → GitHub Actions runs lint, test, and deploys to Mikrus automatically via SSH + Docker.
 
-# Or manually
-docker compose up -d postgres
-export ENV=production
-export POSTGRES_URI=postgresql://agent:agent_password@localhost:5432/agent_db
-uv run uvicorn api.main:app --host 0.0.0.0 --port 8000
+```bash
+# Local development with Docker
+docker compose up -d
 ```
 
 ## Roadmap
@@ -300,6 +296,7 @@ uv run uvicorn api.main:app --host 0.0.0.0 --port 8000
 - [x] Multi-signal ranking (AI + history + novelty)
 - [x] Human-in-the-loop via `interrupt()`
 - [x] Configurable niche/voice/audience
+- [x] CI/CD: GitHub Actions → auto-deploy on push to main
 - [ ] Real Threads API integration
 - [ ] Telegram bot approval flow (end-to-end)
 - [ ] LangSmith observability dashboard

@@ -151,8 +151,13 @@ class RealThreadsClient(ThreadsClient):
 
 
 def get_threads_client(settings) -> ThreadsClient:
-    """Factory: returns mock or real client based on settings."""
-    if settings.threads_access_token and settings.env == "production":
+    """Factory: returns real client in production, mock in development."""
+    if settings.is_production:
+        if not settings.threads_access_token:
+            raise ValueError(
+                "THREADS_ACCESS_TOKEN is required in production. "
+                "Get it from https://developers.facebook.com (Threads API)."
+            )
         return RealThreadsClient(
             access_token=settings.threads_access_token,
             user_id=settings.threads_user_id,

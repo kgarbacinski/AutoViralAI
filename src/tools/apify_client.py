@@ -86,6 +86,12 @@ class RealThreadsScraper(ThreadsScraper):
 
 
 def get_threads_scraper(settings) -> ThreadsScraper:
-    if settings.apify_api_token and settings.env == "production":
+    """Factory: returns real scraper in production, mock in development."""
+    if settings.is_production:
+        if not settings.apify_api_token:
+            raise ValueError(
+                "APIFY_API_TOKEN is required in production. "
+                "Get it from https://console.apify.com/account/integrations"
+            )
         return RealThreadsScraper(api_token=settings.apify_api_token)
     return MockThreadsScraper()

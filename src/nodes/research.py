@@ -1,40 +1,34 @@
 """Research node - discovers viral content in the niche."""
 
 from src.models.state import CreationPipelineState
-from src.models.strategy import AccountNiche, ContentStrategy
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.apify_client import ThreadsScraper
-from src.tools.reddit_client import RedditResearcher
+from src.tools.hackernews_client import HackerNewsResearcher
 
 
 async def research_viral_content(
     state: CreationPipelineState,
     *,
-    reddit: RedditResearcher,
+    hn: HackerNewsResearcher,
     scraper: ThreadsScraper,
     kb: KnowledgeBase,
 ) -> dict:
-    """Search for viral posts across platforms relevant to our niche."""
+    """Search for viral posts across HackerNews and Threads."""
     niche_config = await kb.get_niche_config()
-    strategy = await kb.get_strategy()
-
-    subreddits = ["programming", "webdev", "cscareerquestions", "startups", "technology"]
-    search_queries = _build_search_queries(niche_config, strategy)
 
     all_posts = []
 
-    for query in search_queries:
-        try:
-            reddit_posts = await reddit.search_viral_posts(
-                subreddits=subreddits, query=query, limit=10
-            )
-            all_posts.extend([p.model_dump() for p in reddit_posts])
-        except Exception as e:
-            return {
-                "viral_posts": all_posts,
-                "errors": [f"research: Reddit search failed for '{query}': {e}"],
-            }
+    # Source 1: Hacker News top/best stories
+    try:
+        hn_posts = await hn.get_viral_posts(limit=30)
+        all_posts.extend([p.model_dump() for p in hn_posts])
+    except Exception as e:
+        return {
+            "viral_posts": all_posts,
+            "errors": [f"research: HackerNews fetch failed: {e}"],
+        }
 
+    # Source 2: Threads viral posts via Apify
     try:
         hashtags = []
         if niche_config:
@@ -49,6 +43,7 @@ async def research_viral_content(
             "errors": [f"research: Threads scraping failed: {e}"],
         }
 
+    # Deduplicate
     seen_contents = set()
     unique_posts = []
     for post in all_posts:
@@ -58,23 +53,3 @@ async def research_viral_content(
             unique_posts.append(post)
 
     return {"viral_posts": unique_posts}
-
-
-def _build_search_queries(
-    niche: AccountNiche | None, strategy: ContentStrategy | None
-) -> list[str]:
-    """Generate search queries based on niche config and current strategy."""
-    base_queries = ["programming tips viral", "tech hot takes", "developer career advice"]
-
-    if strategy and strategy.preferred_patterns:
-        pattern_queries = {
-            "contrarian_hot_take": "unpopular opinion programming",
-            "numbered_list": "top things developers",
-            "personal_story": "developer journey lessons learned",
-            "stat_hook": "programming statistics surprising",
-        }
-        for pattern in strategy.preferred_patterns[:2]:
-            if pattern in pattern_queries:
-                base_queries.append(pattern_queries[pattern])
-
-    return base_queries[:5]  # Limit to 5 queries to avoid rate limits

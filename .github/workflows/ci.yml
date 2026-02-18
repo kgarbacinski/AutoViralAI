@@ -60,3 +60,67 @@ jobs:
         with:
           name: coverage-report
           path: coverage.xml
+
+  deploy:
+    needs: [lint, test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      SSH_HOST: patryk176.mikrus.xyz
+      SSH_PORT: "10176"
+      SSH_USER: root
+      REMOTE_DIR: /opt/threads-agent
+      IMAGE_NAME: threads-agent
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add Mikrus host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p $SSH_PORT $SSH_HOST >> ~/.ssh/known_hosts
+
+      - name: Build Docker image
+        run: docker build --platform linux/amd64 -t $IMAGE_NAME:latest .
+
+      - name: Save and compress image
+        run: docker save $IMAGE_NAME:latest | gzip > $IMAGE_NAME.tar.gz
+
+      - name: Upload image to server
+        run: scp -P $SSH_PORT $IMAGE_NAME.tar.gz $SSH_USER@$SSH_HOST:/tmp/
+
+      - name: Deploy on server
+        run: |
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << 'ENDSSH'
+            set -e
+            echo "Loading Docker image..."
+            docker load < /tmp/threads-agent.tar.gz
+            rm /tmp/threads-agent.tar.gz
+
+            cd /opt/threads-agent
+            docker compose down || true
+            docker compose up -d
+
+            docker image prune -f
+            echo "--- Container status ---"
+            docker compose ps
+          ENDSSH
+
+      - name: Health check
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -sf https://caspercooks.tech/agent/health; then
+              echo ""
+              echo "Health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "Health check failed after 5 attempts"
+          exit 1
