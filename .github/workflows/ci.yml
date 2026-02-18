@@ -91,8 +91,11 @@ jobs:
       - name: Save and compress image
         run: docker save $IMAGE_NAME:latest | gzip > $IMAGE_NAME.tar.gz
 
-      - name: Upload image to server
-        run: scp -P $SSH_PORT $IMAGE_NAME.tar.gz $SSH_USER@$SSH_HOST:/tmp/
+      - name: Upload image and compose file to server
+        run: |
+          scp -P $SSH_PORT $IMAGE_NAME.tar.gz $SSH_USER@$SSH_HOST:/tmp/
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "mkdir -p $REMOTE_DIR"
+          scp -P $SSH_PORT docker-compose.prod.yml $SSH_USER@$SSH_HOST:$REMOTE_DIR/docker-compose.yml
 
       - name: Deploy on server
         run: |
