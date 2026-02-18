@@ -105,12 +105,11 @@ jobs:
           zcat /tmp/threads-agent.tar.gz | docker load
           rm -f /tmp/threads-agent.tar.gz
           cd /opt/threads-agent
-          ls -la docker-compose.yml
-          docker compose down || true
-          docker compose up -d
+          docker compose -f docker-compose.yml down || true
+          docker compose -f docker-compose.yml up -d
           docker image prune -f
           echo "--- Container status ---"
-          docker compose ps
+          docker compose -f docker-compose.yml ps
           EOF
 
       - name: Health check
