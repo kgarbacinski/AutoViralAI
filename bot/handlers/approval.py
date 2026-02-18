@@ -7,17 +7,13 @@ from telegram.ext import ContextTypes
 
 logger = logging.getLogger(__name__)
 
-_pending_resumes: dict[str, dict] = {}
+_orchestrator = None
 
 
-def register_pending_resume(thread_id: str, graph_config: dict) -> None:
-    """Register a graph interrupt waiting for human decision."""
-    _pending_resumes[thread_id] = graph_config
-
-
-def get_pending_resume(thread_id: str) -> dict | None:
-    """Get the graph config for a pending resume."""
-    return _pending_resumes.get(thread_id)
+def set_orchestrator(orchestrator) -> None:
+    """Set the orchestrator instance for graph resumption."""
+    global _orchestrator
+    _orchestrator = orchestrator
 
 
 async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -69,17 +65,17 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         return
 
     if decision:
-        await _resume_graph(thread_id, decision, context)
+        await _resume_graph(thread_id, decision)
 
 
-async def _resume_graph(thread_id: str, decision: dict, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Resume the paused graph with the human's decision."""
-    graph_config = get_pending_resume(thread_id)
-    if not graph_config:
-        logger.warning(f"No pending resume found for thread_id={thread_id}")
+async def _resume_graph(thread_id: str, decision: dict) -> None:
+    """Resume the paused graph with the human's decision via the orchestrator."""
+    if _orchestrator is None:
+        logger.error("Orchestrator not set — cannot resume graph")
         return
 
-    graph_config["decision"] = decision
-    _pending_resumes[thread_id] = graph_config
-
-    logger.info(f"Decision stored for thread_id={thread_id}: {decision}")
+    try:
+        await _orchestrator.resume_creation(thread_id, decision)
+        logger.info(f"Graph resumed for thread_id={thread_id} with decision={decision}")
+    except Exception as e:
+        logger.error(f"Failed to resume graph for thread_id={thread_id}: {e}")
