@@ -75,12 +75,14 @@ async def send_approval_request(
     ]
 
     for i, alt in enumerate(alternatives):
-        keyboard.append([
-            InlineKeyboardButton(
-                f"Use Alt {i+1}",
-                callback_data=f"alt:{thread_id}:{i}",
-            )
-        ])
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    f"Use Alt {i + 1}",
+                    callback_data=f"alt:{thread_id}:{i}",
+                )
+            ]
+        )
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 

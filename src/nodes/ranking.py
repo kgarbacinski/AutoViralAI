@@ -55,15 +55,17 @@ async def rank_and_select(
     )
 
     structured_llm = llm.with_structured_output(AIScoreResult)
-    ai_result = await structured_llm.ainvoke([
-        SystemMessage(content=RANK_POSTS_SYSTEM),
-        HumanMessage(
-            content=RANK_POSTS_USER.format(
-                variants=variants_text,
-                audience_description=audience_desc or "Tech professionals and developers",
-            )
-        ),
-    ])
+    ai_result = await structured_llm.ainvoke(
+        [
+            SystemMessage(content=RANK_POSTS_SYSTEM),
+            HumanMessage(
+                content=RANK_POSTS_USER.format(
+                    variants=variants_text,
+                    audience_description=audience_desc or "Tech professionals and developers",
+                )
+            ),
+        ]
+    )
 
     ai_scores = {s.index: (s.ai_score, s.reasoning) for s in ai_result.scores}
 

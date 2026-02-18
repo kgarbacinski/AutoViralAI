@@ -45,35 +45,40 @@ async def generate_post_variants(
     pillars_text = "No specific pillars configured."
     if niche_config and niche_config.content_pillars:
         pillars_text = "\n".join(
-            f"- {p.name} ({p.weight:.0%}): {p.description}"
-            for p in niche_config.content_pillars
+            f"- {p.name} ({p.weight:.0%}): {p.description}" for p in niche_config.content_pillars
         )
 
-    recent_text = "\n".join(
-        f"- {p.content[:100]}..." for p in recent_posts
-    ) or "No posts published yet."
+    recent_text = (
+        "\n".join(f"- {p.content[:100]}..." for p in recent_posts) or "No posts published yet."
+    )
 
     avoid_text = ", ".join(niche_config.avoid_topics) if niche_config else "None specified."
 
-    strategy_text = "\n".join(strategy.key_learnings) if strategy.key_learnings else "No learnings yet - first cycle."
+    strategy_text = (
+        "\n".join(strategy.key_learnings)
+        if strategy.key_learnings
+        else "No learnings yet - first cycle."
+    )
 
     structured_llm = llm.with_structured_output(GenerationResult)
 
-    result = await structured_llm.ainvoke([
-        SystemMessage(content=GENERATE_VARIANTS_SYSTEM),
-        HumanMessage(
-            content=GENERATE_VARIANTS_USER.format(
-                niche=niche_config.niche if niche_config else "tech",
-                voice_tone=niche_config.voice.tone if niche_config else "conversational",
-                voice_persona=niche_config.voice.persona if niche_config else "tech expert",
-                style_notes="\n".join(niche_config.voice.style_notes) if niche_config else "",
-                patterns=patterns_text,
-                pillars=pillars_text,
-                avoid_topics=avoid_text,
-                recent_posts=recent_text,
-                strategy_learnings=strategy_text,
-            )
-        ),
-    ])
+    result = await structured_llm.ainvoke(
+        [
+            SystemMessage(content=GENERATE_VARIANTS_SYSTEM),
+            HumanMessage(
+                content=GENERATE_VARIANTS_USER.format(
+                    niche=niche_config.niche if niche_config else "tech",
+                    voice_tone=niche_config.voice.tone if niche_config else "conversational",
+                    voice_persona=niche_config.voice.persona if niche_config else "tech expert",
+                    style_notes="\n".join(niche_config.voice.style_notes) if niche_config else "",
+                    patterns=patterns_text,
+                    pillars=pillars_text,
+                    avoid_topics=avoid_text,
+                    recent_posts=recent_text,
+                    strategy_learnings=strategy_text,
+                )
+            ),
+        ]
+    )
 
     return {"generated_variants": [v.model_dump() for v in result.variants]}

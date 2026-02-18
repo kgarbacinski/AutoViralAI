@@ -47,12 +47,15 @@ async def analyze_performance(
     )
 
     performances = await kb.get_all_pattern_performances()
-    perf_text = "\n".join(
-        f"- {p.pattern_name}: used {p.times_used}x, "
-        f"avg engagement {p.avg_engagement_rate:.2%}, "
-        f"effectiveness {p.effectiveness_score:.1f}/10"
-        for p in performances
-    ) or "No historical data."
+    perf_text = (
+        "\n".join(
+            f"- {p.pattern_name}: used {p.times_used}x, "
+            f"avg engagement {p.avg_engagement_rate:.2%}, "
+            f"effectiveness {p.effectiveness_score:.1f}/10"
+            for p in performances
+        )
+        or "No historical data."
+    )
 
     strategy = await kb.get_strategy()
     strategy_text = (
@@ -63,15 +66,17 @@ async def analyze_performance(
 
     structured_llm = llm.with_structured_output(PerformanceAnalysis)
 
-    result = await structured_llm.ainvoke([
-        SystemMessage(content=ANALYZE_PERFORMANCE_SYSTEM),
-        HumanMessage(
-            content=ANALYZE_PERFORMANCE_USER.format(
-                posts_with_metrics=metrics_text,
-                pattern_performance=perf_text,
-                current_strategy=strategy_text,
-            )
-        ),
-    ])
+    result = await structured_llm.ainvoke(
+        [
+            SystemMessage(content=ANALYZE_PERFORMANCE_SYSTEM),
+            HumanMessage(
+                content=ANALYZE_PERFORMANCE_USER.format(
+                    posts_with_metrics=metrics_text,
+                    pattern_performance=perf_text,
+                    current_strategy=strategy_text,
+                )
+            ),
+        ]
+    )
 
     return {"performance_analysis": result.model_dump()}

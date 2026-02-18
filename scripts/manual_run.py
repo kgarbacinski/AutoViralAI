@@ -131,7 +131,9 @@ async def run_creation_pipeline(auto_approve: bool = False) -> None:
             if len(ranked) > 1:
                 print("Alternatives:")
                 for alt in ranked[1:3]:
-                    print(f"  [{alt.get('composite_score', 0):.1f}] {alt.get('content', '')[:100]}...")
+                    print(
+                        f"  [{alt.get('composite_score', 0):.1f}] {alt.get('content', '')[:100]}..."
+                    )
                 print()
 
             choice = input("(a)pprove / (r)eject / (e)dit: ").strip().lower()

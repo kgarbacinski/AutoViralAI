@@ -31,14 +31,17 @@ async def extract_patterns(
         }
 
     performances = await kb.get_all_pattern_performances()
-    perf_summary = "\n".join(
-        f"- {p.pattern_name}: used {p.times_used}x, avg engagement {p.avg_engagement_rate:.2%}, "
-        f"effectiveness {p.effectiveness_score:.1f}/10"
-        for p in performances
-    ) or "No historical data yet."
+    perf_summary = (
+        "\n".join(
+            f"- {p.pattern_name}: used {p.times_used}x, avg engagement {p.avg_engagement_rate:.2%}, "
+            f"effectiveness {p.effectiveness_score:.1f}/10"
+            for p in performances
+        )
+        or "No historical data yet."
+    )
 
     posts_text = "\n\n".join(
-        f"[{i+1}] Platform: {p.get('platform', 'unknown')}\n"
+        f"[{i + 1}] Platform: {p.get('platform', 'unknown')}\n"
         f"Content: {p.get('content', '')}\n"
         f"Engagement: {p.get('likes', 0)} likes, {p.get('replies', 0)} replies, "
         f"{p.get('reposts', 0)} reposts"
@@ -47,14 +50,16 @@ async def extract_patterns(
 
     structured_llm = llm.with_structured_output(PatternExtractionResult)
 
-    result = await structured_llm.ainvoke([
-        SystemMessage(content=EXTRACT_PATTERNS_SYSTEM),
-        HumanMessage(
-            content=EXTRACT_PATTERNS_USER.format(
-                viral_posts=posts_text,
-                pattern_performance=perf_summary,
-            )
-        ),
-    ])
+    result = await structured_llm.ainvoke(
+        [
+            SystemMessage(content=EXTRACT_PATTERNS_SYSTEM),
+            HumanMessage(
+                content=EXTRACT_PATTERNS_USER.format(
+                    viral_posts=posts_text,
+                    pattern_performance=perf_summary,
+                )
+            ),
+        ]
+    )
 
     return {"extracted_patterns": [p.model_dump() for p in result.patterns]}

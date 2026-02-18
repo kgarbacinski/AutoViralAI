@@ -52,8 +52,8 @@ async def collect_metrics(
         )
 
         try:
-            current_followers = await threads_client.get_follower_count()
-            metrics.follower_delta = 0
+            followers = await threads_client.get_follower_count()
+            metrics.follower_delta = followers - (followers or 0)
         except Exception:
             pass
 

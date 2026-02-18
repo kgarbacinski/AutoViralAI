@@ -1,7 +1,5 @@
 """Configuration endpoints."""
 
-from pathlib import Path
-
 import yaml
 from fastapi import APIRouter
 

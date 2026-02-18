@@ -3,7 +3,6 @@
 from datetime import datetime, timezone
 
 from src.models.state import LearningPipelineState
-from src.models.strategy import PatternPerformance
 from src.store.knowledge_base import KnowledgeBase
 
 
@@ -40,9 +39,8 @@ async def update_knowledge_base(
 
         follower_delta = metrics.get("follower_delta", 0)
         perf.avg_follower_delta = (
-            (perf.avg_follower_delta * (perf.times_used - 1) + follower_delta)
-            / perf.times_used
-        )
+            perf.avg_follower_delta * (perf.times_used - 1) + follower_delta
+        ) / perf.times_used
 
         engagement_rate = metrics.get("engagement_rate", 0.0)
         threads_id = metrics.get("threads_id", "")

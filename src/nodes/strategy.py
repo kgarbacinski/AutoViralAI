@@ -28,35 +28,39 @@ async def adjust_strategy(
     niche_config = await kb.get_niche_config()
 
     analysis_text = "\n".join(
-        f"**{k}**: {', '.join(v) if isinstance(v, list) else v}"
-        for k, v in analysis.items()
+        f"**{k}**: {', '.join(v) if isinstance(v, list) else v}" for k, v in analysis.items()
     )
 
     strategy_text = current_strategy.model_dump_json(indent=2)
 
-    perf_text = "\n".join(
-        f"- {p.pattern_name}: {p.times_used} uses, "
-        f"engagement {p.avg_engagement_rate:.2%}, "
-        f"follower delta {p.avg_follower_delta:+.1f}, "
-        f"effectiveness {p.effectiveness_score:.1f}/10"
-        for p in all_performances
-    ) or "No pattern data yet."
+    perf_text = (
+        "\n".join(
+            f"- {p.pattern_name}: {p.times_used} uses, "
+            f"engagement {p.avg_engagement_rate:.2%}, "
+            f"follower delta {p.avg_follower_delta:+.1f}, "
+            f"effectiveness {p.effectiveness_score:.1f}/10"
+            for p in all_performances
+        )
+        or "No pattern data yet."
+    )
 
     niche_text = niche_config.model_dump_json(indent=2) if niche_config else "Not configured."
 
     structured_llm = llm.with_structured_output(ContentStrategy)
 
-    new_strategy = await structured_llm.ainvoke([
-        SystemMessage(content=ADJUST_STRATEGY_SYSTEM),
-        HumanMessage(
-            content=ADJUST_STRATEGY_USER.format(
-                analysis=analysis_text,
-                current_strategy=strategy_text,
-                all_pattern_performance=perf_text,
-                niche_config=niche_text,
-            )
-        ),
-    ])
+    new_strategy = await structured_llm.ainvoke(
+        [
+            SystemMessage(content=ADJUST_STRATEGY_SYSTEM),
+            HumanMessage(
+                content=ADJUST_STRATEGY_USER.format(
+                    analysis=analysis_text,
+                    current_strategy=strategy_text,
+                    all_pattern_performance=perf_text,
+                    niche_config=niche_text,
+                )
+            ),
+        ]
+    )
 
     new_strategy.iteration = current_strategy.iteration + 1
 

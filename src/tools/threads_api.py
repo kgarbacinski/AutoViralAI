@@ -43,7 +43,9 @@ class MockThreadsClient(ThreadsClient):
 
     async def publish_post(self, content: str) -> str:
         self._post_counter += 1
-        threads_id = f"mock_{self._post_counter}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+        threads_id = (
+            f"mock_{self._post_counter}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+        )
         self._posts[threads_id] = {
             "id": threads_id,
             "content": content,

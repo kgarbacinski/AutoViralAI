@@ -99,13 +99,9 @@ class RealRedditResearcher(RedditResearcher):
         self, subreddits: list[str], query: str, limit: int = 20
     ) -> list[ViralPost]:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self._search_sync, subreddits, query, limit
-        )
+        return await loop.run_in_executor(None, self._search_sync, subreddits, query, limit)
 
-    def _search_sync(
-        self, subreddits: list[str], query: str, limit: int
-    ) -> list[ViralPost]:
+    def _search_sync(self, subreddits: list[str], query: str, limit: int) -> list[ViralPost]:
         posts = []
         for sub_name in subreddits:
             subreddit = self.reddit.subreddit(sub_name)
@@ -116,7 +112,9 @@ class RealRedditResearcher(RedditResearcher):
                     ViralPost(
                         platform="reddit",
                         author=f"u/{submission.author.name}" if submission.author else "deleted",
-                        content=submission.selftext[:500] if submission.is_self else submission.title,
+                        content=submission.selftext[:500]
+                        if submission.is_self
+                        else submission.title,
                         url=f"https://reddit.com{submission.permalink}",
                         likes=submission.score,
                         replies=submission.num_comments,

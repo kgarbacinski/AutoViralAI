@@ -1,6 +1,5 @@
 """Knowledge base operations wrapping LangGraph Store."""
 
-import json
 from datetime import datetime, timezone
 
 from langgraph.store.base import BaseStore

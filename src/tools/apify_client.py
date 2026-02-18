@@ -9,17 +9,13 @@ from src.models.research import ViralPost
 
 class ThreadsScraper(ABC):
     @abstractmethod
-    async def scrape_viral_posts(
-        self, hashtags: list[str], limit: int = 20
-    ) -> list[ViralPost]: ...
+    async def scrape_viral_posts(self, hashtags: list[str], limit: int = 20) -> list[ViralPost]: ...
 
 
 class MockThreadsScraper(ThreadsScraper):
     """Mock scraper returning sample Threads viral posts."""
 
-    async def scrape_viral_posts(
-        self, hashtags: list[str], limit: int = 20
-    ) -> list[ViralPost]:
+    async def scrape_viral_posts(self, hashtags: list[str], limit: int = 20) -> list[ViralPost]:
         return [
             ViralPost(
                 platform="threads",
@@ -63,9 +59,7 @@ class RealThreadsScraper(ThreadsScraper):
     def __init__(self, api_token: str):
         self.client = ApifyClientAsync(api_token)
 
-    async def scrape_viral_posts(
-        self, hashtags: list[str], limit: int = 20
-    ) -> list[ViralPost]:
+    async def scrape_viral_posts(self, hashtags: list[str], limit: int = 20) -> list[ViralPost]:
         run_input = {
             "hashtags": hashtags,
             "resultsLimit": limit,

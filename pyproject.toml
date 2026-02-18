@@ -1,11 +1,11 @@
 [project]
-name = "self-learning-viral-agent"
+name = "self-learning-viral-agent-ai"
 version = "0.1.0"
-description = "Autonomous AI agent that grows your Threads account through self-learning content loops — researches viral posts, generates content, publishes, measures, and adapts strategy."
+description = "AI agent that learns what goes viral and posts it for you. Researches content, generates posts, publishes, measures engagement, and adapts strategy automatically."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.12"
-keywords = ["langgraph", "ai-agent", "threads", "social-media", "autonomous", "self-learning"]
+keywords = ["langgraph", "ai-agent", "social-media", "autonomous", "self-learning", "viral-content", "threads", "growth"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

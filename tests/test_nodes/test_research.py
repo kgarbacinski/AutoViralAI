@@ -3,7 +3,6 @@
 import pytest
 
 from src.nodes.research import research_viral_content
-from src.store.knowledge_base import KnowledgeBase
 from src.tools.apify_client import MockThreadsScraper
 from src.tools.reddit_client import MockRedditResearcher
 
