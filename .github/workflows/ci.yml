@@ -101,6 +101,15 @@ jobs:
         run: |
           ssh -p $SSH_PORT $SSH_USER@$SSH_HOST bash -s << 'EOF'
           set -e
+          # Migrate agent.env from old location if needed
+          if [ ! -f /root/autoviralai/agent.env ] && [ -f /root/threads-agent/agent.env ]; then
+            echo "Migrating agent.env from old location..."
+            cp /root/threads-agent/agent.env /root/autoviralai/agent.env
+          fi
+          # Stop old containers if still running
+          if [ -f /root/threads-agent/docker-compose.yml ]; then
+            docker compose -f /root/threads-agent/docker-compose.yml down || true
+          fi
           COMPOSE_FILE=/root/autoviralai/docker-compose.yml
           echo "Loading Docker image..."
           zcat /tmp/autoviralai.tar.gz | docker load
