@@ -6,11 +6,14 @@ from datetime import datetime, timezone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from langgraph.types import Command
 
-from bot.telegram_bot import send_approval_request
+from bot.telegram_bot import build_enrichment_data, send_approval_request, send_pipeline_report
 from config.settings import Settings, get_settings
 from src.graphs.creation_pipeline import build_creation_pipeline
 from src.graphs.learning_pipeline import build_learning_pipeline
 from src.persistence import create_checkpointer, create_store
+from src.store.knowledge_base import KnowledgeBase
+from src.tools.apify_client import get_threads_scraper
+from src.tools.hackernews_client import HackerNewsResearcher
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +39,8 @@ class PipelineOrchestrator:
         self._learning_cycle = 0
         # thread_id -> {"compiled": graph, "config": config, "state_snapshot": state}
         self._pending_interrupts: dict[str, dict] = {}
+        self._paused = False
+        self.kb = KnowledgeBase(store=self.store, account_id=self.settings.account_id)
 
     def setup_schedules(self) -> None:
         """Configure APScheduler jobs for both pipelines."""
@@ -124,6 +129,19 @@ class PipelineOrchestrator:
         ranked_posts = values.get("ranked_posts", [])
         alternatives = ranked_posts[1:3] if len(ranked_posts) > 1 else []
 
+        # Send pipeline report first (shows how agents work)
+        try:
+            await send_pipeline_report(self.bot_app, self.telegram_chat_id, values)
+        except Exception as e:
+            logger.error(f"Failed to send pipeline report: {e}")
+
+        # Build enrichment data from KnowledgeBase
+        enrichment = None
+        try:
+            enrichment = await build_enrichment_data(self.kb, selected_post or {})
+        except Exception as e:
+            logger.error(f"Failed to build enrichment data: {e}")
+
         try:
             await send_approval_request(
                 app=self.bot_app,
@@ -133,6 +151,7 @@ class PipelineOrchestrator:
                 alternatives=alternatives,
                 cycle_number=values.get("cycle_number", 0),
                 follower_count=values.get("current_follower_count", 0),
+                enrichment=enrichment,
             )
             logger.info(f"Approval request sent to Telegram for thread={thread_id}")
         except Exception as e:
@@ -141,7 +160,7 @@ class PipelineOrchestrator:
     async def resume_creation(self, thread_id: str, decision: dict) -> dict | None:
         """Resume a paused creation pipeline with the human's decision.
 
-        Handles recursive interrupts (e.g., reject → regenerate → new interrupt).
+        Handles recursive interrupts (e.g., reject -> regenerate -> new interrupt).
         """
         pending = self._pending_interrupts.pop(thread_id, None)
         if not pending:
@@ -151,6 +170,13 @@ class PipelineOrchestrator:
         compiled = pending["compiled"]
         config = pending["config"]
 
+        # Handle delayed publishing
+        publish_at = decision.get("publish_at")
+        if publish_at:
+            self._pending_interrupts[thread_id] = pending
+            self._schedule_delayed_publish(thread_id, decision, publish_at)
+            return None
+
         logger.info(f"Resuming creation pipeline thread={thread_id} with decision={decision}")
 
         try:
@@ -159,7 +185,7 @@ class PipelineOrchestrator:
                 result = event
                 logger.info(f"Resume event: {list(event.keys())}")
 
-            # Check if another interrupt was triggered (reject → regenerate → new approval)
+            # Check if another interrupt was triggered (reject -> regenerate -> new approval)
             state = await compiled.aget_state(config)
             if state.next and "human_approval" in state.next:
                 logger.info(f"Another interrupt detected after resume (thread={thread_id})")
@@ -175,6 +201,26 @@ class PipelineOrchestrator:
         except Exception as e:
             logger.error(f"Failed to resume creation pipeline thread={thread_id}: {e}")
             raise
+
+    def _schedule_delayed_publish(
+        self, thread_id: str, decision: dict, publish_at: str
+    ) -> None:
+        """Schedule a one-shot APScheduler job to publish at a specific time."""
+        run_date = datetime.fromisoformat(publish_at)
+        # Remove publish_at so the actual resume just approves
+        resume_decision = {k: v for k, v in decision.items() if k != "publish_at"}
+
+        async def _delayed_resume():
+            await self.resume_creation(thread_id, resume_decision)
+
+        self._scheduler.add_job(
+            _delayed_resume,
+            "date",
+            run_date=run_date,
+            id=f"delayed_publish_{thread_id}",
+            replace_existing=True,
+        )
+        logger.info(f"Scheduled delayed publish for thread={thread_id} at {publish_at}")
 
     async def run_learning_pipeline(self) -> dict | None:
         """Execute a single learning pipeline cycle."""
@@ -212,10 +258,39 @@ class PipelineOrchestrator:
             logger.error(f"Learning pipeline cycle #{self._learning_cycle} failed: {e}")
             raise
 
+    async def run_research_only(self) -> list[dict]:
+        """Run only the research step standalone (without full pipeline)."""
+        from src.nodes.research import research_viral_content
+
+        hn = HackerNewsResearcher()
+        scraper = get_threads_scraper(self.settings)
+
+        minimal_state = {
+            "viral_posts": [],
+            "errors": [],
+        }
+
+        result = await research_viral_content(
+            minimal_state, hn=hn, scraper=scraper, kb=self.kb
+        )
+        return result.get("viral_posts", [])
+
     @property
     def pending_approvals(self) -> dict[str, dict]:
         """Return pending interrupt thread IDs (for status endpoint)."""
         return dict(self._pending_interrupts)
+
+    @property
+    def is_paused(self) -> bool:
+        return self._paused
+
+    @property
+    def creation_cycle(self) -> int:
+        return self._creation_cycle
+
+    @property
+    def learning_cycle(self) -> int:
+        return self._learning_cycle
 
     def get_scheduled_jobs(self) -> list[dict]:
         """Return info about scheduled jobs."""
@@ -225,9 +300,24 @@ class PipelineOrchestrator:
                 {
                     "id": job.id,
                     "next_run_time": str(job.next_run_time) if job.next_run_time else None,
+                    "paused": job.next_run_time is None,
                 }
             )
         return jobs
+
+    def pause_all_jobs(self) -> None:
+        """Pause all scheduled pipeline jobs."""
+        for job in self._scheduler.get_jobs():
+            job.pause()
+        self._paused = True
+        logger.info("All scheduled jobs paused")
+
+    def resume_all_jobs(self) -> None:
+        """Resume all scheduled pipeline jobs."""
+        for job in self._scheduler.get_jobs():
+            job.resume()
+        self._paused = False
+        logger.info("All scheduled jobs resumed")
 
     def start(self) -> None:
         """Start the scheduler."""

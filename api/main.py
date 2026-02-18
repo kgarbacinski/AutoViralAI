@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from api.routes.config import router as config_router
 from api.routes.status import router as status_router
-from bot.handlers.approval import set_orchestrator
+from bot.dependencies import set_knowledge_base, set_orchestrator
 from bot.telegram_bot import create_bot
 from bot.webhook import router as webhook_router, set_bot_app
 from config.settings import get_settings
@@ -94,6 +94,7 @@ async def lifespan(app: FastAPI):
 
         # 2. Niche config → Knowledge Base
         kb = KnowledgeBase(store=store, account_id=settings.account_id)
+        set_knowledge_base(kb)
         await _init_niche_config(kb)
 
         # 3. Telegram bot

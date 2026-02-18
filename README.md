@@ -2,57 +2,79 @@
 
 # AutoViralAI
 
-### AI agent that learns what goes viral — and posts it for you
+### Your social media grows while you sleep.
 
 <p>
-Give it your niche. It researches viral content, generates posts,<br/>
-learns from engagement data, and <strong>gets better every day</strong>.
+An autonomous AI agent that researches what's going viral, generates content,<br/>
+publishes it, measures engagement — and <strong>rewrites its own strategy based on what actually worked</strong>.
 </p>
 
+<br/>
+
 [![CI](https://github.com/kgarbacinski/AutoViralAI/actions/workflows/ci.yml/badge.svg)](https://github.com/kgarbacinski/AutoViralAI/actions/workflows/ci.yml)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.3+-orange.svg)](https://github.com/langchain-ai/langgraph)
 
-[Quick Start](#quick-start) · [How It Works](#how-it-works) · [Configuration](#configuring-your-niche) · [Contributing](CONTRIBUTING.md)
+[Quick Start](#-quick-start) · [How It Works](#-how-it-works) · [Configuration](#-configuring-your-niche) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-Most social media bots just post on a schedule. **This agent learns.** It studies what goes viral in your niche, extracts the patterns behind it, generates posts using those patterns, publishes them, measures the results, and feeds everything back into its strategy.
+**The problem:** You know you should be posting consistently. You know what kind of content performs. But researching trends, writing posts, tracking what works, adjusting strategy — it's a full-time job.
+
+**The solution:** AutoViralAI does the entire loop autonomously. It doesn't just post — it *learns*. Every day it gets a little better at understanding what your audience actually engages with.
 
 ```
-Day 1:  "Here's a generic coding tip"           → 12 likes
-Day 7:  "Hot take: most devs don't need Docker"  → 340 likes
-Day 14: Agent learned contrarian hooks work 3x    → adapts strategy automatically
+Day 1:   "Here's a generic coding tip"            → 12 likes
+Day 7:   "Hot take: most devs don't need Docker"   → 340 likes
+Day 14:  Agent learned contrarian hooks work 3x     → adapts strategy automatically
+Day 30:  Posts consistently hit 500+ engagement     → you didn't write a single one
 ```
 
-<!-- TODO: Replace with actual demo GIF
-<div align="center">
-  <img src="docs/demo.gif" alt="GrowthPilot demo" width="600"/>
-</div>
--->
+## Why AutoViralAI?
+
+Most "AI social media tools" are glorified schedulers with a GPT wrapper. They generate generic content, blast it out, and call it a day.
+
+**AutoViralAI is fundamentally different:**
+
+| Traditional tools | AutoViralAI |
+|---|---|
+| Generate content from a static prompt | Research what's *actually* going viral right now, extract the patterns, and generate content using those patterns |
+| Same strategy forever | Strategy evolves daily based on real engagement data |
+| Post and forget | Measure results after 24h, learn what worked and why, feed it back |
+| AI picks the post | Multi-signal ranking: AI score + historical pattern performance + novelty scoring |
+| Fully automated (risky) | Human-in-the-loop: you approve every post via Telegram before it goes live |
+
+## Key Features
+
+**Self-Learning Loop** — The agent doesn't just execute. It observes, measures, and adapts. Pattern that got 3x engagement? It'll use it more. Strategy that flopped? Automatically deprioritized.
+
+**Multi-Signal Ranking** — Posts aren't ranked on "AI vibes." Each variant scores on 3 independent signals: AI-evaluated viral potential, historical pattern performance, and novelty (so it doesn't repeat itself).
+
+**Human-in-the-Loop** — Nothing gets published without your approval. The agent sends you the top-ranked post via Telegram. You approve, edit, or reject. Built on LangGraph's `interrupt()` — survives server restarts.
+
+**Niche-Aware** — Define your voice, audience, content pillars, and topics to avoid in a single YAML file. The agent stays on-brand in every cycle.
+
+**Research-Driven** — Before generating anything, the agent scrapes Reddit, Threads, and HackerNews to understand what's trending *right now* in your niche. No hallucinated trends.
+
+**Production-Ready** — PostgreSQL persistence, Docker deployment, CI/CD via GitHub Actions, Telegram webhooks, APScheduler for cron-like execution. Not a toy — this runs 24/7.
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.13+
 - [uv](https://docs.astral.sh/uv/) (recommended) or pip
 - An [Anthropic API key](https://console.anthropic.com/)
 
 ### Setup
 
 ```bash
-# Clone
 git clone https://github.com/kgarbacinski/AutoViralAI.git
 cd AutoViralAI
-
-# Install dependencies
 uv sync
-
-# Configure
 cp .env.example .env
 # Edit .env → set ANTHROPIC_API_KEY (minimum required)
 ```
@@ -72,19 +94,13 @@ uv run python scripts/manual_run.py --pipeline learning
 
 The first run uses **mock APIs** — no social media account needed. You'll see the full pipeline execute with realistic simulated data.
 
-### Health Check
-
-```bash
-uv run python scripts/check_health.py
-```
-
 ## How It Works
 
 The system runs **two independent pipelines** that share a knowledge base:
 
 ```mermaid
 graph TB
-    subgraph "Creation Pipeline · runs 2-3x/day"
+    subgraph "Creation Pipeline · runs 3x/day"
         A[Goal Check] -->|not reached| B[Research Viral Content]
         A -->|target reached| Z[Done!]
         B --> C[Extract Patterns]
@@ -130,7 +146,7 @@ Adapt        →  Update strategy, adjust weights
 
 ### Multi-Signal Ranking
 
-Posts aren't ranked by AI vibes alone. Each variant gets a **composite score** from three independent signals:
+Each variant gets a **composite score** from three independent signals:
 
 ```
 composite = 0.4 × ai_score + 0.3 × pattern_history + 0.3 × novelty
@@ -146,7 +162,7 @@ New patterns get a **5.0 exploration bonus** — the system balances exploitatio
 
 ### Human-in-the-Loop
 
-The agent never posts without your approval:
+The agent never posts without your approval. Before the approval message, you get a **full pipeline report** showing what each agent did — research results, extracted patterns, generated variants, and ranking breakdown. Then:
 
 ```
 ┌──────────────────────────────────────────┐
@@ -157,16 +173,17 @@ The agent never posts without your approval:
 │  ─────────────────────────────           │
 │  Hot take: 90% of "clean code"           │
 │  advice makes your code slower.          │
-│                                          │
-│  The fastest code is the code that       │
-│  doesn't exist. Ship less, ship faster.  │
 │  ─────────────────────────────           │
-│  Pattern: contrarian_hot_take            │
-│  Score: 7.8/10                           │
+│  Score: 7.8/10 (+1.2 vs avg 6.6)        │
+│  Pattern: contrarian_hot_take — 4.2% ER  │
+│  Best publish time: 08:00, 12:30         │
 │                                          │
-│  [Approve] [Edit] [Reject]               │
+│  Recent posts:                           │
+│   1. 3.50% ER | 42L 5R | "Most devs..." │
+│   2. 2.10% ER | 28L 3R | "Docker is..." │
 │                                          │
-│  Alternatives:                           │
+│  [Approve]  [Reject]                     │
+│  [Edit]     [Publish Later]              │
 │  [Use Alt 1]  [Use Alt 2]               │
 └──────────────────────────────────────────┘
 ```
@@ -225,7 +242,7 @@ AutoViralAI/
 │   ├── orchestrator.py          # APScheduler (cron-like scheduling)
 │   └── persistence.py           # Checkpointer + Store factory
 │
-├── bot/                         # Telegram approval bot
+├── bot/                         # Telegram bot (approval, commands, config)
 ├── api/                         # FastAPI server
 ├── scripts/                     # Manual run, init, health check
 └── tests/                       # pytest suite
@@ -282,7 +299,7 @@ uv run ruff check .
 
 ## Production Deployment
 
-Push to `main` → GitHub Actions runs lint, test, and deploys to Mikrus automatically via SSH + Docker.
+Push to `main` → GitHub Actions runs lint, test, and deploys automatically via SSH + Docker.
 
 ```bash
 # Local development with Docker
@@ -297,8 +314,16 @@ docker compose up -d
 - [x] Human-in-the-loop via `interrupt()`
 - [x] Configurable niche/voice/audience
 - [x] CI/CD: GitHub Actions → auto-deploy on push to main
+- [x] Telegram bot approval flow (end-to-end)
+- [x] Pipeline transparency — full AI agent report (research, patterns, generation, ranking)
+- [x] Enriched approval messages — metrics benchmark, pattern rationale, optimal publish time
+- [x] Reject with feedback — reason buttons feed back into the learning loop
+- [x] Publish later — schedule approved posts for optimal times
+- [x] Bot commands — `/metrics`, `/history`, `/schedule`, `/force`, `/learn`, `/research`, `/pause`, `/resume`
+- [x] Remote config via Telegram — `/config` to change tone, language, hashtags, posting schedule
+- [x] Live `/status` — running/paused state, cycles, pending approvals, next run
+- [x] Standalone `/research` — see what virals the agent finds without running the full pipeline
 - [ ] Real Threads API integration
-- [ ] Telegram bot approval flow (end-to-end)
 - [ ] LangSmith observability dashboard
 - [ ] A/B testing (publish two variants, compare)
 - [ ] Multi-platform support (X, Bluesky, LinkedIn)

@@ -12,32 +12,331 @@ from telegram.ext import (
     filters,
 )
 
-from bot.handlers.approval import handle_approval_callback, handle_edit_message
+from bot.handlers.approval import (
+    handle_approval_callback,
+    handle_edit_message,
+    handle_reject_feedback_text,
+)
 from bot.handlers.status import handle_status_command
 
 logger = logging.getLogger(__name__)
+
+TELEGRAM_MAX_MESSAGE_LENGTH = 4096
+
+
+HELP_TEXT = (
+    "*AutoViralAI — Command Reference*\n\n"
+    "*Monitoring*\n"
+    "/status — Live agent status (running/paused, cycles, pending approvals, next run)\n"
+    "/metrics — Performance metrics: avg ER, trend, top patterns, key learnings\n"
+    "/history — Last 10 published posts with scores and engagement data\n"
+    "/schedule — Scheduled jobs and AI-recommended posting times\n\n"
+    "*Pipeline Control*\n"
+    "/force — Trigger creation pipeline now (blocked if approvals pending)\n"
+    "/learn — Trigger learning pipeline (collect metrics, analyze, update strategy)\n"
+    "/research — Run standalone viral research without the full pipeline\n"
+    "/pause — Pause all scheduled pipelines\n"
+    "/resume — Resume paused pipelines\n\n"
+    "*Configuration*\n"
+    "/config — View and edit: tone, language, hashtags, max posts/day, posting schedule, avoid topics\n\n"
+    "*Other*\n"
+    "/start — Welcome message\n"
+    "/help — This command reference\n\n"
+    "_When a post is ready, I'll send a pipeline report + approval message with buttons._"
+)
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /start command."""
     await update.message.reply_text(
         "AutoViralAI Bot active.\n\n"
-        "Commands:\n"
-        "/status - Check agent status\n\n"
+        "Type /help to see all available commands.\n\n"
         "I'll send you posts for approval when they're ready."
     )
 
 
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /help command — show all available commands."""
+    await update.message.reply_text(HELP_TEXT, parse_mode="Markdown")
+
+
 def create_bot(token: str) -> Application:
     """Create and configure the Telegram bot application."""
+    from bot.handlers.commands import (
+        handle_config_command,
+        handle_force_command,
+        handle_history_command,
+        handle_learn_command,
+        handle_metrics_command,
+        handle_pause_command,
+        handle_research_command,
+        handle_resume_command,
+        handle_schedule_command,
+    )
+    from bot.handlers.config_callbacks import handle_config_callback
+
     app = Application.builder().token(token).build()
 
+    # Command handlers
     app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("status", handle_status_command))
+    app.add_handler(CommandHandler("metrics", handle_metrics_command))
+    app.add_handler(CommandHandler("history", handle_history_command))
+    app.add_handler(CommandHandler("schedule", handle_schedule_command))
+    app.add_handler(CommandHandler("force", handle_force_command))
+    app.add_handler(CommandHandler("learn", handle_learn_command))
+    app.add_handler(CommandHandler("research", handle_research_command))
+    app.add_handler(CommandHandler("pause", handle_pause_command))
+    app.add_handler(CommandHandler("resume", handle_resume_command))
+    app.add_handler(CommandHandler("config", handle_config_command))
+
+    # Callback query handlers — config before approval catch-all
+    app.add_handler(CallbackQueryHandler(handle_config_callback, pattern=r"^cfg:"))
     app.add_handler(CallbackQueryHandler(handle_approval_callback))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_edit_message))
+
+    # Text message handler — edit and reject feedback
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            _handle_text_message,
+        )
+    )
 
     return app
+
+
+async def _handle_text_message(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """Route text messages to the appropriate handler (edit or reject feedback)."""
+    if context.user_data.get("awaiting_reject_feedback"):
+        await handle_reject_feedback_text(update, context)
+    elif context.user_data.get("awaiting_edit"):
+        await handle_edit_message(update, context)
+    elif context.user_data.get("awaiting_config_input"):
+        from bot.handlers.config_callbacks import handle_config_text_input
+
+        await handle_config_text_input(update, context)
+
+
+# ---------------------------------------------------------------------------
+# Pipeline report — shows how the AI agents work
+# ---------------------------------------------------------------------------
+
+
+async def send_pipeline_report(
+    app: Application, chat_id: str, state_values: dict
+) -> None:
+    """Send a detailed pipeline report showing what each agent did."""
+    sections = []
+
+    # Section 1: Research Summary
+    viral_posts = state_values.get("viral_posts", [])
+    if viral_posts:
+        sections.append(_build_research_section(viral_posts))
+
+    # Section 2: Pattern Extraction
+    patterns = state_values.get("extracted_patterns", [])
+    if patterns:
+        sections.append(_build_patterns_section(patterns))
+
+    # Section 3: Generation Overview
+    variants = state_values.get("generated_variants", [])
+    if variants:
+        sections.append(_build_generation_section(variants))
+
+    # Section 4: Ranking Breakdown
+    ranked = state_values.get("ranked_posts", [])
+    if ranked:
+        sections.append(_build_ranking_section(ranked))
+
+    if not sections:
+        return
+
+    # Split into messages if needed (Telegram 4096 char limit)
+    messages = _split_report_messages(sections)
+
+    for msg in messages:
+        try:
+            await app.bot.send_message(chat_id=chat_id, text=msg)
+        except Exception as e:
+            logger.error(f"Failed to send pipeline report section: {e}")
+
+
+def _build_research_section(viral_posts: list[dict]) -> str:
+    hn_count = sum(1 for p in viral_posts if p.get("platform") == "hackernews")
+    threads_count = sum(1 for p in viral_posts if p.get("platform") == "threads")
+
+    lines = [f"Research (found {len(viral_posts)} viral posts)"]
+    lines.append(f"Sources: {hn_count} from HackerNews, {threads_count} from Threads")
+
+    # Top 3 by engagement
+    sorted_posts = sorted(
+        viral_posts, key=lambda p: p.get("engagement_rate", 0), reverse=True
+    )
+    lines.append("Top 3 by engagement:")
+    for i, post in enumerate(sorted_posts[:3], 1):
+        content = post.get("content", "")[:80]
+        er = post.get("engagement_rate", 0)
+        likes = post.get("likes", 0)
+        lines.append(f'  {i}. "{content}..." - {er:.1%} ER, {likes} likes')
+
+    return "\n".join(lines)
+
+
+def _build_patterns_section(patterns: list[dict]) -> str:
+    lines = [f"Patterns Extracted ({len(patterns)} patterns)"]
+
+    for i, pat in enumerate(patterns[:5], 1):
+        name = pat.get("name", "?")
+        hook = pat.get("hook_type", "?")
+        desc = pat.get("description", "")[:100]
+        structure = pat.get("structure", "?")
+        src_count = pat.get("source_posts_count", 0)
+        lines.append(f"  {i}. {name} ({hook} hook)")
+        lines.append(f'     "{desc}"')
+        lines.append(f"     Structure: {structure}")
+        lines.append(f"     Found in {src_count} viral posts")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _build_generation_section(variants: list[dict]) -> str:
+    lines = [f"Generated {len(variants)} Variants"]
+
+    for i, var in enumerate(variants[:5], 1):
+        pattern = var.get("pattern_used", "?")
+        pillar = var.get("pillar", "?")
+        est = var.get("estimated_engagement", 0)
+        content = var.get("content", "")[:100]
+        lines.append(f"  {i}. [{pattern}] [{pillar}] est: {est}")
+        lines.append(f'     "{content}..."')
+
+    return "\n".join(lines)
+
+
+def _build_ranking_section(ranked: list[dict]) -> str:
+    lines = ["Ranking (AI x0.4 + History x0.3 + Novelty x0.3)"]
+
+    for i, post in enumerate(ranked[:5], 1):
+        composite = post.get("composite_score", 0)
+        ai = post.get("ai_score", 0)
+        hist = post.get("pattern_history_score", 0)
+        novelty = post.get("novelty_score", 0)
+        pattern = post.get("pattern_used", "?")
+        pillar = post.get("pillar", "?")
+        reasoning = post.get("reasoning", "")[:100]
+        star = " *" if i == 1 else ""
+        lines.append(
+            f"  #{i}{star} {composite:.1f}/10  "
+            f"[AI:{ai:.1f} H:{hist:.1f} N:{novelty:.1f}]"
+        )
+        lines.append(f"     Pattern: {pattern} | Pillar: {pillar}")
+        if reasoning:
+            lines.append(f'     "{reasoning}"')
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _split_report_messages(sections: list[str]) -> list[str]:
+    """Split report sections into messages under Telegram's 4096 char limit."""
+    messages = []
+    current = ""
+
+    for section in sections:
+        candidate = f"{current}\n\n{section}" if current else section
+        if len(candidate) > TELEGRAM_MAX_MESSAGE_LENGTH:
+            if current:
+                messages.append(current)
+            # If a single section exceeds the limit, truncate it
+            if len(section) > TELEGRAM_MAX_MESSAGE_LENGTH:
+                messages.append(section[: TELEGRAM_MAX_MESSAGE_LENGTH - 3] + "...")
+            else:
+                current = section
+                continue
+        else:
+            current = candidate
+            continue
+        current = ""
+
+    if current:
+        messages.append(current)
+
+    return messages
+
+
+# ---------------------------------------------------------------------------
+# Enrichment data — adds context from KnowledgeBase to approval messages
+# ---------------------------------------------------------------------------
+
+
+async def build_enrichment_data(kb, selected_post: dict) -> dict:
+    """Build enrichment data from KnowledgeBase for the approval message."""
+    enrichment = {}
+
+    try:
+        # Recent post metrics
+        metrics_history = await kb.get_metrics_history(limit=5)
+        if metrics_history:
+            recent_metrics = []
+            for m in metrics_history[:5]:
+                recent_metrics.append(
+                    {
+                        "content_preview": m.content[:50] if m.content else "?",
+                        "engagement_rate": m.engagement_rate,
+                        "likes": m.likes,
+                        "replies": m.replies,
+                    }
+                )
+            enrichment["recent_metrics"] = recent_metrics
+
+            # Benchmark: average composite score of recent posts
+            ers = [m.engagement_rate for m in metrics_history]
+            enrichment["avg_engagement_rate"] = sum(ers) / len(ers) if ers else 0
+    except Exception as e:
+        logger.warning(f"Failed to fetch recent metrics for enrichment: {e}")
+
+    try:
+        # Pattern rationale
+        pattern_name = selected_post.get("pattern_used", "")
+        if pattern_name:
+            perf = await kb.get_pattern_performance(pattern_name)
+            enrichment["pattern_rationale"] = (
+                f"{perf.avg_engagement_rate:.2%} avg ER over {perf.times_used} uses"
+                if perf.times_used > 0
+                else "New pattern (no history yet)"
+            )
+    except Exception as e:
+        logger.warning(f"Failed to fetch pattern performance for enrichment: {e}")
+
+    try:
+        # Optimal posting times from strategy
+        strategy = await kb.get_strategy()
+        if strategy.optimal_posting_times:
+            enrichment["optimal_time"] = ", ".join(strategy.optimal_posting_times[:3])
+    except Exception as e:
+        logger.warning(f"Failed to fetch strategy for enrichment: {e}")
+
+    try:
+        # Benchmark: current score vs average of last 10 posts
+        recent_posts = await kb.get_recent_posts(limit=10)
+        if recent_posts:
+            avg_score = (
+                sum(p.composite_score for p in recent_posts) / len(recent_posts)
+            )
+            enrichment["avg_score"] = avg_score
+    except Exception as e:
+        logger.warning(f"Failed to fetch recent posts for benchmark: {e}")
+
+    return enrichment
+
+
+# ---------------------------------------------------------------------------
+# Approval request message
+# ---------------------------------------------------------------------------
 
 
 async def send_approval_request(
@@ -48,6 +347,7 @@ async def send_approval_request(
     alternatives: list[dict],
     cycle_number: int,
     follower_count: int,
+    enrichment: dict | None = None,
 ) -> None:
     """Send a post approval request to the user via Telegram."""
     content = selected_post.get("content", "")
@@ -55,16 +355,44 @@ async def send_approval_request(
     pattern = selected_post.get("pattern_used", "unknown")
 
     message = (
-        f"**New Post for Approval** (Cycle #{cycle_number})\n"
+        f"*New Post for Approval* (Cycle #{cycle_number})\n"
         f"Followers: {follower_count}\n\n"
         f"---\n"
         f"{content}\n"
         f"---\n\n"
-        f"Pattern: {pattern} | Score: {score:.1f}/10\n"
     )
 
+    # Score line with benchmark comparison
+    if enrichment and "avg_score" in enrichment:
+        avg = enrichment["avg_score"]
+        diff = score - avg
+        sign = "+" if diff >= 0 else ""
+        message += f"Score: {score:.1f}/10 ({sign}{diff:.1f} vs avg {avg:.1f})\n"
+    else:
+        message += f"Score: {score:.1f}/10\n"
+
+    # Pattern with rationale
+    if enrichment and "pattern_rationale" in enrichment:
+        message += f"Pattern: {pattern} - {enrichment['pattern_rationale']}\n"
+    else:
+        message += f"Pattern: {pattern}\n"
+
+    # Optimal posting time
+    if enrichment and "optimal_time" in enrichment:
+        message += f"Best publish time: {enrichment['optimal_time']}\n"
+
+    # Recent post metrics
+    if enrichment and "recent_metrics" in enrichment:
+        message += "\nRecent posts:\n"
+        for i, m in enumerate(enrichment["recent_metrics"][:3], 1):
+            er = m["engagement_rate"]
+            likes = m["likes"]
+            replies = m["replies"]
+            preview = m["content_preview"]
+            message += f'  {i}. {er:.2%} ER | {likes}L {replies}R | "{preview}..."\n'
+
     if alternatives:
-        message += "\n**Alternatives:**\n"
+        message += "\n*Alternatives:*\n"
         for i, alt in enumerate(alternatives, 1):
             message += (
                 f"\n{i}. [{alt.get('pattern_used', '?')} | "
@@ -79,10 +407,13 @@ async def send_approval_request(
         ],
         [
             InlineKeyboardButton("Edit", callback_data=f"edit:{thread_id}"),
+            InlineKeyboardButton(
+                "Publish Later", callback_data=f"later:{thread_id}"
+            ),
         ],
     ]
 
-    for i, alt in enumerate(alternatives):
+    for i, _alt in enumerate(alternatives):
         keyboard.append(
             [
                 InlineKeyboardButton(
