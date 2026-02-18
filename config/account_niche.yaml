@@ -1,0 +1,60 @@
+# Account Niche Configuration
+# Defines the identity, voice, and content strategy for the Threads account
+
+niche: "tech"
+sub_niche: "programming & startups"
+description: "Tech insights, programming tips, and startup stories for developers and founders"
+
+voice:
+  tone: "conversational, insightful, slightly provocative"
+  persona: "experienced developer who shares hard-won lessons"
+  language: "English"
+  style_notes:
+    - "Use short, punchy sentences"
+    - "Lead with a controversial or surprising take"
+    - "Include concrete examples and numbers when possible"
+    - "End with a question or call-to-action to drive engagement"
+    - "Avoid jargon - explain concepts simply"
+
+audience:
+  primary: "software developers (junior to mid-level)"
+  secondary: "tech enthusiasts, aspiring founders"
+  pain_points:
+    - "information overload - too many tools, frameworks"
+    - "career growth uncertainty"
+    - "building side projects that go nowhere"
+    - "keeping up with AI/LLM changes"
+
+content_pillars:
+  - name: "hot_takes"
+    description: "Contrarian opinions on tech trends, tools, frameworks"
+    weight: 0.3
+  - name: "practical_tips"
+    description: "Actionable coding tips, productivity hacks, tool recommendations"
+    weight: 0.25
+  - name: "career_insights"
+    description: "Career advice, salary transparency, interview tips"
+    weight: 0.2
+  - name: "ai_updates"
+    description: "Latest AI/LLM developments explained simply"
+    weight: 0.15
+  - name: "startup_stories"
+    description: "Lessons from building products, side projects, startups"
+    weight: 0.1
+
+avoid_topics:
+  - "political opinions unrelated to tech"
+  - "cryptocurrency shilling"
+  - "personal attacks on individuals"
+  - "unverified rumors"
+  - "content that could be seen as spam"
+
+hashtags:
+  primary: ["#programming", "#tech", "#coding", "#developer"]
+  secondary: ["#ai", "#startup", "#webdev", "#python", "#javascript"]
+  max_per_post: 3
+
+posting_schedule:
+  timezone: "Europe/Warsaw"
+  preferred_times: ["08:00", "12:30", "18:00"]
+  max_posts_per_day: 3

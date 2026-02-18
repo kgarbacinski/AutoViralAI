@@ -1,0 +1,41 @@
+"""Initialize account - load niche config into the store.
+
+Usage:
+    uv run python scripts/init_account.py
+"""
+
+import asyncio
+import logging
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from config.settings import get_settings
+from src.persistence import create_store
+from src.store.knowledge_base import KnowledgeBase
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+async def main():
+    settings = get_settings()
+    store = create_store(settings)
+    kb = KnowledgeBase(store=store, account_id=settings.account_id)
+
+    from scripts.manual_run import init_niche_config
+
+    await init_niche_config(kb)
+
+    niche = await kb.get_niche_config()
+    if niche:
+        logger.info(f"Account initialized: {niche.niche} / {niche.sub_niche}")
+        logger.info(f"Content pillars: {[p.name for p in niche.content_pillars]}")
+        logger.info(f"Voice: {niche.voice.tone}")
+    else:
+        logger.error("Failed to initialize account config")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
