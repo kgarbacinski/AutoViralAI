@@ -99,8 +99,9 @@ jobs:
           ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << 'ENDSSH'
             set -e
             echo "Loading Docker image..."
-            docker load < /tmp/threads-agent.tar.gz
-            rm /tmp/threads-agent.tar.gz
+            gunzip -f /tmp/threads-agent.tar.gz
+            docker load -i /tmp/threads-agent.tar
+            rm -f /tmp/threads-agent.tar
 
             cd /opt/threads-agent
             docker compose down || true
