@@ -53,7 +53,9 @@ class HackerNewsResearcher:
                         platform="hackernews",
                         author=story.get("by", "unknown"),
                         content=story.get("title", ""),
-                        url=story.get("url", f"https://news.ycombinator.com/item?id={story.get('id', '')}"),
+                        url=story.get(
+                            "url", f"https://news.ycombinator.com/item?id={story.get('id', '')}"
+                        ),
                         likes=story.get("score", 0),
                         replies=story.get("descendants", 0),
                         reposts=0,
@@ -70,6 +72,11 @@ class HackerNewsResearcher:
         resp = await client.get(f"{HN_BASE_URL}/item/{story_id}.json")
         resp.raise_for_status()
         data = resp.json()
-        if data and data.get("type") == "story" and not data.get("dead") and not data.get("deleted"):
+        if (
+            data
+            and data.get("type") == "story"
+            and not data.get("dead")
+            and not data.get("deleted")
+        ):
             return data
         return None

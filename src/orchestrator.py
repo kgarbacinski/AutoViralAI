@@ -221,10 +221,12 @@ class PipelineOrchestrator:
         """Return info about scheduled jobs."""
         jobs = []
         for job in self._scheduler.get_jobs():
-            jobs.append({
-                "id": job.id,
-                "next_run_time": str(job.next_run_time) if job.next_run_time else None,
-            })
+            jobs.append(
+                {
+                    "id": job.id,
+                    "next_run_time": str(job.next_run_time) if job.next_run_time else None,
+                }
+            )
         return jobs
 
     def start(self) -> None:
