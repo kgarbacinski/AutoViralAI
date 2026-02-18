@@ -99,20 +99,19 @@ jobs:
 
       - name: Deploy on server
         run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << 'ENDSSH'
-            set -e
-            echo "Loading Docker image..."
-            zcat /tmp/threads-agent.tar.gz | docker load
-            rm -f /tmp/threads-agent.tar.gz
-
-            cd /opt/threads-agent
-            docker compose down || true
-            docker compose up -d
-
-            docker image prune -f
-            echo "--- Container status ---"
-            docker compose ps
-          ENDSSH
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST bash -s << 'EOF'
+          set -e
+          echo "Loading Docker image..."
+          zcat /tmp/threads-agent.tar.gz | docker load
+          rm -f /tmp/threads-agent.tar.gz
+          cd /opt/threads-agent
+          ls -la docker-compose.yml
+          docker compose down || true
+          docker compose up -d
+          docker image prune -f
+          echo "--- Container status ---"
+          docker compose ps
+          EOF
 
       - name: Health check
         run: |
