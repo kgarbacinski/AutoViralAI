@@ -77,7 +77,7 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     edited_content = update.message.text.strip()
     del context.user_data["awaiting_edit"]
 
-    await update.message.reply_text(f"Edited post received. Publishing...")
+    await update.message.reply_text("Edited post received. Publishing...")
 
     decision = {"decision": "edit", "edited_content": edited_content}
     await _resume_graph(thread_id, decision)
