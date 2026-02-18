@@ -101,15 +101,15 @@ jobs:
         run: |
           ssh -p $SSH_PORT $SSH_USER@$SSH_HOST bash -s << 'EOF'
           set -e
+          COMPOSE_FILE=/opt/threads-agent/docker-compose.yml
           echo "Loading Docker image..."
           zcat /tmp/threads-agent.tar.gz | docker load
           rm -f /tmp/threads-agent.tar.gz
-          cd /opt/threads-agent
-          docker compose -f docker-compose.yml down || true
-          docker compose -f docker-compose.yml up -d
+          docker compose -f $COMPOSE_FILE down || true
+          docker compose -f $COMPOSE_FILE up -d
           docker image prune -f
           echo "--- Container status ---"
-          docker compose -f docker-compose.yml ps
+          docker compose -f $COMPOSE_FILE ps
           EOF
 
       - name: Health check
