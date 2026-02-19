@@ -5,7 +5,7 @@ import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from bot.dependencies import get_knowledge_base, get_orchestrator
+from bot.dependencies import get_authorized_chat_id, get_knowledge_base, get_orchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,11 @@ LANGUAGE_OPTIONS = [
 async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle cfg:* callback queries for configuration changes."""
     query = update.callback_query
+    authorized = get_authorized_chat_id()
+    if authorized and query.message.chat.id != authorized:
+        await query.answer("Unauthorized.", show_alert=True)
+        return
+
     await query.answer()
 
     data = query.data

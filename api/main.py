@@ -8,9 +8,9 @@ from fastapi import FastAPI
 
 from api.routes.config import router as config_router
 from api.routes.status import router as status_router
-from bot.dependencies import set_knowledge_base, set_orchestrator
+from bot.dependencies import set_authorized_chat_id, set_knowledge_base, set_orchestrator
 from bot.telegram_bot import create_bot
-from bot.webhook import router as webhook_router, set_bot_app
+from bot.webhook import router as webhook_router, set_bot_app, set_webhook_secret
 from config.settings import get_settings
 from src.models.strategy import AccountNiche, AudienceConfig, ContentPillar, VoiceConfig
 from src.orchestrator import PipelineOrchestrator
@@ -99,15 +99,21 @@ async def lifespan(app: FastAPI):
 
         # 3. Telegram bot
         bot_app = None
+        if settings.telegram_chat_id:
+            set_authorized_chat_id(settings.telegram_chat_id)
         if settings.telegram_bot_token:
-            bot_app = create_bot(settings.telegram_bot_token)
+            bot_app = create_bot(settings.telegram_bot_token, settings.telegram_chat_id)
             await bot_app.initialize()
             set_bot_app(bot_app)
             logger.info("Telegram bot initialized")
 
             if settings.telegram_webhook_url:
                 webhook_url = f"{settings.telegram_webhook_url.rstrip('/')}/webhook/telegram"
-                await bot_app.bot.set_webhook(url=webhook_url)
+                webhook_kwargs = {"url": webhook_url}
+                if settings.telegram_webhook_secret:
+                    webhook_kwargs["secret_token"] = settings.telegram_webhook_secret
+                    set_webhook_secret(settings.telegram_webhook_secret)
+                await bot_app.bot.set_webhook(**webhook_kwargs)
                 logger.info(f"Telegram webhook set to {webhook_url}")
         else:
             logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled")

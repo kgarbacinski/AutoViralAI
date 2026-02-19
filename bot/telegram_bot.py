@@ -61,7 +61,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(HELP_TEXT, parse_mode="HTML")
 
 
-def create_bot(token: str) -> Application:
+def create_bot(token: str, authorized_chat_id: str = "") -> Application:
     """Create and configure the Telegram bot application."""
     from bot.handlers.commands import (
         handle_config_command,
@@ -78,31 +78,37 @@ def create_bot(token: str) -> Application:
 
     app = Application.builder().token(token).build()
 
+    # Restrict all handlers to the authorized chat
+    chat_filter = filters.Chat(chat_id=int(authorized_chat_id)) if authorized_chat_id else None
+
+    if chat_filter:
+        cmd_filter = chat_filter
+        text_filter = filters.TEXT & ~filters.COMMAND & chat_filter
+    else:
+        logger.warning("No TELEGRAM_CHAT_ID set — bot commands are unrestricted!")
+        cmd_filter = None
+        text_filter = filters.TEXT & ~filters.COMMAND
+
     # Command handlers
-    app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("status", handle_status_command))
-    app.add_handler(CommandHandler("metrics", handle_metrics_command))
-    app.add_handler(CommandHandler("history", handle_history_command))
-    app.add_handler(CommandHandler("schedule", handle_schedule_command))
-    app.add_handler(CommandHandler("force", handle_force_command))
-    app.add_handler(CommandHandler("learn", handle_learn_command))
-    app.add_handler(CommandHandler("research", handle_research_command))
-    app.add_handler(CommandHandler("pause", handle_pause_command))
-    app.add_handler(CommandHandler("resume", handle_resume_command))
-    app.add_handler(CommandHandler("config", handle_config_command))
+    app.add_handler(CommandHandler("start", start_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("help", help_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("status", handle_status_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("metrics", handle_metrics_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("history", handle_history_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("schedule", handle_schedule_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("force", handle_force_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("learn", handle_learn_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("research", handle_research_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("pause", handle_pause_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("resume", handle_resume_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("config", handle_config_command, filters=cmd_filter))
 
     # Callback query handlers — config before approval catch-all
     app.add_handler(CallbackQueryHandler(handle_config_callback, pattern=r"^cfg:"))
     app.add_handler(CallbackQueryHandler(handle_approval_callback))
 
     # Text message handler — edit and reject feedback
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            _handle_text_message,
-        )
-    )
+    app.add_handler(MessageHandler(text_filter, _handle_text_message))
 
     return app
 

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 _knowledge_base: KnowledgeBase | None = None
 _orchestrator: PipelineOrchestrator | None = None
+_authorized_chat_id: int | None = None
 
 
 def set_knowledge_base(kb: KnowledgeBase) -> None:
@@ -31,3 +32,12 @@ def set_orchestrator(orchestrator: PipelineOrchestrator) -> None:
 
 def get_orchestrator() -> PipelineOrchestrator | None:
     return _orchestrator
+
+
+def set_authorized_chat_id(chat_id: str) -> None:
+    global _authorized_chat_id
+    _authorized_chat_id = int(chat_id) if chat_id else None
+
+
+def get_authorized_chat_id() -> int | None:
+    return _authorized_chat_id
