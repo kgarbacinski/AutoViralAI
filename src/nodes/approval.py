@@ -43,6 +43,12 @@ async def human_approval(state: CreationPipelineState) -> dict:
     human_edited = decision.get("edited_content")
     human_feedback = decision.get("feedback")
 
+    use_alternative = decision.get("use_alternative")
+    if use_alternative is not None and human_decision == "approve":
+        alt_index = use_alternative + 1  # alternatives are ranked[1:3], callback sends 0-based
+        if 0 < alt_index < len(ranked):
+            selected = ranked[alt_index]
+
     if human_decision == "edit" and human_edited:
         selected = {**selected, "content": human_edited}
 

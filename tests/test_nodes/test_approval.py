@@ -89,3 +89,71 @@ async def test_approval_reject():
 
     assert result["human_decision"] == "reject"
     assert result["selected_post"] is None
+
+
+@pytest.mark.asyncio
+async def test_approval_use_alternative_0():
+    """use_alternative=0 → selects 2nd ranked post."""
+    top = {"content": "Top post", "pattern_used": "test", "pillar": "tips"}
+    alt1 = {"content": "Alt 1 post", "pattern_used": "test", "pillar": "tips"}
+    alt2 = {"content": "Alt 2 post", "pattern_used": "test", "pillar": "tips"}
+    state = {"selected_post": top, "ranked_posts": [top, alt1, alt2]}
+
+    with patch(
+        "src.nodes.approval.interrupt",
+        return_value={"decision": "approve", "use_alternative": 0},
+    ):
+        result = await human_approval(state)
+
+    assert result["human_decision"] == "approve"
+    assert result["selected_post"]["content"] == "Alt 1 post"
+
+
+@pytest.mark.asyncio
+async def test_approval_use_alternative_1():
+    """use_alternative=1 → selects 3rd ranked post."""
+    top = {"content": "Top post", "pattern_used": "test", "pillar": "tips"}
+    alt1 = {"content": "Alt 1 post", "pattern_used": "test", "pillar": "tips"}
+    alt2 = {"content": "Alt 2 post", "pattern_used": "test", "pillar": "tips"}
+    state = {"selected_post": top, "ranked_posts": [top, alt1, alt2]}
+
+    with patch(
+        "src.nodes.approval.interrupt",
+        return_value={"decision": "approve", "use_alternative": 1},
+    ):
+        result = await human_approval(state)
+
+    assert result["human_decision"] == "approve"
+    assert result["selected_post"]["content"] == "Alt 2 post"
+
+
+@pytest.mark.asyncio
+async def test_approval_use_alternative_out_of_range():
+    """use_alternative with out-of-range index → falls back to original."""
+    top = {"content": "Top post", "pattern_used": "test", "pillar": "tips"}
+    state = {"selected_post": top, "ranked_posts": [top]}
+
+    with patch(
+        "src.nodes.approval.interrupt",
+        return_value={"decision": "approve", "use_alternative": 0},
+    ):
+        result = await human_approval(state)
+
+    assert result["human_decision"] == "approve"
+    assert result["selected_post"]["content"] == "Top post"
+
+
+@pytest.mark.asyncio
+async def test_approval_use_alternative_empty_ranked():
+    """use_alternative with empty ranked_posts → falls back to original."""
+    top = {"content": "Top post", "pattern_used": "test", "pillar": "tips"}
+    state = {"selected_post": top, "ranked_posts": []}
+
+    with patch(
+        "src.nodes.approval.interrupt",
+        return_value={"decision": "approve", "use_alternative": 0},
+    ):
+        result = await human_approval(state)
+
+    assert result["human_decision"] == "approve"
+    assert result["selected_post"]["content"] == "Top post"
