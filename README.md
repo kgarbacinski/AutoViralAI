@@ -1,4 +1,12 @@
+<!-- ============================================ -->
+<!--            HERO SECTION                      -->
+<!-- ============================================ -->
+
 <div align="center">
+
+<img src="docs/screenshots/banner.png" alt="AutoViralAI Banner" width="100%">
+
+<br/>
 
 # AutoViralAI
 
@@ -15,24 +23,55 @@ publishes it, measures engagement — and <strong>rewrites its own strategy base
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.3+-orange.svg)](https://github.com/langchain-ai/langgraph)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Threads API](https://img.shields.io/badge/Threads-API-000000.svg?logo=threads&logoColor=white)](https://developers.facebook.com/docs/threads/)
 
-[Quick Start](#-quick-start) · [How It Works](#-how-it-works) · [Configuration](#-configuring-your-niche) · [Contributing](CONTRIBUTING.md)
+<br/>
 
-</div>
+[Demo](#-demo) · [Quick Start](#-quick-start) · [How It Works](#-how-it-works) · [Configuration](#-configuring-your-niche) · [Roadmap](#-roadmap) · [Contributing](CONTRIBUTING.md)
 
----
-
-<!-- Pipeline in action: research → patterns → generation → ranking → approval -->
-<div align="center">
-<img src="docs/screenshots/pipeline-report.png" alt="Pipeline report: research results, extracted patterns, generated variants and ranking" width="48%">
-<img src="docs/screenshots/approval-message.png" alt="Approval message with score, alternatives, and approve/reject buttons" width="48%">
 </div>
 
 <br/>
 
-**The problem:** You know you should be posting consistently. You know what kind of content performs. But researching trends, writing posts, tracking what works, adjusting strategy — it's a full-time job.
+---
 
-**The solution:** AutoViralAI does the entire loop autonomously. It doesn't just post — it *learns*. Every day it gets a little better at understanding what your audience actually engages with.
+<!-- ============================================ -->
+<!--            DEMO SECTION                      -->
+<!-- ============================================ -->
+
+## 🎬 Demo
+
+<div align="center">
+
+<em>See it in action — the agent researches trends, generates posts, ranks them, and sends you an approval request.</em>
+
+<br/><br/>
+
+<img src="docs/screenshots/pipeline-report.png" alt="Pipeline report: research results, extracted patterns, generated variants and ranking" width="48%">
+&nbsp;
+<img src="docs/screenshots/approval-message.png" alt="Approval message with score, alternatives, and approve/reject buttons" width="48%">
+
+<sub><b>Left:</b> Full pipeline report — research, patterns, generation, ranking &nbsp;|&nbsp; <b>Right:</b> Telegram approval with score breakdown</sub>
+
+</div>
+
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--         PROBLEM / SOLUTION                   -->
+<!-- ============================================ -->
+
+## 💡 The Problem
+
+You know you should be posting consistently. You know what kind of content performs. But researching trends, writing posts, tracking what works, adjusting strategy — **it's a full-time job**.
+
+## 💡 The Solution
+
+AutoViralAI does the entire loop autonomously. It doesn't just post — it ***learns***. Every day it gets a little better at understanding what your audience actually engages with.
 
 ```
 Day 1:   "Here's a generic coding tip"            → 12 likes
@@ -41,35 +80,92 @@ Day 14:  Agent learned contrarian hooks work 3x     → adapts strategy automati
 Day 30:  Posts consistently hit 500+ engagement     → you didn't write a single one
 ```
 
-## Why AutoViralAI?
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--         WHY AUTOVIRALAI                      -->
+<!-- ============================================ -->
+
+## ⚡ Why AutoViralAI?
 
 Most "AI social media tools" are glorified schedulers with a GPT wrapper. They generate generic content, blast it out, and call it a day.
 
 **AutoViralAI is fundamentally different:**
 
-| Traditional tools | AutoViralAI |
-|---|---|
-| Generate content from a static prompt | Research what's *actually* going viral right now, extract the patterns, and generate content using those patterns |
-| Same strategy forever | Strategy evolves daily based on real engagement data |
-| Post and forget | Measure results after 24h, learn what worked and why, feed it back |
-| AI picks the post | Multi-signal ranking: AI score + historical pattern performance + novelty scoring |
-| Fully automated (risky) | Human-in-the-loop: you approve every post via Telegram before it goes live |
+| | Traditional tools | AutoViralAI |
+|:---:|---|---|
+| 🔍 | Generate content from a static prompt | Research what's *actually* going viral right now, extract the patterns, and generate content using those patterns |
+| 📈 | Same strategy forever | Strategy evolves daily based on real engagement data |
+| 📊 | Post and forget | Measure results after 24h, learn what worked and why, feed it back |
+| 🏆 | AI picks the post | Multi-signal ranking: AI score + historical pattern performance + novelty scoring |
+| 🛡️ | Fully automated (risky) | Human-in-the-loop: you approve every post via Telegram before it goes live |
 
-## Key Features
+<br/>
 
-**Self-Learning Loop** — The agent doesn't just execute. It observes, measures, and adapts. Pattern that got 3x engagement? It'll use it more. Strategy that flopped? Automatically deprioritized.
+---
 
-**Multi-Signal Ranking** — Posts aren't ranked on "AI vibes." Each variant scores on 3 independent signals: AI-evaluated viral potential, historical pattern performance, and novelty (so it doesn't repeat itself).
+<!-- ============================================ -->
+<!--            KEY FEATURES                      -->
+<!-- ============================================ -->
 
-**Human-in-the-Loop** — Nothing gets published without your approval. The agent sends you the top-ranked post via Telegram. You approve, edit, or reject. Built on LangGraph's `interrupt()` — survives server restarts.
+## ✨ Key Features
 
-**Niche-Aware** — Define your voice, audience, content pillars, and topics to avoid in a single YAML file. The agent stays on-brand in every cycle.
+<table>
+<tr>
+<td width="50%" valign="top">
 
-**Research-Driven** — Before generating anything, the agent scrapes Reddit, Threads, and HackerNews to understand what's trending *right now* in your niche. No hallucinated trends.
+### 🧠 Self-Learning Loop
+The agent doesn't just execute. It observes, measures, and adapts. Pattern that got 3x engagement? It'll use it more. Strategy that flopped? Automatically deprioritized.
 
-**Production-Ready** — PostgreSQL persistence, Docker deployment, CI/CD via GitHub Actions, Telegram webhooks, APScheduler for cron-like execution. Not a toy — this runs 24/7.
+</td>
+<td width="50%" valign="top">
 
-## Quick Start
+### 🏆 Multi-Signal Ranking
+Posts aren't ranked on "AI vibes." Each variant scores on 3 independent signals: AI-evaluated viral potential, historical pattern performance, and novelty (so it doesn't repeat itself).
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 🛡️ Human-in-the-Loop
+Nothing gets published without your approval. The agent sends you the top-ranked post via Telegram. You approve, edit, or reject. Built on LangGraph's `interrupt()` — survives server restarts.
+
+</td>
+<td width="50%" valign="top">
+
+### 🎯 Niche-Aware
+Define your voice, audience, content pillars, and topics to avoid in a single YAML file. The agent stays on-brand in every cycle.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 🔍 Research-Driven
+Before generating anything, the agent scrapes Reddit, Threads, and HackerNews to understand what's trending *right now* in your niche. No hallucinated trends.
+
+</td>
+<td width="50%" valign="top">
+
+### 🚀 Production-Ready
+PostgreSQL persistence, Docker deployment, CI/CD via GitHub Actions, Telegram webhooks, APScheduler for cron-like execution. Not a toy — this runs 24/7.
+
+</td>
+</tr>
+</table>
+
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--            QUICK START                       -->
+<!-- ============================================ -->
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -100,9 +196,17 @@ uv run python scripts/manual_run.py --auto-approve
 uv run python scripts/manual_run.py --pipeline learning
 ```
 
-The first run uses **mock APIs** — no social media account needed. You'll see the full pipeline execute with realistic simulated data.
+> **Note:** The first run uses **mock APIs** — no social media account needed. You'll see the full pipeline execute with realistic simulated data.
 
-## How It Works
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--            HOW IT WORKS                      -->
+<!-- ============================================ -->
+
+## 🔄 How It Works
 
 The system runs **two independent pipelines** that share a knowledge base:
 
@@ -167,7 +271,7 @@ graph TB
 
 **Why two pipelines?** Posts need 24-48 hours to accumulate meaningful engagement data. The creation pipeline runs multiple times per day, while the learning pipeline runs once daily on yesterday's data — then feeds the improved strategy back into creation.
 
-### The Self-Learning Loop
+### 🔁 The Self-Learning Loop
 
 ```mermaid
 graph LR
@@ -190,7 +294,7 @@ graph LR
     style A fill:#AF7AC5,stroke:#7D3C98,color:#fff
 ```
 
-### Multi-Signal Ranking
+### 📊 Multi-Signal Ranking
 
 Each variant gets a **composite score** from three independent signals:
 
@@ -224,19 +328,29 @@ graph LR
 
 New patterns get a **5.0 exploration bonus** — the system balances exploitation (use what works) with exploration (try new things).
 
-### Human-in-the-Loop
+### 🤝 Human-in-the-Loop
 
 The agent never posts without your approval. Before the approval message, you get a **full pipeline report** showing what each agent did — research results, extracted patterns, generated variants, and ranking breakdown.
 
-<!-- /force — pipeline report (research, patterns, generation, ranking) + approval message -->
 <div align="center">
 <img src="docs/screenshots/pipeline-report.png" alt="Pipeline report showing research results, extracted patterns, generated variants and ranking breakdown" width="48%">
+&nbsp;
 <img src="docs/screenshots/approval-message.png" alt="Approval message with score, pattern, buttons: Approve, Reject, Edit, Publish Later" width="48%">
 </div>
 
+<br/>
+
 Built on LangGraph's `interrupt()` — the graph pauses, saves state, and resumes when you respond. Survives server restarts.
 
-## Configuring Your Niche
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--        CONFIGURING YOUR NICHE                -->
+<!-- ============================================ -->
+
+## 🎯 Configuring Your Niche
 
 Edit `config/account_niche.yaml` to define your identity:
 
@@ -268,7 +382,15 @@ avoid_topics:
 
 The agent uses this config in every generation cycle to stay on-brand and on-topic.
 
-## Architecture
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--            ARCHITECTURE                      -->
+<!-- ============================================ -->
+
+## 🏗️ Architecture
 
 ```
 AutoViralAI/
@@ -294,7 +416,7 @@ AutoViralAI/
 └── tests/                       # pytest suite
 ```
 
-## Knowledge Base
+### 📦 Knowledge Base
 
 Both pipelines share a persistent knowledge base via [LangGraph Store](https://langchain-ai.github.io/langgraph/concepts/persistence/#store):
 
@@ -341,7 +463,15 @@ graph LR
 
 Dev: `InMemoryStore` · Prod: `AsyncPostgresStore` with embedding support.
 
-## Tech Stack
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--            TECH STACK                        -->
+<!-- ============================================ -->
+
+## 🛠️ Tech Stack
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
@@ -357,7 +487,15 @@ Dev: `InMemoryStore` · Prod: `AsyncPostgresStore` with embedding support.
 | Database | PostgreSQL (prod) / In-memory (dev) | Checkpoints, store, metrics |
 | Validation | [Pydantic](https://docs.pydantic.dev/) v2 | Structured LLM output + data models |
 
-## Tests
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--            TESTS                             -->
+<!-- ============================================ -->
+
+## 🧪 Tests
 
 ```bash
 # Run all tests
@@ -370,7 +508,15 @@ uv run pytest --cov=src --cov=bot --cov=api --cov-report=term-missing
 uv run ruff check .
 ```
 
-## Production Deployment
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--         PRODUCTION DEPLOYMENT                -->
+<!-- ============================================ -->
+
+## 🐳 Production Deployment
 
 Push to `main` → GitHub Actions runs lint, test, and deploys automatically via SSH + Docker.
 
@@ -379,32 +525,48 @@ Push to `main` → GitHub Actions runs lint, test, and deploys automatically via
 docker compose up -d
 ```
 
-## Roadmap
+<br/>
 
-- [x] Two-graph architecture (creation + learning)
-- [x] Mock-first development (works without API keys except Anthropic)
-- [x] Multi-signal ranking (AI + history + novelty)
-- [x] Human-in-the-loop via `interrupt()`
-- [x] Configurable niche/voice/audience
-- [x] CI/CD: GitHub Actions → auto-deploy on push to main
-- [x] Telegram bot approval flow (end-to-end)
-- [x] Pipeline transparency — full AI agent report (research, patterns, generation, ranking)
-- [x] Enriched approval messages — metrics benchmark, pattern rationale, optimal publish time
-- [x] Reject with feedback — reason buttons feed back into the learning loop
-- [x] Publish later — schedule approved posts for optimal times
-- [x] Bot commands — `/metrics`, `/history`, `/schedule`, `/force`, `/learn`, `/research`, `/pause`, `/resume`
-- [x] Remote config via Telegram — `/config` to change tone, language, hashtags, posting schedule
-- [x] Live `/status` — running/paused state, cycles, pending approvals, next run
-- [x] Standalone `/research` — see what virals the agent finds without running the full pipeline
-- [x] Real Threads API integration
-- [ ] LangSmith observability dashboard
-- [ ] A/B testing (publish two variants, compare)
-- [ ] Multi-platform support (X, Bluesky, LinkedIn)
-- [ ] Web dashboard for strategy visualization
-- [ ] Configurable LLM provider (OpenAI, Ollama)
-- [ ] Plugin system for research sources
+---
 
-## Contributing
+<!-- ============================================ -->
+<!--            ROADMAP                           -->
+<!-- ============================================ -->
+
+## 🗺️ Roadmap
+
+- ✅ Two-graph architecture (creation + learning)
+- ✅ Mock-first development (works without API keys except Anthropic)
+- ✅ Multi-signal ranking (AI + history + novelty)
+- ✅ Human-in-the-loop via `interrupt()`
+- ✅ Configurable niche/voice/audience
+- ✅ CI/CD: GitHub Actions → auto-deploy on push to main
+- ✅ Telegram bot approval flow (end-to-end)
+- ✅ Pipeline transparency — full AI agent report (research, patterns, generation, ranking)
+- ✅ Enriched approval messages — metrics benchmark, pattern rationale, optimal publish time
+- ✅ Reject with feedback — reason buttons feed back into the learning loop
+- ✅ Publish later — schedule approved posts for optimal times
+- ✅ Bot commands — `/metrics`, `/history`, `/schedule`, `/force`, `/learn`, `/research`, `/pause`, `/resume`
+- ✅ Remote config via Telegram — `/config` to change tone, language, hashtags, posting schedule
+- ✅ Live `/status` — running/paused state, cycles, pending approvals, next run
+- ✅ Standalone `/research` — see what virals the agent finds without running the full pipeline
+- ✅ Real Threads API integration
+- 🔲 LangSmith observability dashboard
+- 🔲 A/B testing (publish two variants, compare)
+- 🔲 Multi-platform support (X, Bluesky, LinkedIn)
+- 🔲 Web dashboard for strategy visualization
+- 🔲 Configurable LLM provider (OpenAI, Ollama)
+- 🔲 Plugin system for research sources
+
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--            CONTRIBUTING                      -->
+<!-- ============================================ -->
+
+## 🤝 Contributing
 
 Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) for details on the development workflow, code style, and how to submit pull requests.
 
@@ -417,6 +579,32 @@ Some good first issues:
 - Add support for image/carousel posts
 - Add support for new platforms (X, LinkedIn, Bluesky)
 
-## License
+<br/>
+
+---
+
+<!-- ============================================ -->
+<!--            LICENSE + STAR                    -->
+<!-- ============================================ -->
+
+## 📄 License
 
 [MIT](LICENSE)
+
+<br/>
+
+---
+
+<div align="center">
+
+### ⭐ Star History
+
+If you find this project useful, consider giving it a star!
+
+[![Star History Chart](https://api.star-history.com/svg?repos=kgarbacinski/AutoViralAI&type=Date)](https://star-history.com/#kgarbacinski/AutoViralAI&Date)
+
+<br/>
+
+<sub>Built with 🧠 by <a href="https://github.com/kgarbacinski">@kgarbacinski</a></sub>
+
+</div>
