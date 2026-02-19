@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from langchain_anthropic import ChatAnthropic
@@ -30,9 +31,11 @@ async def extract_patterns(
             "errors": ["extract_patterns: No viral posts to analyze"],
         }
 
-    niche_config = await kb.get_niche_config()
+    niche_config, performances = await asyncio.gather(
+        kb.get_niche_config(),
+        kb.get_all_pattern_performances(),
+    )
     niche = niche_config or AccountNiche()
-    performances = await kb.get_all_pattern_performances()
     perf_summary = (
         "\n".join(
             f"- {p.pattern_name}: used {p.times_used}x, "

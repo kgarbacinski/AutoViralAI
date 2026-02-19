@@ -22,6 +22,7 @@ def build_learning_pipeline(
         model=settings.llm_model,
         api_key=settings.anthropic_api_key,
         max_tokens=4096,
+        max_retries=3,
     )
     threads_client = threads_client or get_threads_client(settings)
     kb = KnowledgeBase(store=store, account_id=settings.account_id)
@@ -46,7 +47,11 @@ def build_learning_pipeline(
     )
 
     graph.add_edge(START, "collect_metrics")
-    graph.add_edge("collect_metrics", "analyze_performance")
+    graph.add_conditional_edges(
+        "collect_metrics",
+        lambda state: "continue" if state.get("collected_metrics") else "end",
+        {"continue": "analyze_performance", "end": END},
+    )
     graph.add_edge("analyze_performance", "update_knowledge_base")
     graph.add_edge("update_knowledge_base", "adjust_strategy")
     graph.add_edge("adjust_strategy", END)

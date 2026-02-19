@@ -31,6 +31,7 @@ def build_creation_pipeline(
         model=settings.llm_model,
         api_key=settings.anthropic_api_key,
         max_tokens=4096,
+        max_retries=3,
     )
     threads_client = threads_client or get_threads_client(settings)
     hn = hn or get_hackernews_client(settings)
@@ -92,6 +93,7 @@ def build_creation_pipeline(
         {
             "publish": "publish_post",
             "regenerate": "generate_post_variants",
+            "end": END,
         },
     )
 
@@ -111,4 +113,7 @@ def _after_approval(state: CreationPipelineState) -> str:
     decision = state.get("human_decision", "reject")
     if decision in ("approve", "edit"):
         return "publish"
-    return "regenerate"
+    feedback = state.get("human_feedback", "")
+    if decision == "reject" and feedback:
+        return "regenerate"
+    return "end"

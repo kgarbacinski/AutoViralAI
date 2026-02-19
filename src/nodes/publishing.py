@@ -8,6 +8,8 @@ from src.tools.threads_api import ThreadsClient
 
 logger = logging.getLogger(__name__)
 
+THREADS_MAX_LENGTH = 500
+
 
 async def publish_post(
     state: CreationPipelineState,
@@ -27,6 +29,13 @@ async def publish_post(
         return {
             "published_post": None,
             "errors": ["publish_post: Post content is empty"],
+        }
+    if len(content) > THREADS_MAX_LENGTH:
+        return {
+            "published_post": None,
+            "errors": [
+                f"publish_post: Content exceeds {THREADS_MAX_LENGTH} chars ({len(content)})"
+            ],
         }
 
     try:
@@ -71,7 +80,7 @@ async def schedule_metrics_check(
 ) -> dict:
     published = state.get("published_post")
     if not published:
-        return {}
+        return {"errors": ["schedule_metrics_check: No published post to schedule"]}
 
     post = PublishedPost.model_validate(published)
     await kb.add_pending_metrics(post)

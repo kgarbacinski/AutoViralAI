@@ -42,7 +42,10 @@ async def rank_and_select(
             "errors": ["rank_and_select: No variants to rank"],
         }
 
-    niche_config = await kb.get_niche_config()
+    niche_config, recent_contents = await asyncio.gather(
+        kb.get_niche_config(),
+        kb.get_recent_post_contents(limit=20),
+    )
     audience_desc = ""
     if niche_config:
         audience_desc = (
@@ -87,7 +90,6 @@ async def rank_and_select(
         p: perf.effectiveness_score for p, perf in zip(unique_patterns, perf_results, strict=True)
     }
 
-    recent_contents = await kb.get_recent_post_contents(limit=20)
     if embedding_client is None:
         embedding_client = EmbeddingClient()
 

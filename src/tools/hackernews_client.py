@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 HN_BASE_URL = "https://hacker-news.firebaseio.com/v0"
 MIN_HN_SCORE = 50
+MAX_CONCURRENT_HN_REQUESTS = 10
 
 
 class HackerNewsClient(ABC):
@@ -76,13 +77,13 @@ class RealHackerNewsClient(HackerNewsClient):
         try:
             top_resp.raise_for_status()
             top_ids = top_resp.json()[:limit]
-        except httpx.HTTPStatusError:
-            logger.warning("Failed to fetch HN top stories")
+        except (httpx.HTTPStatusError, ValueError):
+            logger.warning("Failed to fetch or parse HN top stories")
         try:
             best_resp.raise_for_status()
             best_ids = best_resp.json()[:limit]
-        except httpx.HTTPStatusError:
-            logger.warning("Failed to fetch HN best stories")
+        except (httpx.HTTPStatusError, ValueError):
+            logger.warning("Failed to fetch or parse HN best stories")
 
         seen = set()
         all_ids = []
@@ -91,7 +92,13 @@ class RealHackerNewsClient(HackerNewsClient):
                 seen.add(sid)
                 all_ids.append(sid)
 
-        tasks = [self._fetch_story(sid) for sid in all_ids[:limit]]
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_HN_REQUESTS)
+
+        async def _fetch_with_limit(sid: int):
+            async with semaphore:
+                return await self._fetch_story(sid)
+
+        tasks = [_fetch_with_limit(sid) for sid in all_ids[:limit]]
         stories = await asyncio.gather(*tasks, return_exceptions=True)
 
         posts = []
@@ -99,6 +106,8 @@ class RealHackerNewsClient(HackerNewsClient):
         for story in stories:
             if isinstance(story, Exception):
                 failure_count += 1
+                if failure_count <= 3:
+                    logger.warning("HN story fetch failed: %s", story)
                 continue
             if story and story.get("score", 0) >= MIN_HN_SCORE:
                 posts.append(
@@ -128,7 +137,10 @@ class RealHackerNewsClient(HackerNewsClient):
         if resp.status_code == 404:
             return None
         resp.raise_for_status()
-        data = resp.json()
+        try:
+            data = resp.json()
+        except ValueError:
+            return None
         if (
             data
             and data.get("type") == "story"

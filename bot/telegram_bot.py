@@ -73,28 +73,30 @@ def create_bot(token: str, authorized_chat_id: str = "") -> Application:
 
     app = Application.builder().token(token).build()
 
-    chat_filter = filters.Chat(chat_id=int(authorized_chat_id)) if authorized_chat_id else None
+    if not authorized_chat_id:
+        logger.warning(
+            "No TELEGRAM_CHAT_ID set — only /start and /help available. "
+            "Set TELEGRAM_CHAT_ID to enable all commands."
+        )
+        app.add_handler(CommandHandler("start", start_command))
+        app.add_handler(CommandHandler("help", help_command))
+        return app
 
-    if chat_filter:
-        cmd_filter = chat_filter
-        text_filter = filters.TEXT & ~filters.COMMAND & chat_filter
-    else:
-        logger.warning("No TELEGRAM_CHAT_ID set — bot commands are unrestricted!")
-        cmd_filter = None
-        text_filter = filters.TEXT & ~filters.COMMAND
+    chat_filter = filters.Chat(chat_id=int(authorized_chat_id))
+    text_filter = filters.TEXT & ~filters.COMMAND & chat_filter
 
-    app.add_handler(CommandHandler("start", start_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("help", help_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("status", handle_status_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("metrics", handle_metrics_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("history", handle_history_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("schedule", handle_schedule_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("force", handle_force_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("learn", handle_learn_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("research", handle_research_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("pause", handle_pause_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("resume", handle_resume_command, filters=cmd_filter))
-    app.add_handler(CommandHandler("config", handle_config_command, filters=cmd_filter))
+    app.add_handler(CommandHandler("start", start_command, filters=chat_filter))
+    app.add_handler(CommandHandler("help", help_command, filters=chat_filter))
+    app.add_handler(CommandHandler("status", handle_status_command, filters=chat_filter))
+    app.add_handler(CommandHandler("metrics", handle_metrics_command, filters=chat_filter))
+    app.add_handler(CommandHandler("history", handle_history_command, filters=chat_filter))
+    app.add_handler(CommandHandler("schedule", handle_schedule_command, filters=chat_filter))
+    app.add_handler(CommandHandler("force", handle_force_command, filters=chat_filter))
+    app.add_handler(CommandHandler("learn", handle_learn_command, filters=chat_filter))
+    app.add_handler(CommandHandler("research", handle_research_command, filters=chat_filter))
+    app.add_handler(CommandHandler("pause", handle_pause_command, filters=chat_filter))
+    app.add_handler(CommandHandler("resume", handle_resume_command, filters=chat_filter))
+    app.add_handler(CommandHandler("config", handle_config_command, filters=chat_filter))
 
     app.add_handler(CallbackQueryHandler(handle_config_callback, pattern=r"^cfg:"))
     app.add_handler(CallbackQueryHandler(handle_approval_callback))

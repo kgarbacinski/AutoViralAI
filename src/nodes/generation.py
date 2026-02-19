@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from langchain_anthropic import ChatAnthropic
@@ -30,10 +31,12 @@ async def generate_post_variants(
             "errors": ["generate_post_variants: No patterns available"],
         }
 
-    niche_config = await kb.get_niche_config()
+    niche_config, strategy, recent_posts = await asyncio.gather(
+        kb.get_niche_config(),
+        kb.get_strategy(),
+        kb.get_recent_posts(limit=10),
+    )
     niche = niche_config or AccountNiche()
-    strategy = await kb.get_strategy()
-    recent_posts = await kb.get_recent_posts(limit=10)
 
     patterns_text = "\n\n".join(
         f"Pattern: {p.get('name', 'unnamed')}\n"

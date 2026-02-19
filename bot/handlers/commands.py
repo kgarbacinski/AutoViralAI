@@ -10,6 +10,8 @@ from bot.dependencies import get_knowledge_base, get_orchestrator
 
 logger = logging.getLogger(__name__)
 
+MAX_CONCURRENT_BACKGROUND_TASKS = 3
+
 _background_tasks: set[asyncio.Task] = set()
 
 
@@ -210,6 +212,20 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
         )
         return
 
+    active_tasks = sum(1 for t in _background_tasks if not t.done())
+    if active_tasks >= MAX_CONCURRENT_BACKGROUND_TASKS:
+        await update.message.reply_text(
+            f"Too many tasks running ({active_tasks}). Wait for current tasks to finish."
+        )
+        return
+
+    running_creation = any(
+        t.get_name() == "force_creation" and not t.done() for t in _background_tasks
+    )
+    if running_creation:
+        await update.message.reply_text("A creation pipeline is already running.")
+        return
+
     await update.message.reply_text("⚡ Starting creation pipeline... This may take a few minutes.")
 
     async def _run_and_notify():
@@ -339,10 +355,11 @@ async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_
 
                 text = "\n".join(lines)
 
-            await orchestrator.bot_app.bot.send_message(
-                chat_id=orchestrator.telegram_chat_id,
-                text=text,
-            )
+            if orchestrator.bot_app and orchestrator.telegram_chat_id:
+                await orchestrator.bot_app.bot.send_message(
+                    chat_id=orchestrator.telegram_chat_id,
+                    text=text,
+                )
         except Exception:
             logger.exception("Research command failed")
             if orchestrator.bot_app and orchestrator.telegram_chat_id:

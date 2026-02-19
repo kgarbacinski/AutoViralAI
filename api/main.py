@@ -2,7 +2,9 @@ import logging
 from contextlib import AsyncExitStack, asynccontextmanager
 
 import yaml
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from api.routes.config import router as config_router
 from api.routes.status import router as status_router
@@ -35,7 +37,12 @@ async def _init_niche_config(kb: KnowledgeBase) -> None:
     settings = get_settings()
     config_path = settings.niche_config_path
 
-    raw = yaml.safe_load(config_path.read_text()) if config_path.exists() else {}
+    import asyncio
+
+    if config_path.exists():
+        raw = yaml.safe_load(await asyncio.to_thread(config_path.read_text))
+    else:
+        raw = {}
 
     niche = AccountNiche(
         niche=raw.get("niche", "tech"),
@@ -52,8 +59,13 @@ async def _init_niche_config(kb: KnowledgeBase) -> None:
             pain_points=raw.get("audience", {}).get("pain_points", []),
         ),
         content_pillars=[
-            ContentPillar(name=p["name"], description=p["description"], weight=p["weight"])
+            ContentPillar(
+                name=p.get("name", ""),
+                description=p.get("description", ""),
+                weight=p.get("weight", 1.0),
+            )
             for p in raw.get("content_pillars", [])
+            if isinstance(p, dict)
         ],
         avoid_topics=raw.get("avoid_topics", []),
         hashtags_primary=raw.get("hashtags", {}).get("primary", []),
@@ -133,6 +145,7 @@ async def lifespan(app: FastAPI):
         await orchestrator.stop()
 
         if bot_app:
+            set_bot_app(None)
             await bot_app.shutdown()
             logger.info("Telegram bot shut down")
 
@@ -145,6 +158,23 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[],
+    allow_methods=["GET", "POST"],
+    allow_headers=["X-API-Key"],
+)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
 
 app.include_router(webhook_router, tags=["telegram"])
 app.include_router(status_router, prefix="/api", tags=["status"])

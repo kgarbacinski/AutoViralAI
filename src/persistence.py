@@ -9,10 +9,20 @@ from config.settings import Settings
 
 
 def create_checkpointer(settings: Settings):
+    if settings.is_production:
+        raise RuntimeError(
+            "In-memory checkpointer is not suitable for production. "
+            "Use create_postgres_checkpointer() as an async context manager."
+        )
     return MemorySaver()
 
 
 def create_store(settings: Settings):
+    if settings.is_production:
+        raise RuntimeError(
+            "In-memory store is not suitable for production. "
+            "Use create_postgres_store() as an async context manager."
+        )
     return InMemoryStore()
 
 

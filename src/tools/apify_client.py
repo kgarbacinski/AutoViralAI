@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 APIFY_TIMEOUT_SECS = 120
+MAX_DATASET_ITEMS = 500
 
 
 class ThreadsScraper(ABC):
@@ -103,6 +104,10 @@ class RealThreadsScraper(ThreadsScraper):
             logger.exception("Apify actor call failed")
             return []
 
+        if not run:
+            logger.error("Apify actor returned empty/null result")
+            return []
+
         dataset_id = run.get("defaultDatasetId")
         if not dataset_id:
             logger.error("Apify run did not return a dataset ID")
@@ -125,6 +130,12 @@ class RealThreadsScraper(ThreadsScraper):
                         topic_tags=[],
                     )
                 )
+                if len(items) >= MAX_DATASET_ITEMS:
+                    logger.warning(
+                        "Reached max dataset item limit (%d), stopping iteration",
+                        MAX_DATASET_ITEMS,
+                    )
+                    break
         except Exception:
             logger.exception(
                 "Failed to iterate Apify dataset items (collected %d items before failure)",
@@ -135,8 +146,12 @@ class RealThreadsScraper(ThreadsScraper):
         return items
 
     async def close(self) -> None:
-        if hasattr(self.client, "_http_client"):
-            await self.client._http_client.aclose()
+        http_client = getattr(self.client, "_http_client", None)
+        if http_client and hasattr(http_client, "aclose"):
+            try:
+                await http_client.aclose()
+            except Exception:
+                logger.debug("Failed to close Apify HTTP client", exc_info=True)
 
 
 def get_threads_scraper(settings: Settings) -> ThreadsScraper:

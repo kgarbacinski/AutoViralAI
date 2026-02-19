@@ -32,7 +32,7 @@ async def test_wait_for_container_timeout():
             patch.object(client._client, "get", AsyncMock(return_value=mock_resp)),
             pytest.raises(TimeoutError, match="did not finish"),
         ):
-            await client._wait_for_container("c_123", max_attempts=2, interval=0.01)
+            await client._wait_for_container("c_123", max_attempts=2, initial_interval=0.01)
     finally:
         await client.close()
 
@@ -48,7 +48,7 @@ async def test_wait_for_container_error_status():
             patch.object(client._client, "get", AsyncMock(return_value=mock_resp)),
             pytest.raises(RuntimeError, match="bad media"),
         ):
-            await client._wait_for_container("c_123", max_attempts=5, interval=0.01)
+            await client._wait_for_container("c_123", max_attempts=5, initial_interval=0.01)
     finally:
         await client.close()
 
@@ -61,7 +61,7 @@ async def test_wait_for_container_success():
 
     try:
         with patch.object(client._client, "get", AsyncMock(return_value=mock_resp)):
-            await client._wait_for_container("c_123", max_attempts=5, interval=0.01)
+            await client._wait_for_container("c_123", max_attempts=5, initial_interval=0.01)
     finally:
         await client.close()
 

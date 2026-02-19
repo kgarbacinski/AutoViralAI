@@ -14,6 +14,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+_MAX_RETRIES = 3
+_RETRY_BASE_DELAY = 1.0
+
 
 class ThreadsClient(ABC):
     @abstractmethod
@@ -89,22 +93,42 @@ class RealThreadsClient(ThreadsClient):
         self.base_url = "https://graph.threads.net/v1.0"
         self._client = httpx.AsyncClient(timeout=self.TIMEOUT)
 
+    async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Response:
+        for attempt in range(_MAX_RETRIES):
+            resp = await self._client.request(method, url, **kwargs)
+            if resp.status_code in _RETRYABLE_STATUS_CODES and attempt < _MAX_RETRIES - 1:
+                delay = _RETRY_BASE_DELAY * (2**attempt)
+                logger.warning(
+                    "Threads API %d on %s, retrying in %.1fs (attempt %d/%d)",
+                    resp.status_code,
+                    url.split("?")[0],
+                    delay,
+                    attempt + 1,
+                    _MAX_RETRIES,
+                )
+                await asyncio.sleep(delay)
+                continue
+            resp.raise_for_status()
+            return resp
+        return resp
+
     async def get_follower_count(self) -> int:
-        resp = await self._client.get(
+        resp = await self._request_with_retry(
+            "GET",
             f"{self.base_url}/{self.user_id}/threads_insights",
             params={
                 "metric": "followers_count",
                 "access_token": self.access_token,
             },
         )
-        resp.raise_for_status()
         data = resp.json().get("data", [])
         if data:
             return data[0].get("total_value", {}).get("value", 0)
         return 0
 
     async def publish_post(self, content: str) -> str:
-        create_resp = await self._client.post(
+        create_resp = await self._request_with_retry(
+            "POST",
             f"{self.base_url}/{self.user_id}/threads",
             params={
                 "media_type": "TEXT",
@@ -112,24 +136,28 @@ class RealThreadsClient(ThreadsClient):
                 "access_token": self.access_token,
             },
         )
-        create_resp.raise_for_status()
         container_id = create_resp.json()["id"]
 
-        await self._wait_for_container(container_id)
+        try:
+            await self._wait_for_container(container_id)
+        except (TimeoutError, RuntimeError):
+            logger.error("Container %s failed; cannot publish", container_id)
+            raise
 
-        publish_resp = await self._client.post(
+        publish_resp = await self._request_with_retry(
+            "POST",
             f"{self.base_url}/{self.user_id}/threads_publish",
             params={
                 "creation_id": container_id,
                 "access_token": self.access_token,
             },
         )
-        publish_resp.raise_for_status()
         return publish_resp.json()["id"]
 
     async def _wait_for_container(
-        self, container_id: str, *, max_attempts: int = 10, interval: float = 2.0
+        self, container_id: str, *, max_attempts: int = 10, initial_interval: float = 1.0
     ) -> None:
+        interval = initial_interval
         for attempt in range(1, max_attempts + 1):
             resp = await self._client.get(
                 f"{self.base_url}/{container_id}",
@@ -150,20 +178,21 @@ class RealThreadsClient(ThreadsClient):
                 raise RuntimeError(f"Threads container {container_id} failed: {error_msg}")
 
             await asyncio.sleep(interval)
+            interval = min(interval * 1.5, 10.0)
 
         raise TimeoutError(
             f"Threads container {container_id} did not finish after {max_attempts} attempts"
         )
 
     async def get_post_metrics(self, threads_id: str) -> dict:
-        resp = await self._client.get(
+        resp = await self._request_with_retry(
+            "GET",
             f"{self.base_url}/{threads_id}/insights",
             params={
                 "metric": "views,likes,replies,reposts,quotes",
                 "access_token": self.access_token,
             },
         )
-        resp.raise_for_status()
         data = resp.json().get("data", [])
         metrics = {}
         for item in data:
@@ -179,7 +208,8 @@ class RealThreadsClient(ThreadsClient):
         return metrics
 
     async def get_user_posts(self, limit: int = 25) -> list[dict]:
-        resp = await self._client.get(
+        resp = await self._request_with_retry(
+            "GET",
             f"{self.base_url}/{self.user_id}/threads",
             params={
                 "fields": "id,text,timestamp",
@@ -187,7 +217,6 @@ class RealThreadsClient(ThreadsClient):
                 "access_token": self.access_token,
             },
         )
-        resp.raise_for_status()
         return resp.json().get("data", [])
 
     async def close(self) -> None:
@@ -201,6 +230,8 @@ def get_threads_client(settings: Settings) -> ThreadsClient:
                 "THREADS_ACCESS_TOKEN is required in production. "
                 "Get it from https://developers.facebook.com (Threads API)."
             )
+        if not settings.threads_user_id:
+            raise ValueError("THREADS_USER_ID is required in production.")
         return RealThreadsClient(
             access_token=settings.threads_access_token,
             user_id=settings.threads_user_id,

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from langchain_anthropic import ChatAnthropic
@@ -45,7 +46,10 @@ async def analyze_performance(
         for m in collected
     )
 
-    performances = await kb.get_all_pattern_performances()
+    performances, strategy = await asyncio.gather(
+        kb.get_all_pattern_performances(),
+        kb.get_strategy(),
+    )
     perf_text = (
         "\n".join(
             f"- {p.pattern_name}: used {p.times_used}x, "
@@ -55,8 +59,6 @@ async def analyze_performance(
         )
         or "No historical data."
     )
-
-    strategy = await kb.get_strategy()
     strategy_text = (
         f"Preferred patterns: {', '.join(strategy.preferred_patterns)}\n"
         f"Key learnings: {'; '.join(strategy.key_learnings)}\n"

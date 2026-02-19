@@ -12,7 +12,12 @@ from src.models.research import ViralPost
 if TYPE_CHECKING:
     from config.settings import Settings
 
+import aiohttp
+
 logger = logging.getLogger(__name__)
+
+MIN_REDDIT_SCORE = 100
+MAX_CONTENT_PREVIEW_LENGTH = 500
 
 
 class RedditResearcher(ABC):
@@ -126,6 +131,9 @@ class RealRedditResearcher(RedditResearcher):
             client_id=client_id,
             client_secret=client_secret,
             user_agent=user_agent,
+            requestor_kwargs={
+                "session": aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30))
+            },
         )
 
     async def search_viral_posts(
@@ -148,10 +156,17 @@ class RealRedditResearcher(RedditResearcher):
         async for submission in subreddit.search(
             query, sort="top", time_filter="week", limit=limit
         ):
-            if submission.score < 100:
+            if submission.score < MIN_REDDIT_SCORE:
                 continue
-            author_name = f"u/{submission.author.name}" if submission.author else "deleted"
-            content = submission.selftext[:500] if submission.is_self else submission.title
+            try:
+                author_name = f"u/{submission.author.name}" if submission.author else "deleted"
+            except (AttributeError, Exception):
+                author_name = "deleted"
+            content = (
+                submission.selftext[:MAX_CONTENT_PREVIEW_LENGTH]
+                if submission.is_self
+                else submission.title
+            )
             posts.append(
                 ViralPost(
                     platform="reddit",

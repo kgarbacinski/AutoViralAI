@@ -28,22 +28,31 @@ async def collect_metrics(
         logger.warning("Failed to fetch follower count for metrics cycle", exc_info=True)
 
     for post in pending:
-        if post.scheduled_metrics_check:
-            check_time = datetime.fromisoformat(post.scheduled_metrics_check)
-            if check_time.tzinfo is None:
-                check_time = check_time.replace(tzinfo=UTC)
-            if now < check_time:
-                continue
+        try:
+            if post.scheduled_metrics_check:
+                check_time = datetime.fromisoformat(post.scheduled_metrics_check)
+                if check_time.tzinfo is None:
+                    check_time = check_time.replace(tzinfo=UTC)
+                if now < check_time:
+                    continue
+        except (ValueError, TypeError) as e:
+            errors.append(f"collect_metrics: Bad schedule timestamp for {post.threads_id}: {e}")
+            continue
 
         try:
             raw_metrics = await threads_client.get_post_metrics(post.threads_id)
         except Exception as e:
+            logger.warning("Failed to collect metrics for %s", post.threads_id, exc_info=True)
             errors.append(f"collect_metrics: Failed for {post.threads_id}: {e}")
             continue
 
-        publish_time = datetime.fromisoformat(post.published_at)
-        if publish_time.tzinfo is None:
-            publish_time = publish_time.replace(tzinfo=UTC)
+        try:
+            publish_time = datetime.fromisoformat(post.published_at)
+            if publish_time.tzinfo is None:
+                publish_time = publish_time.replace(tzinfo=UTC)
+        except (ValueError, TypeError) as e:
+            errors.append(f"collect_metrics: Bad publish timestamp for {post.threads_id}: {e}")
+            continue
         hours_elapsed = (now - publish_time).total_seconds() / 3600
 
         metrics = PostMetrics(

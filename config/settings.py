@@ -2,6 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 CONFIG_DIR = Path(__file__).parent
@@ -50,6 +51,30 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.env == "production"
+
+    @model_validator(mode="after")
+    def validate_required_secrets(self) -> "Settings":
+        if not self.anthropic_api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY is required. Set it in .env or as an environment variable."
+            )
+
+        if self.is_production:
+            missing = []
+            if not self.threads_access_token:
+                missing.append("THREADS_ACCESS_TOKEN")
+            if not self.threads_user_id:
+                missing.append("THREADS_USER_ID")
+            if not self.postgres_uri:
+                missing.append("POSTGRES_URI")
+            if not self.api_secret_key:
+                missing.append("API_SECRET_KEY")
+            if not self.telegram_bot_token:
+                missing.append("TELEGRAM_BOT_TOKEN")
+            if missing:
+                raise ValueError(f"Missing required production secrets: {', '.join(missing)}")
+
+        return self
 
 
 @lru_cache(maxsize=1)

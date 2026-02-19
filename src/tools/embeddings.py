@@ -1,5 +1,8 @@
+import asyncio
 import hashlib
 import math
+
+EMBEDDING_DIMENSION = 32
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -15,7 +18,7 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
 
 class EmbeddingClient:
     async def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        return self._embed_texts_sync(texts)
+        return await asyncio.to_thread(self._embed_texts_sync, texts)
 
     async def embed_text(self, text: str) -> list[float]:
         result = await self.embed_texts([text])
@@ -27,7 +30,7 @@ class EmbeddingClient:
         for text in texts:
             h = hashlib.sha256(text.encode()).hexdigest()
             vec = [int(h[i : i + 2], 16) / 255.0 for i in range(0, min(len(h), 64), 2)]
-            vec = (vec + [0.0] * 32)[:32]
+            vec = (vec + [0.0] * EMBEDDING_DIMENSION)[:EMBEDDING_DIMENSION]
             norm = math.sqrt(sum(x * x for x in vec))
             if norm > 0:
                 vec = [x / norm for x in vec]

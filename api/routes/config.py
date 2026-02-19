@@ -1,3 +1,5 @@
+import asyncio
+
 import yaml
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -15,4 +17,5 @@ async def get_niche_config(_=Depends(verify_api_key)):
     if not config_path.exists():
         raise HTTPException(status_code=404, detail="Niche config not found")
 
-    return yaml.safe_load(config_path.read_text())
+    content = await asyncio.to_thread(config_path.read_text)
+    return yaml.safe_load(content)

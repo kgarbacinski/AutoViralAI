@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from langchain_anthropic import ChatAnthropic
@@ -24,9 +25,11 @@ async def adjust_strategy(
             "errors": ["adjust_strategy: No performance analysis available"],
         }
 
-    current_strategy = await kb.get_strategy()
-    all_performances = await kb.get_all_pattern_performances()
-    niche_config = await kb.get_niche_config()
+    current_strategy, all_performances, niche_config = await asyncio.gather(
+        kb.get_strategy(),
+        kb.get_all_pattern_performances(),
+        kb.get_niche_config(),
+    )
 
     analysis_text = "\n".join(
         f"**{k}**: {', '.join(v) if isinstance(v, list) else v}" for k, v in analysis.items()

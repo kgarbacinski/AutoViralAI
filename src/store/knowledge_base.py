@@ -53,7 +53,7 @@ class KnowledgeBase:
         return PatternPerformance(pattern_name=pattern_name)
 
     async def get_all_pattern_performances(self) -> list[PatternPerformance]:
-        items = await self.store.asearch(ns_pattern_performance(self.account_id), limit=100)
+        items = await self.store.asearch(ns_pattern_performance(self.account_id), limit=500)
         return [PatternPerformance.model_validate(item.value) for item in items]
 
     async def save_pattern_performance(self, perf: PatternPerformance) -> None:
@@ -103,3 +103,13 @@ class KnowledgeBase:
     async def get_recent_post_contents(self, limit: int = 20) -> list[str]:
         posts = await self.get_recent_posts(limit=limit)
         return [p.content for p in posts]
+
+    async def cleanup_old_metrics(self, keep_last: int = 200) -> int:
+        items = await self.store.asearch(ns_metrics_history(self.account_id), limit=1000)
+        if len(items) <= keep_last:
+            return 0
+        sorted_items = sorted(items, key=lambda i: i.value.get("collected_at", ""))
+        to_delete = sorted_items[:-keep_last]
+        for item in to_delete:
+            await self.store.adelete(ns_metrics_history(self.account_id), item.key)
+        return len(to_delete)
