@@ -84,7 +84,10 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
 
     # --- Use alternative ---
     elif action == "alt":
-        alt_index = int(parts[2]) if len(parts) > 2 else 0
+        try:
+            alt_index = int(parts[2]) if len(parts) > 2 else 0
+        except (ValueError, IndexError):
+            alt_index = 0
         decision = {"decision": "approve", "use_alternative": alt_index}
         await query.edit_message_text(
             f"{query.message.text}\n\n--- APPROVED (Alt {alt_index + 1}) ---",
@@ -164,7 +167,10 @@ def _resolve_publish_time(code: str) -> datetime:
     elif code == "3h":
         return now + timedelta(hours=3)
     elif code.startswith("t"):
-        hour = int(code[1:])
+        try:
+            hour = int(code[1:])
+        except ValueError:
+            return now + timedelta(hours=1)
         tomorrow = now + timedelta(days=1)
         return tomorrow.replace(hour=hour, minute=0, second=0, microsecond=0)
 

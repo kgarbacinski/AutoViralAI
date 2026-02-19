@@ -13,7 +13,7 @@ from src.graphs.learning_pipeline import build_learning_pipeline
 from src.persistence import create_checkpointer, create_store
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.apify_client import get_threads_scraper
-from src.tools.hackernews_client import HackerNewsResearcher
+from src.tools.hackernews_client import get_hackernews_client
 
 logger = logging.getLogger(__name__)
 
@@ -204,12 +204,29 @@ class PipelineOrchestrator:
 
     def _schedule_delayed_publish(self, thread_id: str, decision: dict, publish_at: str) -> None:
         """Schedule a one-shot APScheduler job to publish at a specific time."""
-        run_date = datetime.fromisoformat(publish_at)
+        try:
+            run_date = datetime.fromisoformat(publish_at)
+        except ValueError:
+            logger.error(f"Invalid publish_at datetime: {publish_at}")
+            return
+
+        if run_date.tzinfo is None:
+            run_date = run_date.replace(tzinfo=timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        if run_date <= now:
+            logger.warning(
+                f"publish_at {publish_at} is in the past — scheduling for immediate execution"
+            )
+
         # Remove publish_at so the actual resume just approves
         resume_decision = {k: v for k, v in decision.items() if k != "publish_at"}
 
         async def _delayed_resume():
-            await self.resume_creation(thread_id, resume_decision)
+            try:
+                await self.resume_creation(thread_id, resume_decision)
+            except Exception:
+                logger.exception(f"Delayed publish failed for thread={thread_id}")
 
         self._scheduler.add_job(
             _delayed_resume,
@@ -218,6 +235,8 @@ class PipelineOrchestrator:
             id=f"delayed_publish_{thread_id}",
             replace_existing=True,
         )
+        # TODO: APScheduler uses in-memory job store — delayed publishes are lost on restart.
+        # Consider a persistent job store (e.g. Redis/PostgreSQL) for production reliability.
         logger.info(f"Scheduled delayed publish for thread={thread_id} at {publish_at}")
 
     async def run_learning_pipeline(self) -> dict | None:
@@ -260,7 +279,7 @@ class PipelineOrchestrator:
         """Run only the research step standalone (without full pipeline)."""
         from src.nodes.research import research_viral_content
 
-        hn = HackerNewsResearcher()
+        hn = get_hackernews_client(self.settings)
         scraper = get_threads_scraper(self.settings)
 
         minimal_state = {
@@ -314,6 +333,38 @@ class PipelineOrchestrator:
             job.resume()
         self._paused = False
         logger.info("All scheduled jobs resumed")
+
+    def reschedule_creation_jobs(self, posting_times: list[str]) -> None:
+        """Replace creation pipeline jobs with a new schedule.
+
+        Args:
+            posting_times: list of "HH:MM" strings (Europe/Warsaw timezone).
+        """
+        # Remove existing creation jobs
+        for job in self._scheduler.get_jobs():
+            if job.id.startswith("creation_"):
+                job.remove()
+
+        # Add new creation jobs
+        for time_str in posting_times:
+            parts = time_str.split(":")
+            try:
+                hour = int(parts[0])
+                minute = int(parts[1]) if len(parts) > 1 else 0
+            except (ValueError, IndexError):
+                logger.warning(f"Skipping invalid posting time: {time_str}")
+                continue
+            self._scheduler.add_job(
+                self.run_creation_pipeline,
+                "cron",
+                hour=hour,
+                minute=minute,
+                timezone="Europe/Warsaw",
+                id=f"creation_{hour}_{minute:02d}",
+                replace_existing=True,
+            )
+
+        logger.info(f"Rescheduled creation jobs for times: {posting_times}")
 
     def start(self) -> None:
         """Start the scheduler."""

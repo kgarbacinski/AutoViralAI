@@ -28,7 +28,7 @@ from src.nodes.research import research_viral_content
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.apify_client import get_threads_scraper
 from src.tools.embeddings import EmbeddingClient
-from src.tools.hackernews_client import HackerNewsResearcher
+from src.tools.hackernews_client import get_hackernews_client
 from src.tools.threads_api import get_threads_client
 
 
@@ -40,7 +40,7 @@ def build_creation_pipeline(settings: Settings, store) -> StateGraph:
         max_tokens=4096,
     )
     threads_client = get_threads_client(settings)
-    hn = HackerNewsResearcher()
+    hn = get_hackernews_client(settings)
     scraper = get_threads_scraper(settings)
     embedding_client = EmbeddingClient()
     kb = KnowledgeBase(store=store, account_id=settings.account_id)

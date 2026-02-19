@@ -11,6 +11,20 @@ from bot.dependencies import get_knowledge_base, get_orchestrator
 
 logger = logging.getLogger(__name__)
 
+_background_tasks: set[asyncio.Task] = set()
+
+
+def _track_task(task: asyncio.Task) -> None:
+    """Add task to background set and register cleanup + error logging callback."""
+    _background_tasks.add(task)
+
+    def _on_done(t: asyncio.Task) -> None:
+        _background_tasks.discard(t)
+        if not t.cancelled() and t.exception():
+            logger.error(f"Background task {t.get_name()} failed: {t.exception()}")
+
+    task.add_done_callback(_on_done)
+
 
 async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /metrics — show performance metrics and top patterns."""
@@ -214,7 +228,7 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
                     text=f"Pipeline failed: {e}",
                 )
 
-    asyncio.create_task(_run_and_notify())
+    _track_task(asyncio.create_task(_run_and_notify(), name="force_creation"))
 
 
 async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -259,7 +273,7 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
                     text=f"Learning pipeline failed: {e}",
                 )
 
-    asyncio.create_task(_run_and_notify())
+    _track_task(asyncio.create_task(_run_and_notify(), name="learn_pipeline"))
 
 
 async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -312,7 +326,7 @@ async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_
                     text=f"Research failed: {e}",
                 )
 
-    asyncio.create_task(_run_and_notify())
+    _track_task(asyncio.create_task(_run_and_notify(), name="research"))
 
 
 async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

@@ -15,6 +15,7 @@ class PublishedPost(BaseModel):
         default="",
         description="When to collect metrics (24-48h after publish)",
     )
+    follower_count_at_publish: int = 0
     ai_score: float = 0.0
     composite_score: float = 0.0
 

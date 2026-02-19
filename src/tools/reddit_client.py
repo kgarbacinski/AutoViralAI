@@ -1,11 +1,13 @@
-"""Reddit API wrapper using PRAW for viral content research."""
+"""Reddit API wrapper using asyncpraw for viral content research."""
 
-import asyncio
+import logging
 from abc import ABC, abstractmethod
 
-import praw
+import asyncpraw
 
 from src.models.research import ViralPost
+
+logger = logging.getLogger(__name__)
 
 
 class RedditResearcher(ABC):
@@ -86,10 +88,10 @@ class MockRedditResearcher(RedditResearcher):
 
 
 class RealRedditResearcher(RedditResearcher):
-    """Real Reddit client using PRAW."""
+    """Real Reddit client using asyncpraw (async-native)."""
 
     def __init__(self, client_id: str, client_secret: str, user_agent: str):
-        self.reddit = praw.Reddit(
+        self._reddit = asyncpraw.Reddit(
             client_id=client_id,
             client_secret=client_secret,
             user_agent=user_agent,
@@ -98,30 +100,35 @@ class RealRedditResearcher(RedditResearcher):
     async def search_viral_posts(
         self, subreddits: list[str], query: str, limit: int = 20
     ) -> list[ViralPost]:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self._search_sync, subreddits, query, limit)
-
-    def _search_sync(self, subreddits: list[str], query: str, limit: int) -> list[ViralPost]:
         posts = []
         for sub_name in subreddits:
-            subreddit = self.reddit.subreddit(sub_name)
-            for submission in subreddit.search(query, sort="top", time_filter="week", limit=limit):
-                if submission.score < 100:
-                    continue
-                posts.append(
-                    ViralPost(
-                        platform="reddit",
-                        author=f"u/{submission.author.name}" if submission.author else "deleted",
-                        content=submission.selftext[:500]
-                        if submission.is_self
-                        else submission.title,
-                        url=f"https://reddit.com{submission.permalink}",
-                        likes=submission.score,
-                        replies=submission.num_comments,
-                        topic_tags=[],
+            try:
+                subreddit = await self._reddit.subreddit(sub_name)
+                async for submission in subreddit.search(
+                    query, sort="top", time_filter="week", limit=limit
+                ):
+                    if submission.score < 100:
+                        continue
+                    author_name = f"u/{submission.author.name}" if submission.author else "deleted"
+                    content = submission.selftext[:500] if submission.is_self else submission.title
+                    posts.append(
+                        ViralPost(
+                            platform="reddit",
+                            author=author_name,
+                            content=content,
+                            url=f"https://reddit.com{submission.permalink}",
+                            likes=submission.score,
+                            replies=submission.num_comments,
+                            topic_tags=[],
+                        )
                     )
-                )
+            except Exception as e:
+                logger.error(f"Reddit search failed for r/{sub_name}: {e}")
+                continue
         return posts
+
+    async def close(self) -> None:
+        await self._reddit.close()
 
 
 def get_reddit_researcher(settings) -> RedditResearcher:

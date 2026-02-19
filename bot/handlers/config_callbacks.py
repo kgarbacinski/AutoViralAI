@@ -128,12 +128,20 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
             await query.edit_message_text(f"Language updated to: {value}")
 
         elif setting == "hashtags":
-            niche.max_hashtags_per_post = int(value)
+            try:
+                niche.max_hashtags_per_post = int(value)
+            except (ValueError, TypeError):
+                await query.edit_message_text("Invalid value for max hashtags.")
+                return
             await kb.save_niche_config(niche)
             await query.edit_message_text(f"Max hashtags updated to: {value}")
 
         elif setting == "max_posts":
-            niche.max_posts_per_day = int(value)
+            try:
+                niche.max_posts_per_day = int(value)
+            except (ValueError, TypeError):
+                await query.edit_message_text("Invalid value for max posts.")
+                return
             await kb.save_niche_config(niche)
             await query.edit_message_text(f"Max posts/day updated to: {value}")
 
@@ -147,7 +155,11 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
                 await query.edit_message_text("Type the topic to avoid:")
 
         elif setting == "schedule":
-            hour = int(value)
+            try:
+                hour = int(value)
+            except (ValueError, TypeError):
+                await query.edit_message_text("Invalid schedule value.")
+                return
             orchestrator = get_orchestrator()
             if not orchestrator:
                 await query.edit_message_text("Orchestrator not available.")
@@ -161,7 +173,7 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
                 await kb.save_niche_config(niche)
 
             # Reschedule the creation jobs
-            _reschedule_creation_jobs(orchestrator, niche.preferred_posting_times)
+            orchestrator.reschedule_creation_jobs(niche.preferred_posting_times)
             await query.edit_message_text(
                 f"Schedule updated. Posting times: {', '.join(niche.preferred_posting_times)}\n"
                 "Jobs have been rescheduled."
@@ -198,30 +210,3 @@ async def handle_config_text_input(update: Update, context: ContextTypes.DEFAULT
         except Exception as e:
             logger.error(f"Failed to add avoid topic: {e}")
             await update.message.reply_text(f"Failed: {e}")
-
-
-def _reschedule_creation_jobs(orchestrator, posting_times: list[str]) -> None:
-    """Remove old creation jobs and schedule new ones based on posting times."""
-    scheduler = orchestrator._scheduler
-
-    # Remove existing creation jobs
-    for job in scheduler.get_jobs():
-        if job.id.startswith("creation_"):
-            job.remove()
-
-    # Add new creation jobs
-    for time_str in posting_times:
-        parts = time_str.split(":")
-        hour = int(parts[0])
-        minute = int(parts[1]) if len(parts) > 1 else 0
-        scheduler.add_job(
-            orchestrator.run_creation_pipeline,
-            "cron",
-            hour=hour,
-            minute=minute,
-            timezone="Europe/Warsaw",
-            id=f"creation_{hour}_{minute:02d}",
-            replace_existing=True,
-        )
-
-    logger.info(f"Rescheduled creation jobs for times: {posting_times}")

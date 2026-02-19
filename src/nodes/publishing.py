@@ -37,6 +37,12 @@ async def publish_post(
             "errors": [f"publish_post: Failed to publish: {e}"],
         }
 
+    follower_count = 0
+    try:
+        follower_count = await threads_client.get_follower_count()
+    except Exception:
+        pass
+
     now = datetime.now(timezone.utc)
     published = PublishedPost(
         threads_id=threads_id,
@@ -45,6 +51,7 @@ async def publish_post(
         pillar=selected.get("pillar", ""),
         published_at=now.isoformat(),
         scheduled_metrics_check=(now + timedelta(hours=24)).isoformat(),
+        follower_count_at_publish=follower_count,
         ai_score=selected.get("ai_score", 0.0),
         composite_score=selected.get("composite_score", 0.0),
     )

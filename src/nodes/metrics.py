@@ -1,11 +1,14 @@
 """Metrics collection node - gathers engagement data for published posts."""
 
+import logging
 from datetime import datetime, timezone
 
 from src.models.publishing import PostMetrics
 from src.models.state import LearningPipelineState
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.threads_api import ThreadsClient
+
+logger = logging.getLogger(__name__)
 
 
 async def collect_metrics(
@@ -53,9 +56,9 @@ async def collect_metrics(
 
         try:
             followers = await threads_client.get_follower_count()
-            metrics.follower_delta = followers - (followers or 0)
-        except Exception:
-            pass
+            metrics.follower_delta = followers - post.follower_count_at_publish
+        except Exception as e:
+            logger.warning(f"Failed to compute follower_delta for {post.threads_id}: {e}")
 
         collected.append(metrics)
 

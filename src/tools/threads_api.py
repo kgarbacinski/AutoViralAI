@@ -84,72 +84,72 @@ class RealThreadsClient(ThreadsClient):
         self.access_token = access_token
         self.user_id = user_id
         self.base_url = "https://graph.threads.net/v1.0"
+        self._client = httpx.AsyncClient(timeout=self.TIMEOUT)
 
     async def get_follower_count(self) -> int:
-        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
-            resp = await client.get(
-                f"{self.base_url}/{self.user_id}",
-                params={
-                    "fields": "followers_count",
-                    "access_token": self.access_token,
-                },
-            )
-            resp.raise_for_status()
-            return resp.json()["followers_count"]
+        resp = await self._client.get(
+            f"{self.base_url}/{self.user_id}",
+            params={
+                "fields": "followers_count",
+                "access_token": self.access_token,
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()["followers_count"]
 
     async def publish_post(self, content: str) -> str:
-        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
-            create_resp = await client.post(
-                f"{self.base_url}/{self.user_id}/threads",
-                params={
-                    "media_type": "TEXT",
-                    "text": content,
-                    "access_token": self.access_token,
-                },
-            )
-            create_resp.raise_for_status()
-            container_id = create_resp.json()["id"]
+        create_resp = await self._client.post(
+            f"{self.base_url}/{self.user_id}/threads",
+            params={
+                "media_type": "TEXT",
+                "text": content,
+                "access_token": self.access_token,
+            },
+        )
+        create_resp.raise_for_status()
+        container_id = create_resp.json()["id"]
 
-            publish_resp = await client.post(
-                f"{self.base_url}/{self.user_id}/threads_publish",
-                params={
-                    "creation_id": container_id,
-                    "access_token": self.access_token,
-                },
-            )
-            publish_resp.raise_for_status()
-            return publish_resp.json()["id"]
+        publish_resp = await self._client.post(
+            f"{self.base_url}/{self.user_id}/threads_publish",
+            params={
+                "creation_id": container_id,
+                "access_token": self.access_token,
+            },
+        )
+        publish_resp.raise_for_status()
+        return publish_resp.json()["id"]
 
     async def get_post_metrics(self, threads_id: str) -> dict:
-        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
-            resp = await client.get(
-                f"{self.base_url}/{threads_id}/insights",
-                params={
-                    "metric": "views,likes,replies,reposts,quotes",
-                    "access_token": self.access_token,
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json().get("data", [])
-            metrics = {item["name"]: item["values"][0]["value"] for item in data}
-            views = metrics.get("views", 0)
-            total = sum(metrics.get(k, 0) for k in ["likes", "replies", "reposts", "quotes"])
-            metrics["engagement_rate"] = total / views if views > 0 else 0
-            metrics["threads_id"] = threads_id
-            return metrics
+        resp = await self._client.get(
+            f"{self.base_url}/{threads_id}/insights",
+            params={
+                "metric": "views,likes,replies,reposts,quotes",
+                "access_token": self.access_token,
+            },
+        )
+        resp.raise_for_status()
+        data = resp.json().get("data", [])
+        metrics = {item["name"]: item["values"][0]["value"] for item in data}
+        views = metrics.get("views", 0)
+        total = sum(metrics.get(k, 0) for k in ["likes", "replies", "reposts", "quotes"])
+        metrics["engagement_rate"] = total / views if views > 0 else 0
+        metrics["threads_id"] = threads_id
+        return metrics
 
     async def get_user_posts(self, limit: int = 25) -> list[dict]:
-        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
-            resp = await client.get(
-                f"{self.base_url}/{self.user_id}/threads",
-                params={
-                    "fields": "id,text,timestamp",
-                    "limit": limit,
-                    "access_token": self.access_token,
-                },
-            )
-            resp.raise_for_status()
-            return resp.json().get("data", [])
+        resp = await self._client.get(
+            f"{self.base_url}/{self.user_id}/threads",
+            params={
+                "fields": "id,text,timestamp",
+                "limit": limit,
+                "access_token": self.access_token,
+            },
+        )
+        resp.raise_for_status()
+        return resp.json().get("data", [])
+
+    async def close(self) -> None:
+        await self._client.aclose()
 
 
 def get_threads_client(settings) -> ThreadsClient:

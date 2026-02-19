@@ -6,7 +6,7 @@ Thanks for your interest in contributing! This guide will help you get started.
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.13+
 - [uv](https://docs.astral.sh/uv/) package manager
 
 ### Getting Started
@@ -78,7 +78,7 @@ uv run python scripts/check_health.py
 
 - We use [ruff](https://docs.astral.sh/ruff/) for linting and formatting.
 - Line length: 100 characters.
-- Target: Python 3.12.
+- Target: Python 3.13.
 - Type hints are expected on all public functions.
 - Use `async/await` for I/O operations.
 
