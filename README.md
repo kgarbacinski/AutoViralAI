@@ -111,11 +111,11 @@ graph TB
     subgraph creation ["Content Creation Pipeline · runs 3x/day"]
         direction TB
         A["Goal Check"]
-        B["Research Viral Content\n(HackerNews + Threads)"]
-        C["Extract Patterns\n(hooks, structures, triggers)"]
+        B["Research Viral Content<br/>(HackerNews + Threads)"]
+        C["Extract Patterns<br/>(hooks, structures, triggers)"]
         D["Generate Post Variants"]
-        E["Multi-Signal Ranking\n(AI + History + Novelty)"]
-        F{"Human Approval\nvia Telegram"}
+        E["Multi-Signal Ranking<br/>(AI + History + Novelty)"]
+        F{"Human Approval<br/>via Telegram"}
         G["Publish to Threads"]
         H["Schedule Metrics Check"]
         Z(["Target Reached"])
@@ -135,7 +135,7 @@ graph TB
 
     subgraph store ["Shared Knowledge Base"]
         direction LR
-        KB[("Patterns · Strategy\nMetrics · Posts")]
+        KB[("Patterns · Strategy<br/>Metrics · Posts")]
     end
 
     H -. "post data" .-> KB
@@ -171,13 +171,13 @@ graph TB
 
 ```mermaid
 graph LR
-    R["Research\nWhat's viral?"] --> E["Extract\nWhy it works"]
-    E --> G["Generate\nUsing patterns"]
-    G --> K["Rank\nAI + History + Novelty"]
-    K --> P["Publish\nPost the winner"]
-    P --> M["Measure\nWait 24h, collect data"]
-    M --> L["Learn\nWhat worked & why"]
-    L --> A["Adapt\nUpdate strategy"]
+    R["Research<br/>What's viral?"] --> E["Extract<br/>Why it works"]
+    E --> G["Generate<br/>Using patterns"]
+    G --> K["Rank<br/>AI + History + Novelty"]
+    K --> P["Publish<br/>Post the winner"]
+    P --> M["Measure<br/>Wait 24h, collect data"]
+    M --> L["Learn<br/>What worked & why"]
+    L --> A["Adapt<br/>Update strategy"]
     A -->|"feed back"| R
 
     style R fill:#4A90D9,stroke:#2C6FA0,color:#fff
@@ -198,15 +198,15 @@ Each variant gets a **composite score** from three independent signals:
 graph LR
     subgraph signals [" "]
         direction TB
-        AI["AI Score\n(0–10)\nweight: 0.4"]
-        PH["Pattern History\n(0–10)\nweight: 0.3"]
-        NV["Novelty\n(0–10)\nweight: 0.3"]
+        AI["AI Score<br/>(0–10)<br/>weight: 0.4"]
+        PH["Pattern History<br/>(0–10)<br/>weight: 0.3"]
+        NV["Novelty<br/>(0–10)<br/>weight: 0.3"]
     end
 
     AI --> C(["Composite Score"])
     PH --> C
     NV --> C
-    C --> W{"Select\nWinner"}
+    C --> W{"Select<br/>Winner"}
 
     style AI fill:#4A90D9,stroke:#2C6FA0,color:#fff
     style PH fill:#E8A838,stroke:#C4872A,color:#fff
@@ -304,23 +304,23 @@ graph LR
         direction TB
 
         subgraph config_ns ["Configuration"]
-            C1["config/\nNiche & voice"]
-            C2["strategy/\nContent strategy"]
+            C1["config/<br/>Niche & voice"]
+            C2["strategy/<br/>Content strategy"]
         end
 
         subgraph perf_ns ["Performance"]
-            P1["pattern_performance/\nWhat patterns work"]
-            P2["metrics_history/\nEngagement data"]
+            P1["pattern_performance/<br/>What patterns work"]
+            P2["metrics_history/<br/>Engagement data"]
         end
 
         subgraph content_ns ["Content"]
-            T1["published_posts/\nPost history"]
-            T2["pending_metrics/\nAwaiting check"]
+            T1["published_posts/<br/>Post history"]
+            T2["pending_metrics/<br/>Awaiting check"]
         end
     end
 
-    CP["Creation\nPipeline"] --> store
-    store --> LP["Learning\nPipeline"]
+    CP["Creation<br/>Pipeline"] --> store
+    store --> LP["Learning<br/>Pipeline"]
     LP --> store
 
     style store fill:transparent,stroke:#50C878,stroke-width:2px
