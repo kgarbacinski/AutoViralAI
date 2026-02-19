@@ -43,7 +43,11 @@ class MockRedditResearcher(RedditResearcher):
             ViralPost(
                 platform="reddit",
                 author="u/techdev42",
-                content="Hot take: Most developers don't need microservices. A well-structured monolith handles 99% of use cases better. Stop overengineering.",
+                content=(
+                    "Hot take: Most developers don't need microservices. "
+                    "A well-structured monolith handles 99% of use cases better. "
+                    "Stop overengineering."
+                ),
                 url="https://reddit.com/r/programming/mock1",
                 likes=2847,
                 replies=432,
@@ -55,7 +59,11 @@ class MockRedditResearcher(RedditResearcher):
             ViralPost(
                 platform="reddit",
                 author="u/ai_researcher",
-                content="I replaced 80% of my Google searches with Claude. Not because AI is always right, but because it gives me a starting point that's 10x faster to verify than to search from scratch.",
+                content=(
+                    "I replaced 80% of my Google searches with Claude. "
+                    "Not because AI is always right, but because it gives me a starting "
+                    "point that's 10x faster to verify than to search from scratch."
+                ),
                 url="https://reddit.com/r/programming/mock2",
                 likes=5123,
                 replies=891,
@@ -67,7 +75,11 @@ class MockRedditResearcher(RedditResearcher):
             ViralPost(
                 platform="reddit",
                 author="u/startup_founder",
-                content="After 3 failed startups, here's what I wish I knew: Your first 100 users matter more than your first 100,000 lines of code. Ship ugly, ship fast, ship often.",
+                content=(
+                    "After 3 failed startups, here's what I wish I knew: "
+                    "Your first 100 users matter more than your first 100,000 lines of code. "
+                    "Ship ugly, ship fast, ship often."
+                ),
                 url="https://reddit.com/r/startups/mock3",
                 likes=3456,
                 replies=267,
@@ -79,7 +91,11 @@ class MockRedditResearcher(RedditResearcher):
             ViralPost(
                 platform="reddit",
                 author="u/senior_dev",
-                content="The best debugging technique nobody talks about: explain your code to a rubber duck. Sounds stupid. Works every time. Something about verbalizing forces your brain to process differently.",
+                content=(
+                    "The best debugging technique nobody talks about: "
+                    "explain your code to a rubber duck. Sounds stupid. Works every time. "
+                    "Something about verbalizing forces your brain to process differently."
+                ),
                 url="https://reddit.com/r/programming/mock4",
                 likes=4210,
                 replies=356,
@@ -91,7 +107,11 @@ class MockRedditResearcher(RedditResearcher):
             ViralPost(
                 platform="reddit",
                 author="u/career_dev",
-                content="Unpopular opinion: Leetcode grinding is a waste of time for 90% of developers. The companies that require it are not the only good companies to work for.",
+                content=(
+                    "Unpopular opinion: Leetcode grinding is a waste of time for "
+                    "90% of developers. The companies that require it are not the "
+                    "only good companies to work for."
+                ),
                 url="https://reddit.com/r/cscareerquestions/mock5",
                 likes=6789,
                 replies=1023,
@@ -123,7 +143,7 @@ class RealRedditResearcher(RedditResearcher):
         posts = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                logger.error(f"Reddit search failed for r/{subreddits[i]}: {result}")
+                logger.error("Reddit search failed for r/%s: %s", subreddits[i], result)
                 continue
             posts.extend(result)
         return posts

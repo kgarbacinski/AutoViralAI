@@ -1,6 +1,6 @@
 """Knowledge base operations wrapping LangGraph Store."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from langgraph.store.base import BaseStore
 
@@ -24,9 +24,9 @@ class KnowledgeBase:
         self.account_id = account_id
 
     async def get_niche_config(self) -> AccountNiche | None:
-        items = await self.store.asearch(ns_config(self.account_id))
-        if items:
-            return AccountNiche.model_validate(items[0].value)
+        item = await self.store.aget(ns_config(self.account_id), "niche")
+        if item:
+            return AccountNiche.model_validate(item.value)
         return None
 
     async def save_niche_config(self, config: AccountNiche) -> None:
@@ -37,24 +37,23 @@ class KnowledgeBase:
         )
 
     async def get_strategy(self) -> ContentStrategy:
-        items = await self.store.asearch(ns_strategy(self.account_id))
-        if items:
-            return ContentStrategy.model_validate(items[0].value)
+        item = await self.store.aget(ns_strategy(self.account_id), "current")
+        if item:
+            return ContentStrategy.model_validate(item.value)
         return ContentStrategy()
 
     async def save_strategy(self, strategy: ContentStrategy) -> None:
-        strategy.last_updated = datetime.now(timezone.utc).isoformat()
+        updated = strategy.model_copy(update={"last_updated": datetime.now(UTC).isoformat()})
         await self.store.aput(
             ns_strategy(self.account_id),
             "current",
-            strategy.model_dump(),
+            updated.model_dump(),
         )
 
     async def get_pattern_performance(self, pattern_name: str) -> PatternPerformance:
-        items = await self.store.asearch(ns_pattern_performance(self.account_id))
-        for item in items:
-            if item.value.get("pattern_name") == pattern_name:
-                return PatternPerformance.model_validate(item.value)
+        item = await self.store.aget(ns_pattern_performance(self.account_id), pattern_name)
+        if item:
+            return PatternPerformance.model_validate(item.value)
         return PatternPerformance(pattern_name=pattern_name)
 
     async def get_all_pattern_performances(self) -> list[PatternPerformance]:

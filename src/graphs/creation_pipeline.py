@@ -19,8 +19,8 @@ from langgraph.graph import END, START, StateGraph
 from config.settings import Settings
 from src.models.state import CreationPipelineState
 from src.nodes.approval import human_approval
-from src.nodes.goal_check import goal_check
 from src.nodes.generation import generate_post_variants
+from src.nodes.goal_check import goal_check
 from src.nodes.patterns import extract_patterns
 from src.nodes.publishing import publish_post, schedule_metrics_check
 from src.nodes.ranking import rank_and_select

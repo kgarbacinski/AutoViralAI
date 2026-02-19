@@ -1,7 +1,7 @@
 """Telegram callback handlers for post approval."""
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
@@ -9,6 +9,8 @@ from telegram.ext import ContextTypes
 from bot.dependencies import get_authorized_chat_id, get_orchestrator
 
 logger = logging.getLogger(__name__)
+
+MAX_POST_LENGTH = 500
 
 REJECT_REASONS = {
     "promo": "Too promotional",
@@ -119,8 +121,9 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         time_code = parts[2] if len(parts) > 2 else "1h"
         publish_at = _resolve_publish_time(time_code)
         decision = {"decision": "approve", "publish_at": publish_at.isoformat()}
+        scheduled_str = publish_at.strftime("%Y-%m-%d %H:%M")
         await query.edit_message_text(
-            f"{query.message.text}\n\n--- SCHEDULED: {publish_at.strftime('%Y-%m-%d %H:%M')} UTC ---",
+            f"{query.message.text}\n\n--- SCHEDULED: {scheduled_str} UTC ---",
         )
         await _resume_graph(thread_id, decision)
 
@@ -141,9 +144,9 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     edited_content = update.message.text.strip()
     del context.user_data["awaiting_edit"]
 
-    if len(edited_content) > 500:
+    if len(edited_content) > MAX_POST_LENGTH:
         await update.message.reply_text(
-            "Post too long (max 500 characters for Threads). Try again."
+            f"Post too long (max {MAX_POST_LENGTH} characters for Threads). Try again."
         )
         context.user_data["awaiting_edit"] = thread_id
         return
@@ -166,8 +169,10 @@ async def handle_reject_feedback_text(update: Update, context: ContextTypes.DEFA
 
     feedback = update.message.text.strip()
 
-    if len(feedback) > 500:
-        await update.message.reply_text("Feedback too long (max 500 characters). Try again.")
+    if len(feedback) > MAX_POST_LENGTH:
+        await update.message.reply_text(
+            f"Feedback too long (max {MAX_POST_LENGTH} characters). Try again."
+        )
         return
 
     del context.user_data["awaiting_reject_feedback"]
@@ -180,7 +185,7 @@ async def handle_reject_feedback_text(update: Update, context: ContextTypes.DEFA
 
 def _resolve_publish_time(code: str) -> datetime:
     """Convert a time code to a UTC datetime."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if code == "1h":
         return now + timedelta(hours=1)
@@ -208,6 +213,6 @@ async def _resume_graph(thread_id: str, decision: dict) -> None:
 
     try:
         await orchestrator.resume_creation(thread_id, decision)
-        logger.info(f"Graph resumed for thread_id={thread_id} with decision={decision}")
+        logger.info("Graph resumed for thread_id=%s with decision=%s", thread_id, decision)
     except Exception:
-        logger.exception(f"Failed to resume graph for thread_id={thread_id}")
+        logger.exception("Failed to resume graph for thread_id=%s", thread_id)

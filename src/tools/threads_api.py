@@ -6,7 +6,7 @@ import asyncio
 import logging
 import random
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 import httpx
@@ -62,13 +62,11 @@ class MockThreadsClient(ThreadsClient):
 
     async def publish_post(self, content: str) -> str:
         self._post_counter += 1
-        threads_id = (
-            f"mock_{self._post_counter}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
-        )
+        threads_id = f"mock_{self._post_counter}_{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
         self._posts[threads_id] = {
             "id": threads_id,
             "content": content,
-            "published_at": datetime.now(timezone.utc).isoformat(),
+            "published_at": datetime.now(UTC).isoformat(),
         }
         return threads_id
 
@@ -158,7 +156,7 @@ class RealThreadsClient(ThreadsClient):
             resp.raise_for_status()
             data = resp.json()
             status = data.get("status")
-            logger.info(f"Container {container_id} status: {status} (attempt {attempt})")
+            logger.info("Container %s status: %s (attempt %d)", container_id, status, attempt)
 
             if status == "FINISHED":
                 return

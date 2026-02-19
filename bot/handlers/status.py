@@ -19,10 +19,7 @@ async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TY
     lines = ["🤖 <b>AutoViralAI Status</b>\n"]
 
     if orchestrator:
-        if orchestrator.is_paused:
-            state = "🟡 Paused"
-        else:
-            state = "🟢 Running"
+        state = "🟡 Paused" if orchestrator.is_paused else "🟢 Running"
         lines.append(f"State: {state}")
         lines.append(
             f"📋 Cycles: {orchestrator.creation_cycle} creation, "
@@ -55,6 +52,6 @@ async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TY
             if strategy.last_updated:
                 lines.append(f"Last updated: {strategy.last_updated[:16]}")
         except Exception as e:
-            logger.error(f"Error fetching strategy for status: {e}")
+            logger.error("Error fetching strategy for status: %s", e)
 
     await update.message.reply_text("\n".join(lines), parse_mode="HTML")

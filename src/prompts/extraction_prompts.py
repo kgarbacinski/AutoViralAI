@@ -8,7 +8,7 @@ A "pattern" is a repeatable content structure or technique that drives engagemen
 Focus on WHY posts go viral, not just WHAT they say."""
 
 EXTRACT_PATTERNS_USER = """\
-Analyze these viral posts from the tech/programming niche and extract 3-5 distinct \
+Analyze these viral posts from the {niche} niche and extract 3-5 distinct \
 content patterns that explain their success.
 
 ## Viral Posts to Analyze
@@ -33,4 +33,4 @@ For each pattern, provide:
 Focus on patterns that are:
 - Replicable (can be used for different topics)
 - Proven (seen in multiple successful posts)
-- Suited to the tech/programming niche"""
+- Suited to the {niche} niche"""

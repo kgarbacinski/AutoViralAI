@@ -2,6 +2,7 @@
 
 import hmac
 import logging
+import os
 
 from fastapi import APIRouter, HTTPException, Request
 from telegram import Update
@@ -14,12 +15,12 @@ _bot_app = None
 _webhook_secret: str = ""
 
 
-def set_bot_app(app):
+def set_bot_app(app: object) -> None:
     global _bot_app
     _bot_app = app
 
 
-def set_webhook_secret(secret: str):
+def set_webhook_secret(secret: str) -> None:
     global _webhook_secret
     _webhook_secret = secret
 
@@ -36,6 +37,9 @@ async def telegram_webhook(request: Request):
         if not hmac.compare_digest(token, _webhook_secret):
             logger.warning("Webhook request with invalid secret token")
             raise HTTPException(status_code=401, detail="Unauthorized")
+    elif os.getenv("ENV") == "production":
+        logger.warning("Webhook secret not configured in production — rejecting request")
+        raise HTTPException(status_code=403, detail="Webhook secret not configured")
 
     data = await request.json()
     update = Update.de_json(data, _bot_app.bot)

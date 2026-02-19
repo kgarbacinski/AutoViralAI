@@ -1,5 +1,7 @@
 """Strategy and configuration models."""
 
+from typing import ClassVar
+
 from pydantic import BaseModel, Field
 
 
@@ -57,14 +59,22 @@ class PatternPerformance(BaseModel):
     worst_engagement_rate: float | None = None
     last_used_at: str | None = None
 
+    EXPLORATION_BONUS: ClassVar[float] = 5.0
+    ENGAGEMENT_WEIGHT: ClassVar[float] = 0.6
+    FOLLOWER_WEIGHT: ClassVar[float] = 0.4
+    MAX_SCORE: ClassVar[float] = 10.0
+
     @property
     def effectiveness_score(self) -> float:
         """Calculate overall effectiveness (0-10 scale)."""
         if self.times_used == 0:
-            return 5.0  # Exploration bonus for untried patterns
-        engagement_component = min(self.avg_engagement_rate * 100, 10.0)
-        follower_component = min(max(self.avg_follower_delta, 0) * 2, 10.0)
-        return 0.6 * engagement_component + 0.4 * follower_component
+            return self.EXPLORATION_BONUS
+        engagement_component = min(self.avg_engagement_rate * 100, self.MAX_SCORE)
+        follower_component = min(max(self.avg_follower_delta, 0) * 2, self.MAX_SCORE)
+        return (
+            self.ENGAGEMENT_WEIGHT * engagement_component
+            + self.FOLLOWER_WEIGHT * follower_component
+        )
 
 
 class ContentStrategy(BaseModel):

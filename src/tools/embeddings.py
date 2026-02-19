@@ -1,7 +1,7 @@
 """Embedding utilities for novelty scoring.
 
-Uses lightweight hash-based embeddings — sufficient for detecting
-duplicate/similar short-form posts in novelty scoring.
+Uses lightweight hash-based embeddings — detects exact duplicate content only;
+swap in a real embedding model for semantic similarity.
 """
 
 import hashlib
@@ -12,7 +12,7 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
     """Compute cosine similarity between two vectors."""
     if len(a) != len(b):
         raise ValueError(f"Vector length mismatch: {len(a)} vs {len(b)}")
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=True))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:
@@ -47,28 +47,3 @@ class EmbeddingClient:
                 vec = [x / norm for x in vec]
             embeddings.append(vec)
         return embeddings
-
-
-async def compute_novelty_score(
-    candidate: str, recent_posts: list[str], client: EmbeddingClient | None = None
-) -> float:
-    """Compute novelty score (0-10) for a candidate post vs recent posts.
-
-    Higher score = more novel/different from recent content.
-    """
-    if not recent_posts:
-        return 8.0
-
-    if client is None:
-        client = EmbeddingClient()
-
-    all_texts = [candidate] + recent_posts
-    embeddings = await client.embed_texts(all_texts)
-    candidate_emb = embeddings[0]
-    recent_embs = embeddings[1:]
-
-    similarities = [cosine_similarity(candidate_emb, emb) for emb in recent_embs]
-    avg_similarity = sum(similarities) / len(similarities)
-
-    novelty = (1 - avg_similarity) * 10
-    return max(0.0, min(10.0, novelty))

@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 HN_BASE_URL = "https://hacker-news.firebaseio.com/v0"
+MIN_HN_SCORE = 50
 
 
 class HackerNewsClient(ABC):
@@ -115,7 +116,7 @@ class RealHackerNewsClient(HackerNewsClient):
             if isinstance(story, Exception):
                 failure_count += 1
                 continue
-            if story and story.get("score", 0) >= 50:
+            if story and story.get("score", 0) >= MIN_HN_SCORE:
                 posts.append(
                     ViralPost(
                         platform="hackernews",
@@ -134,8 +135,8 @@ class RealHackerNewsClient(HackerNewsClient):
                 )
 
         if failure_count:
-            logger.warning(f"HackerNews: {failure_count}/{len(stories)} story fetches failed")
-        logger.info(f"HackerNews: fetched {len(posts)} viral stories")
+            logger.warning("HackerNews: %d/%d story fetches failed", failure_count, len(stories))
+        logger.info("HackerNews: fetched %d viral stories", len(posts))
         return posts
 
     async def _fetch_story(self, story_id: int) -> dict | None:

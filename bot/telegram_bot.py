@@ -39,7 +39,7 @@ HELP_TEXT = (
     "/pause — Pause all scheduled pipelines\n"
     "/resume — Resume paused pipelines\n\n"
     "🔧 <b>Configuration</b>\n"
-    "/config — View and edit: tone, language, hashtags, max posts/day, posting schedule, avoid topics\n\n"
+    "/config — View and edit: tone, language, hashtags, schedule, avoid topics\n\n"
     "📎 <b>Other</b>\n"
     "/start — Welcome message\n"
     "/help — This command reference\n\n"
@@ -164,7 +164,7 @@ async def send_pipeline_report(app: Application, chat_id: str, state_values: dic
         try:
             await app.bot.send_message(chat_id=chat_id, text=msg, parse_mode="HTML")
         except Exception as e:
-            logger.error(f"Failed to send pipeline report section: {e}")
+            logger.error("Failed to send pipeline report section: %s", e)
 
 
 def _build_research_section(viral_posts: list[dict]) -> str:
@@ -295,7 +295,7 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
             ers = [m.engagement_rate for m in metrics_history]
             enrichment["avg_engagement_rate"] = sum(ers) / len(ers) if ers else 0
     except Exception as e:
-        logger.warning(f"Failed to fetch recent metrics for enrichment: {e}")
+        logger.warning("Failed to fetch recent metrics for enrichment: %s", e)
 
     try:
         # Pattern rationale
@@ -308,7 +308,7 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
                 else "New pattern (no history yet)"
             )
     except Exception as e:
-        logger.warning(f"Failed to fetch pattern performance for enrichment: {e}")
+        logger.warning("Failed to fetch pattern performance for enrichment: %s", e)
 
     try:
         # Optimal posting times from strategy
@@ -316,7 +316,7 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
         if strategy.optimal_posting_times:
             enrichment["optimal_time"] = ", ".join(strategy.optimal_posting_times[:3])
     except Exception as e:
-        logger.warning(f"Failed to fetch strategy for enrichment: {e}")
+        logger.warning("Failed to fetch strategy for enrichment: %s", e)
 
     try:
         # Benchmark: current score vs average of last 10 posts
@@ -325,7 +325,7 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
             avg_score = sum(p.composite_score for p in recent_posts) / len(recent_posts)
             enrichment["avg_score"] = avg_score
     except Exception as e:
-        logger.warning(f"Failed to fetch recent posts for benchmark: {e}")
+        logger.warning("Failed to fetch recent posts for benchmark: %s", e)
 
     return enrichment
 

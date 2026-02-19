@@ -73,9 +73,7 @@ async def adjust_strategy(
             "errors": [f"adjust_strategy: LLM call failed: {e}"],
         }
 
-    strategy_data = new_strategy.model_dump()
-    strategy_data["iteration"] = current_strategy.iteration + 1
-    final_strategy = ContentStrategy.model_validate(strategy_data)
+    final_strategy = new_strategy.model_copy(update={"iteration": current_strategy.iteration + 1})
 
     await kb.save_strategy(final_strategy)
 

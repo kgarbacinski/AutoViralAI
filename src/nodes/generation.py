@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from src.models.content import PostVariant
 from src.models.state import CreationPipelineState
+from src.models.strategy import AccountNiche
 from src.prompts.generation_prompts import GENERATE_VARIANTS_SYSTEM, GENERATE_VARIANTS_USER
 from src.store.knowledge_base import KnowledgeBase
 
@@ -35,6 +36,7 @@ async def generate_post_variants(
         }
 
     niche_config = await kb.get_niche_config()
+    niche = niche_config or AccountNiche()
     strategy = await kb.get_strategy()
     recent_posts = await kb.get_recent_posts(limit=10)
 
@@ -47,20 +49,16 @@ async def generate_post_variants(
     )
 
     pillars_text = "No specific pillars configured."
-    if niche_config and niche_config.content_pillars:
+    if niche.content_pillars:
         pillars_text = "\n".join(
-            f"- {p.name} ({p.weight:.0%}): {p.description}" for p in niche_config.content_pillars
+            f"- {p.name} ({p.weight:.0%}): {p.description}" for p in niche.content_pillars
         )
 
     recent_text = (
         "\n".join(f"- {p.content[:100]}..." for p in recent_posts) or "No posts published yet."
     )
 
-    avoid_text = (
-        ", ".join(niche_config.avoid_topics)
-        if niche_config and niche_config.avoid_topics
-        else "None specified."
-    )
+    avoid_text = ", ".join(niche.avoid_topics) if niche.avoid_topics else "None specified."
 
     strategy_text = (
         "\n".join(strategy.key_learnings)
@@ -73,15 +71,13 @@ async def generate_post_variants(
     try:
         result = await structured_llm.ainvoke(
             [
-                SystemMessage(content=GENERATE_VARIANTS_SYSTEM),
+                SystemMessage(content=GENERATE_VARIANTS_SYSTEM.format(niche=niche.niche)),
                 HumanMessage(
                     content=GENERATE_VARIANTS_USER.format(
-                        niche=niche_config.niche if niche_config else "tech",
-                        voice_tone=niche_config.voice.tone if niche_config else "conversational",
-                        voice_persona=niche_config.voice.persona if niche_config else "tech expert",
-                        style_notes="\n".join(niche_config.voice.style_notes)
-                        if niche_config
-                        else "",
+                        niche=niche.niche,
+                        voice_tone=niche.voice.tone,
+                        voice_persona=niche.voice.persona,
+                        style_notes="\n".join(niche.voice.style_notes),
                         patterns=patterns_text,
                         pillars=pillars_text,
                         avoid_topics=avoid_text,

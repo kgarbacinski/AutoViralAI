@@ -30,9 +30,9 @@ async def main():
 
     niche = await kb.get_niche_config()
     if niche:
-        logger.info(f"Account initialized: {niche.niche} / {niche.sub_niche}")
-        logger.info(f"Content pillars: {[p.name for p in niche.content_pillars]}")
-        logger.info(f"Voice: {niche.voice.tone}")
+        logger.info("Account initialized: %s / %s", niche.niche, niche.sub_niche)
+        logger.info("Content pillars: %s", [p.name for p in niche.content_pillars])
+        logger.info("Voice: %s", niche.voice.tone)
     else:
         logger.error("Failed to initialize account config")
 

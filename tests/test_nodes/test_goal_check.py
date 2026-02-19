@@ -1,5 +1,7 @@
 """Tests for goal_check node."""
 
+from unittest.mock import patch
+
 import pytest
 
 from src.nodes.goal_check import goal_check
@@ -14,9 +16,10 @@ async def test_goal_not_reached():
         "target_follower_count": 100,
         "goal_reached": False,
     }
-    result = await goal_check(state, threads_client=client)
+    with patch("random.randint", return_value=0):
+        result = await goal_check(state, threads_client=client)
     assert result["goal_reached"] is False
-    assert result["current_follower_count"] >= 10
+    assert result["current_follower_count"] == 10
 
 
 @pytest.mark.asyncio
@@ -27,6 +30,7 @@ async def test_goal_reached():
         "target_follower_count": 100,
         "goal_reached": False,
     }
-    result = await goal_check(state, threads_client=client)
+    with patch("random.randint", return_value=0):
+        result = await goal_check(state, threads_client=client)
     assert result["goal_reached"] is True
-    assert result["current_follower_count"] >= 100
+    assert result["current_follower_count"] == 105

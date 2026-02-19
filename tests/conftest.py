@@ -73,6 +73,29 @@ def sample_niche():
     )
 
 
+def make_metric(
+    threads_id: str = "t_001",
+    pattern_used: str = "hot_take",
+    views: int = 1000,
+    likes: int = 50,
+    replies: int = 10,
+    reposts: int = 5,
+    engagement_rate: float = 0.065,
+    follower_delta: int = 3,
+) -> dict:
+    """Factory for metric dicts used across tests."""
+    return {
+        "threads_id": threads_id,
+        "pattern_used": pattern_used,
+        "views": views,
+        "likes": likes,
+        "replies": replies,
+        "reposts": reposts,
+        "engagement_rate": engagement_rate,
+        "follower_delta": follower_delta,
+    }
+
+
 @pytest.fixture
 def sample_strategy():
     return ContentStrategy(

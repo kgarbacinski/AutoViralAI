@@ -43,8 +43,3 @@ class PostMetrics(BaseModel):
     @property
     def total_engagement(self) -> int:
         return self.likes + self.replies + self.reposts + self.quotes
-
-    def compute_engagement_rate(self) -> float:
-        if self.views == 0:
-            return 0.0
-        return self.total_engagement / self.views

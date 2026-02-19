@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from src.models.research import ContentPattern
 from src.models.state import CreationPipelineState
+from src.models.strategy import AccountNiche
 from src.prompts.extraction_prompts import EXTRACT_PATTERNS_SYSTEM, EXTRACT_PATTERNS_USER
 from src.store.knowledge_base import KnowledgeBase
 
@@ -34,10 +35,13 @@ async def extract_patterns(
             "errors": ["extract_patterns: No viral posts to analyze"],
         }
 
+    niche_config = await kb.get_niche_config()
+    niche = niche_config or AccountNiche()
     performances = await kb.get_all_pattern_performances()
     perf_summary = (
         "\n".join(
-            f"- {p.pattern_name}: used {p.times_used}x, avg engagement {p.avg_engagement_rate:.2%}, "
+            f"- {p.pattern_name}: used {p.times_used}x, "
+            f"avg engagement {p.avg_engagement_rate:.2%}, "
             f"effectiveness {p.effectiveness_score:.1f}/10"
             for p in performances
         )
@@ -60,6 +64,7 @@ async def extract_patterns(
                 SystemMessage(content=EXTRACT_PATTERNS_SYSTEM),
                 HumanMessage(
                     content=EXTRACT_PATTERNS_USER.format(
+                        niche=niche.niche,
                         viral_posts=posts_text,
                         pattern_performance=perf_summary,
                     )

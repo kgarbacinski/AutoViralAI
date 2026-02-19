@@ -8,7 +8,6 @@ from src.nodes.publishing import publish_post
 from src.tools.embeddings import cosine_similarity
 from src.tools.threads_api import RealThreadsClient
 
-
 # ── Helpers ──────────────────────────────────────────────────────────
 
 
@@ -28,11 +27,14 @@ async def test_wait_for_container_timeout():
     client = RealThreadsClient(access_token="fake", user_id="fake")
     mock_resp = _httpx_response({"status": "IN_PROGRESS"})
 
-    with patch.object(client._client, "get", AsyncMock(return_value=mock_resp)):
-        with pytest.raises(TimeoutError, match="did not finish"):
+    try:
+        with (
+            patch.object(client._client, "get", AsyncMock(return_value=mock_resp)),
+            pytest.raises(TimeoutError, match="did not finish"),
+        ):
             await client._wait_for_container("c_123", max_attempts=2, interval=0.01)
-
-    await client.close()
+    finally:
+        await client.close()
 
 
 @pytest.mark.asyncio
@@ -41,11 +43,14 @@ async def test_wait_for_container_error_status():
     client = RealThreadsClient(access_token="fake", user_id="fake")
     mock_resp = _httpx_response({"status": "ERROR", "error_message": "bad media"})
 
-    with patch.object(client._client, "get", AsyncMock(return_value=mock_resp)):
-        with pytest.raises(RuntimeError, match="bad media"):
+    try:
+        with (
+            patch.object(client._client, "get", AsyncMock(return_value=mock_resp)),
+            pytest.raises(RuntimeError, match="bad media"),
+        ):
             await client._wait_for_container("c_123", max_attempts=5, interval=0.01)
-
-    await client.close()
+    finally:
+        await client.close()
 
 
 @pytest.mark.asyncio
@@ -54,10 +59,11 @@ async def test_wait_for_container_success():
     client = RealThreadsClient(access_token="fake", user_id="fake")
     mock_resp = _httpx_response({"status": "FINISHED"})
 
-    with patch.object(client._client, "get", AsyncMock(return_value=mock_resp)):
-        await client._wait_for_container("c_123", max_attempts=5, interval=0.01)
-
-    await client.close()
+    try:
+        with patch.object(client._client, "get", AsyncMock(return_value=mock_resp)):
+            await client._wait_for_container("c_123", max_attempts=5, interval=0.01)
+    finally:
+        await client.close()
 
 
 # ── publish_post follower fallback ───────────────────────────────────

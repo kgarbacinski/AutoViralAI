@@ -3,6 +3,7 @@
 import pytest
 
 from src.nodes.learning import update_knowledge_base
+from tests.conftest import make_metric
 
 
 @pytest.mark.asyncio
@@ -10,16 +11,16 @@ async def test_update_kb_single_metric(kb):
     """One metric → pattern perf created, times_used=1, correct engagement rate."""
     state = {
         "collected_metrics": [
-            {
-                "threads_id": "t_001",
-                "pattern_used": "hot_take",
-                "views": 1000,
-                "likes": 50,
-                "replies": 10,
-                "reposts": 5,
-                "engagement_rate": 0.065,
-                "follower_delta": 3,
-            }
+            make_metric(
+                threads_id="t_001",
+                pattern_used="hot_take",
+                views=1000,
+                likes=50,
+                replies=10,
+                reposts=5,
+                engagement_rate=0.065,
+                follower_delta=3,
+            )
         ],
     }
 
@@ -47,26 +48,26 @@ async def test_update_kb_multiple_metrics(kb):
     """Two metrics for same pattern → cumulative stats."""
     state = {
         "collected_metrics": [
-            {
-                "threads_id": "t_001",
-                "pattern_used": "list_post",
-                "views": 500,
-                "likes": 25,
-                "replies": 5,
-                "reposts": 5,
-                "engagement_rate": 0.07,
-                "follower_delta": 2,
-            },
-            {
-                "threads_id": "t_002",
-                "pattern_used": "list_post",
-                "views": 1000,
-                "likes": 60,
-                "replies": 20,
-                "reposts": 10,
-                "engagement_rate": 0.09,
-                "follower_delta": 4,
-            },
+            make_metric(
+                threads_id="t_001",
+                pattern_used="list_post",
+                views=500,
+                likes=25,
+                replies=5,
+                reposts=5,
+                engagement_rate=0.07,
+                follower_delta=2,
+            ),
+            make_metric(
+                threads_id="t_002",
+                pattern_used="list_post",
+                views=1000,
+                likes=60,
+                replies=20,
+                reposts=10,
+                engagement_rate=0.09,
+                follower_delta=4,
+            ),
         ],
     }
 
@@ -87,26 +88,26 @@ async def test_update_kb_best_worst_tracking(kb):
     """Verify best/worst post tracked by actual engagement rate."""
     state = {
         "collected_metrics": [
-            {
-                "threads_id": "t_high",
-                "pattern_used": "question",
-                "views": 100,
-                "likes": 10,
-                "replies": 5,
-                "reposts": 0,
-                "engagement_rate": 0.15,
-                "follower_delta": 1,
-            },
-            {
-                "threads_id": "t_low",
-                "pattern_used": "question",
-                "views": 200,
-                "likes": 2,
-                "replies": 0,
-                "reposts": 0,
-                "engagement_rate": 0.01,
-                "follower_delta": 0,
-            },
+            make_metric(
+                threads_id="t_high",
+                pattern_used="question",
+                views=100,
+                likes=10,
+                replies=5,
+                reposts=0,
+                engagement_rate=0.15,
+                follower_delta=1,
+            ),
+            make_metric(
+                threads_id="t_low",
+                pattern_used="question",
+                views=200,
+                likes=2,
+                replies=0,
+                reposts=0,
+                engagement_rate=0.01,
+                follower_delta=0,
+            ),
         ],
     }
 
@@ -134,16 +135,16 @@ async def test_update_kb_skips_empty_pattern(kb):
     """Metric with empty pattern_used → skipped."""
     state = {
         "collected_metrics": [
-            {
-                "threads_id": "t_001",
-                "pattern_used": "",
-                "views": 100,
-                "likes": 5,
-                "replies": 1,
-                "reposts": 0,
-                "engagement_rate": 0.06,
-                "follower_delta": 0,
-            }
+            make_metric(
+                threads_id="t_001",
+                pattern_used="",
+                views=100,
+                likes=5,
+                replies=1,
+                reposts=0,
+                engagement_rate=0.06,
+                follower_delta=0,
+            )
         ],
     }
 

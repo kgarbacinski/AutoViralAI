@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from langgraph.types import Command
@@ -81,7 +81,7 @@ class PipelineOrchestrator:
             self._creation_cycle += 1
             cycle = self._creation_cycle
 
-        logger.info(f"Starting creation pipeline cycle #{cycle}")
+        logger.info("Starting creation pipeline cycle #%d", cycle)
 
         graph = build_creation_pipeline(
             self.settings,
@@ -93,7 +93,7 @@ class PipelineOrchestrator:
         )
         compiled = graph.compile(checkpointer=self.checkpointer)
 
-        thread_id = f"creation_{cycle}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        thread_id = f"creation_{cycle}_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
         config = {"configurable": {"thread_id": thread_id}}
 
         initial_state = {
@@ -117,13 +117,15 @@ class PipelineOrchestrator:
             result = None
             async for event in compiled.astream(initial_state, config):
                 result = event
-                logger.info(f"Creation pipeline event: {list(event.keys())}")
+                logger.info("Creation pipeline event: %s", list(event.keys()))
 
             # Check if graph paused at an interrupt (human_approval)
             state = await compiled.aget_state(config)
             if state.next and "human_approval" in state.next:
                 logger.info(
-                    f"Creation cycle #{cycle} paused at human_approval (thread={thread_id})"
+                    "Creation cycle #%d paused at human_approval (thread=%s)",
+                    cycle,
+                    thread_id,
                 )
                 self._pending_interrupts[thread_id] = {
                     "compiled": compiled,
@@ -132,10 +134,10 @@ class PipelineOrchestrator:
                 await self._send_approval_telegram(thread_id, state)
                 return result
 
-            logger.info(f"Creation pipeline cycle #{cycle} completed")
+            logger.info("Creation pipeline cycle #%d completed", cycle)
             return result
         except Exception as e:
-            logger.error(f"Creation pipeline cycle #{cycle} failed: {e}")
+            logger.error("Creation pipeline cycle #%d failed: %s", cycle, e)
             raise
 
     async def _send_approval_telegram(self, thread_id: str, state) -> None:
@@ -153,14 +155,14 @@ class PipelineOrchestrator:
         try:
             await send_pipeline_report(self.bot_app, self.telegram_chat_id, values)
         except Exception as e:
-            logger.error(f"Failed to send pipeline report: {e}")
+            logger.error("Failed to send pipeline report: %s", e)
 
         # Build enrichment data from KnowledgeBase
         enrichment = None
         try:
             enrichment = await build_enrichment_data(self.kb, selected_post or {})
         except Exception as e:
-            logger.error(f"Failed to build enrichment data: {e}")
+            logger.error("Failed to build enrichment data: %s", e)
 
         try:
             await send_approval_request(
@@ -173,9 +175,9 @@ class PipelineOrchestrator:
                 follower_count=values.get("current_follower_count", 0),
                 enrichment=enrichment,
             )
-            logger.info(f"Approval request sent to Telegram for thread={thread_id}")
+            logger.info("Approval request sent to Telegram for thread=%s", thread_id)
         except Exception as e:
-            logger.error(f"Failed to send Telegram approval: {e}")
+            logger.error("Failed to send Telegram approval: %s", e)
 
     async def resume_creation(self, thread_id: str, decision: dict) -> dict | None:
         """Resume a paused creation pipeline with the human's decision.
@@ -187,7 +189,9 @@ class PipelineOrchestrator:
         pending = self._pending_interrupts.pop(thread_id, None)
         if not pending:
             # Reconstruct from persistent checkpointer (survives container restarts)
-            logger.info(f"No in-memory interrupt for {thread_id}, reconstructing from checkpointer")
+            logger.info(
+                "No in-memory interrupt for %s, reconstructing from checkpointer", thread_id
+            )
             graph = build_creation_pipeline(
                 self.settings,
                 self.store,
@@ -202,13 +206,14 @@ class PipelineOrchestrator:
             try:
                 state = await compiled.aget_state(config)
             except Exception as e:
-                logger.error(f"Failed to get state for thread_id={thread_id}: {e}")
+                logger.error("Failed to get state for thread_id=%s: %s", thread_id, e)
                 return None
 
             if not (state and state.next and "human_approval" in state.next):
                 logger.warning(
-                    f"Thread {thread_id} not paused at human_approval "
-                    f"(next={state.next if state else None})"
+                    "Thread %s not paused at human_approval (next=%s)",
+                    thread_id,
+                    state.next if state else None,
                 )
                 return None
 
@@ -224,18 +229,18 @@ class PipelineOrchestrator:
             self._schedule_delayed_publish(thread_id, decision, publish_at)
             return None
 
-        logger.info(f"Resuming creation pipeline thread={thread_id} with decision={decision}")
+        logger.info("Resuming creation pipeline thread=%s with decision=%s", thread_id, decision)
 
         try:
             result = None
             async for event in compiled.astream(Command(resume=decision), config):
                 result = event
-                logger.info(f"Resume event: {list(event.keys())}")
+                logger.info("Resume event: %s", list(event.keys()))
 
             # Check if another interrupt was triggered (reject -> regenerate -> new approval)
             state = await compiled.aget_state(config)
             if state.next and "human_approval" in state.next:
-                logger.info(f"Another interrupt detected after resume (thread={thread_id})")
+                logger.info("Another interrupt detected after resume (thread=%s)", thread_id)
                 self._pending_interrupts[thread_id] = {
                     "compiled": compiled,
                     "config": config,
@@ -243,10 +248,10 @@ class PipelineOrchestrator:
                 await self._send_approval_telegram(thread_id, state)
                 return result
 
-            logger.info(f"Creation pipeline thread={thread_id} completed after resume")
+            logger.info("Creation pipeline thread=%s completed after resume", thread_id)
             return result
         except Exception as e:
-            logger.error(f"Failed to resume creation pipeline thread={thread_id}: {e}")
+            logger.error("Failed to resume creation pipeline thread=%s: %s", thread_id, e)
             raise
 
     def _schedule_delayed_publish(self, thread_id: str, decision: dict, publish_at: str) -> None:
@@ -254,16 +259,17 @@ class PipelineOrchestrator:
         try:
             run_date = datetime.fromisoformat(publish_at)
         except ValueError:
-            logger.error(f"Invalid publish_at datetime: {publish_at}")
+            logger.error("Invalid publish_at datetime: %s", publish_at)
             return
 
         if run_date.tzinfo is None:
-            run_date = run_date.replace(tzinfo=timezone.utc)
+            run_date = run_date.replace(tzinfo=UTC)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if run_date <= now:
             logger.warning(
-                f"publish_at {publish_at} is in the past — scheduling for immediate execution"
+                "publish_at %s is in the past — scheduling for immediate execution",
+                publish_at,
             )
 
         # Remove publish_at so the actual resume just approves
@@ -273,7 +279,7 @@ class PipelineOrchestrator:
             try:
                 await self.resume_creation(thread_id, resume_decision)
             except Exception:
-                logger.exception(f"Delayed publish failed for thread={thread_id}")
+                logger.exception("Delayed publish failed for thread=%s", thread_id)
 
         self._scheduler.add_job(
             _delayed_resume,
@@ -284,7 +290,7 @@ class PipelineOrchestrator:
         )
         # TODO: APScheduler uses in-memory job store — delayed publishes are lost on restart.
         # Consider a persistent job store (e.g. Redis/PostgreSQL) for production reliability.
-        logger.info(f"Scheduled delayed publish for thread={thread_id} at {publish_at}")
+        logger.info("Scheduled delayed publish for thread=%s at %s", thread_id, publish_at)
 
     async def run_learning_pipeline(self) -> dict | None:
         """Execute a single learning pipeline cycle."""
@@ -292,7 +298,7 @@ class PipelineOrchestrator:
             self._learning_cycle += 1
             cycle = self._learning_cycle
 
-        logger.info(f"Starting learning pipeline cycle #{cycle}")
+        logger.info("Starting learning pipeline cycle #%d", cycle)
 
         graph = build_learning_pipeline(
             self.settings,
@@ -303,7 +309,7 @@ class PipelineOrchestrator:
 
         config = {
             "configurable": {
-                "thread_id": f"learning_{cycle}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+                "thread_id": f"learning_{cycle}_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}",
             }
         }
 
@@ -321,12 +327,12 @@ class PipelineOrchestrator:
             result = None
             async for event in compiled.astream(initial_state, config):
                 result = event
-                logger.info(f"Learning pipeline event: {list(event.keys())}")
+                logger.info("Learning pipeline event: %s", list(event.keys()))
 
-            logger.info(f"Learning pipeline cycle #{cycle} completed")
+            logger.info("Learning pipeline cycle #%d completed", cycle)
             return result
         except Exception as e:
-            logger.error(f"Learning pipeline cycle #{cycle} failed: {e}")
+            logger.error("Learning pipeline cycle #%d failed: %s", cycle, e)
             raise
 
     async def run_research_only(self) -> list[dict]:
@@ -405,10 +411,10 @@ class PipelineOrchestrator:
                 hour = int(parts[0])
                 minute = int(parts[1]) if len(parts) > 1 else 0
             except (ValueError, IndexError):
-                logger.warning(f"Skipping invalid posting time: {time_str}")
+                logger.warning("Skipping invalid posting time: %s", time_str)
                 continue
             if not (0 <= hour <= 23 and 0 <= minute <= 59):
-                logger.warning(f"Skipping out-of-range posting time: {time_str}")
+                logger.warning("Skipping out-of-range posting time: %s", time_str)
                 continue
             self._scheduler.add_job(
                 self.run_creation_pipeline,
@@ -420,7 +426,7 @@ class PipelineOrchestrator:
                 replace_existing=True,
             )
 
-        logger.info(f"Rescheduled creation jobs for times: {posting_times}")
+        logger.info("Rescheduled creation jobs for times: %s", posting_times)
 
     def start(self) -> None:
         """Start the scheduler."""
@@ -435,5 +441,5 @@ class PipelineOrchestrator:
             try:
                 await client.close()
             except Exception:
-                logger.exception(f"Error closing {type(client).__name__}")
+                logger.exception("Error closing %s", type(client).__name__)
         logger.info("Orchestrator stopped")

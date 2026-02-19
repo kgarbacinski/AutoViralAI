@@ -11,7 +11,8 @@ from api.routes.status import router as status_router
 from bot.dependencies import set_authorized_chat_id, set_knowledge_base, set_orchestrator
 from bot.handlers.commands import cancel_background_tasks
 from bot.telegram_bot import create_bot
-from bot.webhook import router as webhook_router, set_bot_app, set_webhook_secret
+from bot.webhook import router as webhook_router
+from bot.webhook import set_bot_app, set_webhook_secret
 from config.settings import get_settings
 from src.models.strategy import AccountNiche, AudienceConfig, ContentPillar, VoiceConfig
 from src.orchestrator import PipelineOrchestrator
@@ -74,7 +75,7 @@ async def _init_niche_config(kb: KnowledgeBase) -> None:
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown."""
     settings = get_settings()
-    logger.info(f"Starting agent in {settings.env} mode")
+    logger.info("Starting agent in %s mode", settings.env)
 
     async with AsyncExitStack() as exit_stack:
         # 1. Persistence setup
@@ -114,7 +115,7 @@ async def lifespan(app: FastAPI):
                     webhook_kwargs["secret_token"] = settings.telegram_webhook_secret
                     set_webhook_secret(settings.telegram_webhook_secret)
                 await bot_app.bot.set_webhook(**webhook_kwargs)
-                logger.info(f"Telegram webhook set to {webhook_url}")
+                logger.info("Telegram webhook set to %s", webhook_url)
         else:
             logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled")
 

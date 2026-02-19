@@ -1,11 +1,14 @@
 """Research node - discovers viral content in the niche."""
 
 import asyncio
+import hashlib
 
 from src.models.state import CreationPipelineState
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.apify_client import ThreadsScraper
 from src.tools.hackernews_client import HackerNewsClient
+
+DEFAULT_HASHTAGS = ["programming", "tech", "coding"]
 
 
 async def research_viral_content(
@@ -26,7 +29,7 @@ async def research_viral_content(
     if niche_config:
         hashtags = niche_config.hashtags_primary + niche_config.hashtags_secondary
     if not hashtags:
-        hashtags = ["programming", "tech", "coding"]
+        hashtags = DEFAULT_HASHTAGS
 
     # Fetch HN and Threads concurrently
     hn_result, threads_result = await asyncio.gather(
@@ -45,14 +48,18 @@ async def research_viral_content(
     else:
         all_posts.extend([p.model_dump() for p in threads_result])
 
-    # Deduplicate
-    seen_contents = set()
+    # Deduplicate by content hash
+    seen_hashes = set()
     unique_posts = []
     for post in all_posts:
         content = post.get("content", "")
-        content_key = content[:100] if content else f"_empty_{post.get('url', id(post))}"
-        if content_key not in seen_contents:
-            seen_contents.add(content_key)
+        content_key = (
+            hashlib.sha256(content.encode()).hexdigest()
+            if content
+            else f"_empty_{post.get('url', id(post))}"
+        )
+        if content_key not in seen_hashes:
+            seen_hashes.add(content_key)
             unique_posts.append(post)
 
     result = {"viral_posts": unique_posts}

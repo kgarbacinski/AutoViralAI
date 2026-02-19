@@ -15,6 +15,10 @@ from src.tools.embeddings import EmbeddingClient, cosine_similarity
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_NOVELTY_SCORE = 8.0
+DEFAULT_AI_SCORE = 5.0
+DEFAULT_HISTORY_SCORE = 5.0
+
 
 class AIScoreResult(BaseModel):
     """Structured output for AI scoring."""
@@ -84,7 +88,9 @@ async def rank_and_select(
 
     unique_patterns = list({v.get("pattern_used", "") for v in variants})
     perf_results = await asyncio.gather(*[kb.get_pattern_performance(p) for p in unique_patterns])
-    pattern_scores = {p: perf.effectiveness_score for p, perf in zip(unique_patterns, perf_results)}
+    pattern_scores = {
+        p: perf.effectiveness_score for p, perf in zip(unique_patterns, perf_results, strict=True)
+    }
 
     recent_contents = await kb.get_recent_post_contents(limit=20)
     if embedding_client is None:
@@ -99,8 +105,8 @@ async def rank_and_select(
 
     ranked = []
     for i, v in enumerate(variants):
-        ai_score, reasoning = ai_scores.get(i, (5.0, "No score available"))
-        history_score = pattern_scores.get(v.get("pattern_used", ""), 5.0)
+        ai_score, reasoning = ai_scores.get(i, (DEFAULT_AI_SCORE, "No score available"))
+        history_score = pattern_scores.get(v.get("pattern_used", ""), DEFAULT_HISTORY_SCORE)
 
         # Compute novelty from precomputed embeddings
         if recent_embs:
@@ -108,7 +114,7 @@ async def rank_and_select(
             avg_similarity = sum(similarities) / len(similarities)
             novelty = max(0.0, min(10.0, (1 - avg_similarity) * 10))
         else:
-            novelty = 8.0
+            novelty = DEFAULT_NOVELTY_SCORE
 
         composite = RankedPost.compute_composite(ai_score, history_score, novelty)
 

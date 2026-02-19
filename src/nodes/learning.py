@@ -1,6 +1,6 @@
 """Learning node - updates pattern performance data in the knowledge base."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from src.models.state import LearningPipelineState
 from src.store.knowledge_base import KnowledgeBase
@@ -25,6 +25,7 @@ async def update_knowledge_base(
 
         perf = await kb.get_pattern_performance(pattern_name)
 
+        old_count = perf.times_used
         perf.times_used += 1
         perf.total_views += metrics.get("views", 0)
         perf.total_likes += metrics.get("likes", 0)
@@ -38,7 +39,7 @@ async def update_knowledge_base(
 
         follower_delta = metrics.get("follower_delta", 0)
         perf.avg_follower_delta = (
-            perf.avg_follower_delta * (perf.times_used - 1) + follower_delta
+            perf.avg_follower_delta * old_count + follower_delta
         ) / perf.times_used
 
         engagement_rate = metrics.get("engagement_rate", 0.0)
@@ -50,7 +51,7 @@ async def update_knowledge_base(
             perf.worst_post_id = threads_id
             perf.worst_engagement_rate = engagement_rate
 
-        perf.last_used_at = datetime.now(timezone.utc).isoformat()
+        perf.last_used_at = datetime.now(UTC).isoformat()
 
         await kb.save_pattern_performance(perf)
         updated_patterns.append(perf.model_dump())

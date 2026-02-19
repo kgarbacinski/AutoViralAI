@@ -15,7 +15,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          version: "0.7.12"
+          enable-cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -39,7 +40,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          version: "0.7.12"
+          enable-cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -66,10 +68,10 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
-      SSH_HOST: patryk176.mikrus.xyz
-      SSH_PORT: "10176"
-      SSH_USER: root
-      REMOTE_DIR: /root/autoviralai
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      REMOTE_DIR: ${{ vars.REMOTE_DIR }}
       IMAGE_NAME: autoviralai
 
     steps:
@@ -80,7 +82,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Add Mikrus host key
+      - name: Add host key
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p $SSH_PORT $SSH_HOST >> ~/.ssh/known_hosts
@@ -114,11 +116,9 @@ jobs:
           echo "Loading Docker image..."
           zcat /tmp/autoviralai.tar.gz | docker load
           rm -f /tmp/autoviralai.tar.gz
-          set -a
-          source /root/autoviralai/agent.env
-          set +a
-          docker compose -f $COMPOSE_FILE down || true
-          docker compose -f $COMPOSE_FILE up -d
+          # docker compose reads .env automatically (symlinked to agent.env)
+          docker compose -f $COMPOSE_FILE --env-file /root/autoviralai/.env down || true
+          docker compose -f $COMPOSE_FILE --env-file /root/autoviralai/.env up -d
           docker image prune -f
           echo "--- Container status ---"
           docker compose -f $COMPOSE_FILE ps
@@ -127,7 +127,7 @@ jobs:
       - name: Health check
         run: |
           for i in 1 2 3 4 5; do
-            if curl -sf https://caspercooks.tech/agent/health; then
+            if curl -sf ${{ secrets.HEALTH_CHECK_URL }}; then
               echo ""
               echo "Health check passed!"
               exit 0

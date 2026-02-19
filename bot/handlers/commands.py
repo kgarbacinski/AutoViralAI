@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html import escape
 
 from telegram import Update
@@ -32,7 +32,7 @@ def _track_task(task: asyncio.Task) -> None:
     def _on_done(t: asyncio.Task) -> None:
         _background_tasks.discard(t)
         if not t.cancelled() and t.exception():
-            logger.error(f"Background task {t.get_name()} failed: {t.exception()}")
+            logger.error("Background task %s failed: %s", t.get_name(), t.exception())
 
     task.add_done_callback(_on_done)
 
@@ -73,7 +73,7 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
         else:
             lines.append("No metrics collected yet.")
     except Exception as e:
-        logger.error(f"Error fetching metrics: {e}")
+        logger.error("Error fetching metrics: %s", e)
         lines.append("Error fetching metrics.")
 
     # Top patterns
@@ -89,7 +89,7 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
                     f"({p.times_used} uses, {p.avg_engagement_rate:.2%} ER)"
                 )
     except Exception as e:
-        logger.error(f"Error fetching patterns: {e}")
+        logger.error("Error fetching patterns: %s", e)
 
     # Key learnings from strategy
     try:
@@ -99,7 +99,7 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
             for learning in strategy.key_learnings[:3]:
                 lines.append(f"  • {escape(learning)}")
     except Exception as e:
-        logger.error(f"Error fetching strategy: {e}")
+        logger.error("Error fetching strategy: %s", e)
 
     await update.message.reply_text("\n".join(lines), parse_mode="HTML")
 
@@ -162,7 +162,7 @@ async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_
                 for t in strategy.optimal_posting_times:
                     lines.append(f"  {escape(t)}")
         except Exception as e:
-            logger.error(f"Error fetching strategy for schedule: {e}")
+            logger.error("Error fetching strategy for schedule: %s", e)
 
     await update.message.reply_text("\n".join(lines), parse_mode="HTML")
 
@@ -177,7 +177,7 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
     try:
         posts = await kb.get_recent_posts(limit=10)
     except Exception as e:
-        logger.error(f"Error fetching recent posts: {e}")
+        logger.error("Error fetching recent posts: %s", e)
         await update.message.reply_text("Error fetching post history.")
         return
 
@@ -262,7 +262,7 @@ async def _build_learn_summary(kb) -> str:
             parts.append(f"\nStrategy iteration: {strategy.iteration}")
         elif pending:
             # Pipeline ran but metrics weren't ready yet
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             next_checks = []
             for post in pending[:3]:
                 if post.scheduled_metrics_check:
@@ -297,7 +297,8 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
         return
 
     await update.message.reply_text(
-        "🧠 Starting learning cycle... Collecting metrics, analyzing performance, updating strategy."
+        "🧠 Starting learning cycle... Collecting metrics,"
+        " analyzing performance, updating strategy."
     )
 
     async def _run_and_notify():
@@ -386,7 +387,7 @@ async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TY
     try:
         niche = await kb.get_niche_config()
     except Exception as e:
-        logger.error(f"Error fetching niche config: {e}")
+        logger.error("Error fetching niche config: %s", e)
         await update.message.reply_text("Error fetching configuration.")
         return
 

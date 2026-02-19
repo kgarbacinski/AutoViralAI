@@ -102,11 +102,11 @@ async def run_creation_pipeline(auto_approve: bool = False) -> None:
 
     async for event in compiled.astream(initial_state, config):
         for node_name, node_output in event.items():
-            logger.info(f"Node [{node_name}] completed")
+            logger.info("Node [%s] completed", node_name)
             if node_name == "rank_and_select" and node_output.get("selected_post"):
                 post = node_output["selected_post"]
-                logger.info(f"  Selected post (score: {post.get('composite_score', 0):.1f}):")
-                logger.info(f"  {post.get('content', '')[:200]}")
+                logger.info("  Selected post (score: %.1f):", post.get("composite_score", 0))
+                logger.info("  %s", post.get("content", "")[:200])
 
     state = await compiled.aget_state(config)
     if state.next and "human_approval" in state.next:
@@ -144,15 +144,15 @@ async def run_creation_pipeline(auto_approve: bool = False) -> None:
 
         async for event in compiled.astream(Command(resume=decision), config):
             for node_name, node_output in event.items():
-                logger.info(f"Node [{node_name}] completed")
+                logger.info("Node [%s] completed", node_name)
                 if node_name == "publish_post" and node_output.get("published_post"):
                     post = node_output["published_post"]
-                    logger.info(f"  Published! ID: {post.get('threads_id', 'N/A')}")
+                    logger.info("  Published! ID: %s", post.get("threads_id", "N/A"))
 
     final_state = await compiled.aget_state(config)
     errors = final_state.values.get("errors", [])
     if errors:
-        logger.warning(f"Errors: {errors}")
+        logger.warning("Errors: %s", errors)
     logger.info("Creation pipeline complete!")
 
 
@@ -180,19 +180,19 @@ async def run_learning_pipeline() -> None:
     logger.info("Starting learning pipeline...")
 
     async for event in compiled.astream(initial_state, config):
-        for node_name, node_output in event.items():
-            logger.info(f"Node [{node_name}] completed")
+        for node_name, _node_output in event.items():
+            logger.info("Node [%s] completed", node_name)
 
     final_state = await compiled.aget_state(config)
     errors = final_state.values.get("errors", [])
     if errors:
-        logger.warning(f"Errors: {errors}")
+        logger.warning("Errors: %s", errors)
 
     new_strategy = final_state.values.get("new_strategy")
     if new_strategy:
-        logger.info(f"Updated strategy (iteration {new_strategy.get('iteration', 0)}):")
+        logger.info("Updated strategy (iteration %d):", new_strategy.get("iteration", 0))
         for learning in new_strategy.get("key_learnings", []):
-            logger.info(f"  - {learning}")
+            logger.info("  - %s", learning)
 
     logger.info("Learning pipeline complete!")
 

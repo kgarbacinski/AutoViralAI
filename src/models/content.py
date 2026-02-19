@@ -1,6 +1,6 @@
 """Content generation and ranking models."""
 
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, Field
 
@@ -25,6 +25,10 @@ class PostVariant(BaseModel):
 class RankedPost(BaseModel):
     """A post variant with multi-signal scoring."""
 
+    AI_WEIGHT: ClassVar[float] = 0.4
+    HISTORY_WEIGHT: ClassVar[float] = 0.3
+    NOVELTY_WEIGHT: ClassVar[float] = 0.3
+
     content: str
     pattern_used: str
     pillar: str
@@ -42,7 +46,7 @@ class RankedPost(BaseModel):
     composite_score: float = Field(
         ge=0.0,
         le=10.0,
-        description="Weighted composite: 0.4*ai + 0.3*history + 0.3*novelty",
+        description="Weighted composite: ai + history + novelty",
     )
     rank: int = Field(ge=0, description="Rank among variants (1 = best, 0 = unranked)")
     reasoning: str = ""
@@ -51,4 +55,8 @@ class RankedPost(BaseModel):
     def compute_composite(
         cls, ai_score: float, pattern_history_score: float, novelty_score: float
     ) -> float:
-        return 0.4 * ai_score + 0.3 * pattern_history_score + 0.3 * novelty_score
+        return (
+            cls.AI_WEIGHT * ai_score
+            + cls.HISTORY_WEIGHT * pattern_history_score
+            + cls.NOVELTY_WEIGHT * novelty_score
+        )

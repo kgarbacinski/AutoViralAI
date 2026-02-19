@@ -27,6 +27,14 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
+
+# Linting & type checking
+.ruff_cache/
+.mypy_cache/
+
+# Build artifacts
+*.tar.gz
 
 # uv
 .python-version

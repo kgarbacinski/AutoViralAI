@@ -40,7 +40,11 @@ class MockThreadsScraper(ThreadsScraper):
             ViralPost(
                 platform="threads",
                 author="@techbro",
-                content="Python in 2025:\n\n- uv replaced pip\n- Pydantic replaced dataclasses\n- FastAPI replaced Flask\n- Ruff replaced black+isort+flake8\n\nThe ecosystem moves fast. Adapt or get left behind.",
+                content=(
+                    "Python in 2025:\n\n- uv replaced pip\n- Pydantic replaced dataclasses\n"
+                    "- FastAPI replaced Flask\n- Ruff replaced black+isort+flake8\n\n"
+                    "The ecosystem moves fast. Adapt or get left behind."
+                ),
                 likes=12500,
                 replies=890,
                 reposts=3200,
@@ -51,7 +55,12 @@ class MockThreadsScraper(ThreadsScraper):
             ViralPost(
                 platform="threads",
                 author="@devinsights",
-                content="Stop saying 'I'm not a real developer because I use AI tools.'\n\nPilots use autopilot.\nDoctors use diagnostic AI.\nAccountants use calculators.\n\nUsing tools doesn't make you less skilled. It makes you more effective.",
+                content=(
+                    "Stop saying 'I'm not a real developer because I use AI tools.'\n\n"
+                    "Pilots use autopilot.\nDoctors use diagnostic AI.\n"
+                    "Accountants use calculators.\n\n"
+                    "Using tools doesn't make you less skilled. It makes you more effective."
+                ),
                 likes=28900,
                 replies=2100,
                 reposts=8400,
@@ -62,7 +71,12 @@ class MockThreadsScraper(ThreadsScraper):
             ViralPost(
                 platform="threads",
                 author="@startuplessons",
-                content="My side project made $0 for 11 months.\n\nMonth 12: $47\nMonth 13: $340\nMonth 14: $1,200\nMonth 18: $8,500/mo\n\nThe growth was never linear. Most people quit during the $0 months.\n\nDon't be most people.",
+                content=(
+                    "My side project made $0 for 11 months.\n\n"
+                    "Month 12: $47\nMonth 13: $340\nMonth 14: $1,200\nMonth 18: $8,500/mo\n\n"
+                    "The growth was never linear. Most people quit during the $0 months.\n\n"
+                    "Don't be most people."
+                ),
                 likes=45000,
                 replies=3400,
                 reposts=12000,
@@ -85,7 +99,7 @@ class RealThreadsScraper(ThreadsScraper):
             "resultsLimit": limit,
             "sortBy": "popular",
         }
-        logger.info(f"Starting Apify Threads scraper (timeout={APIFY_TIMEOUT_SECS}s)")
+        logger.info("Starting Apify Threads scraper (timeout=%ds)", APIFY_TIMEOUT_SECS)
         try:
             run = await self.client.actor("apify/threads-scraper").call(
                 run_input=run_input,
@@ -123,7 +137,7 @@ class RealThreadsScraper(ThreadsScraper):
                 len(items),
             )
 
-        logger.info(f"Apify scraper returned {len(items)} items")
+        logger.info("Apify scraper returned %d items", len(items))
         return items
 
     async def close(self) -> None:

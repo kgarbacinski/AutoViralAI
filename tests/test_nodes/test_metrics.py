@@ -1,6 +1,6 @@
 """Tests for the collect_metrics node."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
@@ -14,7 +14,7 @@ def _make_pending_post(
     check_offset_hours: float = -1,
 ) -> PublishedPost:
     """Create a pending post with a scheduled check time relative to now."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return PublishedPost(
         threads_id=threads_id,
         content="Test post",

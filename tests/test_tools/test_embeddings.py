@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.tools.embeddings import EmbeddingClient, compute_novelty_score, cosine_similarity
+from src.tools.embeddings import EmbeddingClient, cosine_similarity
 
 
 def test_cosine_similarity_identical():
@@ -31,16 +31,3 @@ async def test_embeddings_deterministic():
     emb1 = await client.embed_text("test")
     emb2 = await client.embed_text("test")
     assert emb1 == emb2
-
-
-@pytest.mark.asyncio
-async def test_novelty_score_no_history():
-    score = await compute_novelty_score("new post", [])
-    assert score == 8.0
-
-
-@pytest.mark.asyncio
-async def test_novelty_score_with_history():
-    recent = ["programming is fun", "coding tips for beginners"]
-    score = await compute_novelty_score("totally different topic about cooking", recent)
-    assert 0.0 <= score <= 10.0

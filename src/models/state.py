@@ -1,7 +1,7 @@
 """State schemas for both LangGraph pipelines."""
 
 import operator
-from typing import Annotated, Optional, TypedDict
+from typing import Annotated, TypedDict
 
 
 class CreationPipelineState(TypedDict):
@@ -16,13 +16,13 @@ class CreationPipelineState(TypedDict):
 
     generated_variants: list[dict]
     ranked_posts: list[dict]
-    selected_post: Optional[dict]
+    selected_post: dict | None
 
-    human_decision: Optional[str]
-    human_edited_content: Optional[str]
-    human_feedback: Optional[str]
+    human_decision: str | None
+    human_edited_content: str | None
+    human_feedback: str | None
 
-    published_post: Optional[dict]
+    published_post: dict | None
 
     cycle_number: int
     errors: Annotated[list[str], operator.add]
@@ -34,10 +34,10 @@ class LearningPipelineState(TypedDict):
     posts_to_check: list[dict]
     collected_metrics: list[dict]
 
-    performance_analysis: Optional[dict]
+    performance_analysis: dict | None
     pattern_updates: list[dict]
 
-    new_strategy: Optional[dict]
+    new_strategy: dict | None
 
     cycle_number: int
     errors: Annotated[list[str], operator.add]
