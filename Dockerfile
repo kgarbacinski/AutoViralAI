@@ -17,8 +17,9 @@ COPY . .
 # Install the project itself
 RUN uv sync --no-dev
 
-# Create non-root user
-RUN groupadd --system app && useradd --system --gid app app
+# Create non-root user and grant access to app directory
+RUN groupadd --system app && useradd --system --gid app app \
+    && chown -R app:app /app
 USER app
 
 EXPOSE 8000
