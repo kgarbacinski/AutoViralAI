@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from apify_client import ApifyClientAsync
 
+from src.messages import APIFY_TOKEN_REQUIRED
 from src.models.research import ViralPost
 
 if TYPE_CHECKING:
@@ -157,9 +158,6 @@ class RealThreadsScraper(ThreadsScraper):
 def get_threads_scraper(settings: Settings) -> ThreadsScraper:
     if settings.is_production:
         if not settings.apify_api_token:
-            raise ValueError(
-                "APIFY_API_TOKEN is required in production. "
-                "Get it from https://console.apify.com/account/integrations"
-            )
+            raise ValueError(APIFY_TOKEN_REQUIRED)
         return RealThreadsScraper(api_token=settings.apify_api_token)
     return MockThreadsScraper()

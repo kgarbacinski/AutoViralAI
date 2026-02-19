@@ -9,6 +9,13 @@ from typing import TYPE_CHECKING
 
 import httpx
 
+from src.messages import (
+    THREADS_ACCESS_TOKEN_REQUIRED,
+    THREADS_CONTAINER_FAILED,
+    THREADS_CONTAINER_TIMEOUT,
+    THREADS_USER_ID_REQUIRED,
+)
+
 if TYPE_CHECKING:
     from config.settings import Settings
 
@@ -175,13 +182,15 @@ class RealThreadsClient(ThreadsClient):
                 return
             if status == "ERROR":
                 error_msg = data.get("error_message", "unknown error")
-                raise RuntimeError(f"Threads container {container_id} failed: {error_msg}")
+                raise RuntimeError(
+                    THREADS_CONTAINER_FAILED.format(container_id=container_id, error_msg=error_msg)
+                )
 
             await asyncio.sleep(interval)
             interval = min(interval * 1.5, 10.0)
 
         raise TimeoutError(
-            f"Threads container {container_id} did not finish after {max_attempts} attempts"
+            THREADS_CONTAINER_TIMEOUT.format(container_id=container_id, max_attempts=max_attempts)
         )
 
     async def get_post_metrics(self, threads_id: str) -> dict:
@@ -226,12 +235,9 @@ class RealThreadsClient(ThreadsClient):
 def get_threads_client(settings: Settings) -> ThreadsClient:
     if settings.is_production:
         if not settings.threads_access_token:
-            raise ValueError(
-                "THREADS_ACCESS_TOKEN is required in production. "
-                "Get it from https://developers.facebook.com (Threads API)."
-            )
+            raise ValueError(THREADS_ACCESS_TOKEN_REQUIRED)
         if not settings.threads_user_id:
-            raise ValueError("THREADS_USER_ID is required in production.")
+            raise ValueError(THREADS_USER_ID_REQUIRED)
         return RealThreadsClient(
             access_token=settings.threads_access_token,
             user_id=settings.threads_user_id,

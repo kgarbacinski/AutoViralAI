@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from api.messages import APP_DESCRIPTION, APP_TITLE, INTERNAL_SERVER_ERROR, POSTGRES_URI_REQUIRED
 from api.routes.config import router as config_router
 from api.routes.status import router as status_router
 from bot.dependencies import set_authorized_chat_id, set_knowledge_base, set_orchestrator
@@ -87,7 +88,7 @@ async def lifespan(app: FastAPI):
 
     async with AsyncExitStack() as exit_stack:
         if settings.is_production and not settings.postgres_uri:
-            raise RuntimeError("POSTGRES_URI is required in production mode")
+            raise RuntimeError(POSTGRES_URI_REQUIRED)
         if settings.is_production:
             store = await exit_stack.enter_async_context(
                 create_postgres_store(settings.postgres_uri)
@@ -153,8 +154,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AutoViralAI API",
-    description="API for the autonomous viral content growth agent",
+    title=APP_TITLE,
+    description=APP_DESCRIPTION,
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -172,7 +173,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"},
+        content={"detail": INTERNAL_SERVER_ERROR},
     )
 
 

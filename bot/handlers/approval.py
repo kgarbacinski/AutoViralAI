@@ -5,6 +5,23 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from bot.dependencies import get_authorized_chat_id, get_orchestrator
+from bot.messages import (
+    APPROVED_ALT_SUFFIX,
+    APPROVED_SUFFIX,
+    EDIT_MODE_SUFFIX,
+    EDIT_RECEIVED,
+    FEEDBACK_TOO_LONG,
+    INVALID_CALLBACK,
+    POST_TOO_LONG,
+    REJECT_PROMPT_SUFFIX,
+    REJECT_TYPE_REASON,
+    REJECTED_SUFFIX,
+    REJECTION_FEEDBACK_RECEIVED,
+    SCHEDULE_PROMPT_SUFFIX,
+    SCHEDULED_SUFFIX,
+    UNAUTHORIZED,
+    UNKNOWN_ACTION,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +40,7 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
     query = update.callback_query
     authorized = get_authorized_chat_id()
     if not authorized or query.message.chat.id != authorized:
-        await query.answer("Unauthorized.", show_alert=True)
+        await query.answer(UNAUTHORIZED, show_alert=True)
         return
 
     await query.answer()
@@ -32,7 +49,7 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
     parts = data.split(":")
 
     if len(parts) < 2:
-        await query.edit_message_text("Invalid callback data.")
+        await query.edit_message_text(INVALID_CALLBACK)
         return
 
     action = parts[0]
@@ -41,7 +58,7 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
     if action == "approve":
         decision = {"decision": "approve"}
         await query.edit_message_text(
-            f"{query.message.text}\n\n--- APPROVED ---",
+            f"{query.message.text}{APPROVED_SUFFIX}",
         )
         await _resume_graph(thread_id, decision)
 
@@ -50,7 +67,7 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         for code, label in REJECT_REASONS.items():
             keyboard.append([InlineKeyboardButton(label, callback_data=f"rjfb:{thread_id}:{code}")])
         await query.edit_message_text(
-            f"{query.message.text}\n\n--- Why reject? ---",
+            f"{query.message.text}{REJECT_PROMPT_SUFFIX}",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
 
@@ -59,21 +76,20 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         if reason_code == "other":
             context.user_data["awaiting_reject_feedback"] = thread_id
             await query.edit_message_text(
-                f"{query.message.text}\n\nType your rejection reason:",
+                f"{query.message.text}\n\n{REJECT_TYPE_REASON}",
             )
             return
 
         feedback = REJECT_REASONS.get(reason_code, reason_code)
         decision = {"decision": "reject", "feedback": feedback}
         await query.edit_message_text(
-            f"{query.message.text}\n\n--- REJECTED: {feedback} ---",
+            f"{query.message.text}{REJECTED_SUFFIX.format(feedback=feedback)}",
         )
         await _resume_graph(thread_id, decision)
 
     elif action == "edit":
         await query.edit_message_text(
-            f"{query.message.text}\n\n--- EDIT MODE ---\n"
-            "Please send the edited post text as a reply.",
+            f"{query.message.text}{EDIT_MODE_SUFFIX}",
         )
         context.user_data["awaiting_edit"] = thread_id
 
@@ -84,7 +100,7 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
             alt_index = 0
         decision = {"decision": "approve", "use_alternative": alt_index}
         await query.edit_message_text(
-            f"{query.message.text}\n\n--- APPROVED (Alt {alt_index + 1}) ---",
+            f"{query.message.text}{APPROVED_ALT_SUFFIX.format(index=alt_index + 1)}",
         )
         await _resume_graph(thread_id, decision)
 
@@ -103,7 +119,7 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
             ],
         ]
         await query.edit_message_text(
-            f"{query.message.text}\n\n--- When to publish? ---",
+            f"{query.message.text}{SCHEDULE_PROMPT_SUFFIX}",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
 
@@ -113,12 +129,12 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         decision = {"decision": "approve", "publish_at": publish_at.isoformat()}
         scheduled_str = publish_at.strftime("%Y-%m-%d %H:%M")
         await query.edit_message_text(
-            f"{query.message.text}\n\n--- SCHEDULED: {scheduled_str} UTC ---",
+            f"{query.message.text}{SCHEDULED_SUFFIX.format(time=scheduled_str)}",
         )
         await _resume_graph(thread_id, decision)
 
     else:
-        await query.edit_message_text("Unknown action.")
+        await query.edit_message_text(UNKNOWN_ACTION)
 
 
 async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -134,13 +150,11 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     del context.user_data["awaiting_edit"]
 
     if len(edited_content) > MAX_POST_LENGTH:
-        await update.message.reply_text(
-            f"Post too long (max {MAX_POST_LENGTH} characters for Threads). Try again."
-        )
+        await update.message.reply_text(POST_TOO_LONG.format(max_length=MAX_POST_LENGTH))
         context.user_data["awaiting_edit"] = thread_id
         return
 
-    await update.message.reply_text("Edited post received. Publishing...")
+    await update.message.reply_text(EDIT_RECEIVED)
 
     decision = {"decision": "edit", "edited_content": edited_content}
     await _resume_graph(thread_id, decision)
@@ -158,14 +172,12 @@ async def handle_reject_feedback_text(update: Update, context: ContextTypes.DEFA
     feedback = update.message.text.strip()
 
     if len(feedback) > MAX_POST_LENGTH:
-        await update.message.reply_text(
-            f"Feedback too long (max {MAX_POST_LENGTH} characters). Try again."
-        )
+        await update.message.reply_text(FEEDBACK_TOO_LONG.format(max_length=MAX_POST_LENGTH))
         return
 
     del context.user_data["awaiting_reject_feedback"]
 
-    await update.message.reply_text(f"Rejection feedback received: {feedback}")
+    await update.message.reply_text(REJECTION_FEEDBACK_RECEIVED.format(feedback=feedback))
 
     decision = {"decision": "reject", "feedback": feedback}
     await _resume_graph(thread_id, decision)

@@ -6,23 +6,18 @@ from langgraph.store.memory import InMemoryStore
 from langgraph.store.postgres.aio import AsyncPostgresStore
 
 from config.settings import Settings
+from src.messages import MEMORY_CHECKPOINTER_NOT_FOR_PROD, MEMORY_STORE_NOT_FOR_PROD
 
 
 def create_checkpointer(settings: Settings):
     if settings.is_production:
-        raise RuntimeError(
-            "In-memory checkpointer is not suitable for production. "
-            "Use create_postgres_checkpointer() as an async context manager."
-        )
+        raise RuntimeError(MEMORY_CHECKPOINTER_NOT_FOR_PROD)
     return MemorySaver()
 
 
 def create_store(settings: Settings):
     if settings.is_production:
-        raise RuntimeError(
-            "In-memory store is not suitable for production. "
-            "Use create_postgres_store() as an async context manager."
-        )
+        raise RuntimeError(MEMORY_STORE_NOT_FOR_PROD)
     return InMemoryStore()
 
 

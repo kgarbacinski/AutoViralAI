@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import asyncpraw
 
+from src.messages import REDDIT_CREDENTIALS_REQUIRED
 from src.models.research import ViralPost
 
 if TYPE_CHECKING:
@@ -194,10 +195,7 @@ def get_reddit_researcher(settings: Settings) -> RedditResearcher:
         if not settings.reddit_user_agent:
             missing.append("REDDIT_USER_AGENT")
         if missing:
-            raise ValueError(
-                f"{', '.join(missing)} required in production. "
-                "Get credentials from https://www.reddit.com/prefs/apps"
-            )
+            raise ValueError(REDDIT_CREDENTIALS_REQUIRED.format(missing=", ".join(missing)))
         return RealRedditResearcher(
             client_id=settings.reddit_client_id,
             client_secret=settings.reddit_client_secret,

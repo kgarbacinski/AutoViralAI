@@ -1,5 +1,6 @@
 from langgraph.types import interrupt
 
+from src.messages import APPROVAL_INVALID_DECISION, APPROVAL_NO_POST
 from src.models.state import CreationPipelineState
 
 
@@ -10,7 +11,7 @@ async def human_approval(state: CreationPipelineState) -> dict:
     if not selected:
         return {
             "human_decision": "reject",
-            "errors": ["human_approval: No post selected for approval"],
+            "errors": [APPROVAL_NO_POST],
         }
 
     alternatives = ranked[1:3] if len(ranked) > 1 else []
@@ -26,7 +27,7 @@ async def human_approval(state: CreationPipelineState) -> dict:
     if not isinstance(decision, dict):
         return {
             "human_decision": "reject",
-            "errors": [f"human_approval: Invalid decision type: {type(decision).__name__}"],
+            "errors": [APPROVAL_INVALID_DECISION.format(type_name=type(decision).__name__)],
         }
 
     human_decision = decision.get("decision", "reject")

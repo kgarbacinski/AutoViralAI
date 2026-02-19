@@ -17,40 +17,34 @@ from bot.handlers.approval import (
     handle_reject_feedback_text,
 )
 from bot.handlers.status import handle_status_command
+from bot.messages import (
+    APPROVAL_ALTERNATIVES_HEADER,
+    APPROVAL_BEST_TIME,
+    APPROVAL_PATTERN,
+    APPROVAL_PATTERN_WITH_RATIONALE,
+    APPROVAL_RECENT_POSTS_HEADER,
+    APPROVAL_REQUEST_HEADER,
+    APPROVAL_SCORE,
+    APPROVAL_SCORE_WITH_AVG,
+    ENRICHMENT_NEW_PATTERN,
+    ENRICHMENT_PATTERN_RATIONALE,
+    HELP_TEXT,
+    REPORT_GENERATION_HEADER,
+    REPORT_PATTERNS_HEADER,
+    REPORT_RANKING_HEADER,
+    REPORT_RESEARCH_HEADER,
+    REPORT_RESEARCH_SOURCES,
+    REPORT_TOP_BY_ENGAGEMENT,
+    START_MESSAGE,
+)
 
 logger = logging.getLogger(__name__)
 
 TELEGRAM_MAX_MESSAGE_LENGTH = 4096
 
 
-HELP_TEXT = (
-    "🤖 <b>AutoViralAI — Command Reference</b>\n\n"
-    "📊 <b>Monitoring</b>\n"
-    "/status — Live agent status (running/paused, cycles, pending approvals, next run)\n"
-    "/metrics — Performance metrics: avg ER, trend, top patterns, key learnings\n"
-    "/history — Last 10 published posts with scores and engagement data\n"
-    "/schedule — Scheduled jobs and AI-recommended posting times\n\n"
-    "⚙️ <b>Pipeline Control</b>\n"
-    "/force — Trigger creation pipeline now (blocked if approvals pending)\n"
-    "/learn — Trigger learning pipeline (collect metrics, analyze, update strategy)\n"
-    "/research — Run standalone viral research without the full pipeline\n"
-    "/pause — Pause all scheduled pipelines\n"
-    "/resume — Resume paused pipelines\n\n"
-    "🔧 <b>Configuration</b>\n"
-    "/config — View and edit: tone, language, hashtags, schedule, avoid topics\n\n"
-    "📎 <b>Other</b>\n"
-    "/start — Welcome message\n"
-    "/help — This command reference\n\n"
-    "<i>When a post is ready, I'll send a pipeline report + approval message with buttons.</i>"
-)
-
-
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(
-        "AutoViralAI Bot active.\n\n"
-        "Type /help to see all available commands.\n\n"
-        "I'll send you posts for approval when they're ready."
-    )
+    await update.message.reply_text(START_MESSAGE)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -152,11 +146,11 @@ def _build_research_section(viral_posts: list[dict]) -> str:
     hn_count = sum(1 for p in viral_posts if p.get("platform") == "hackernews")
     threads_count = sum(1 for p in viral_posts if p.get("platform") == "threads")
 
-    lines = [f"🔍 <b>Research</b> (found {len(viral_posts)} viral posts)"]
-    lines.append(f"Sources: {hn_count} from HackerNews, {threads_count} from Threads")
+    lines = [REPORT_RESEARCH_HEADER.format(count=len(viral_posts))]
+    lines.append(REPORT_RESEARCH_SOURCES.format(hn=hn_count, threads=threads_count))
 
     sorted_posts = sorted(viral_posts, key=lambda p: p.get("engagement_rate", 0), reverse=True)
-    lines.append("\nTop 3 by engagement:")
+    lines.append(REPORT_TOP_BY_ENGAGEMENT)
     for i, post in enumerate(sorted_posts[:3], 1):
         content = escape(post.get("content", "")[:80])
         er = post.get("engagement_rate", 0)
@@ -167,7 +161,7 @@ def _build_research_section(viral_posts: list[dict]) -> str:
 
 
 def _build_patterns_section(patterns: list[dict]) -> str:
-    lines = [f"🧩 <b>Patterns Extracted</b> ({len(patterns)} patterns)"]
+    lines = [REPORT_PATTERNS_HEADER.format(count=len(patterns))]
 
     for i, pat in enumerate(patterns[:5], 1):
         name = escape(pat.get("name", "?"))
@@ -185,7 +179,7 @@ def _build_patterns_section(patterns: list[dict]) -> str:
 
 
 def _build_generation_section(variants: list[dict]) -> str:
-    lines = [f"✍️ <b>Generated {len(variants)} Variants</b>"]
+    lines = [REPORT_GENERATION_HEADER.format(count=len(variants))]
 
     for i, var in enumerate(variants[:5], 1):
         pattern = escape(var.get("pattern_used", "?"))
@@ -199,7 +193,7 @@ def _build_generation_section(variants: list[dict]) -> str:
 
 
 def _build_ranking_section(ranked: list[dict]) -> str:
-    lines = ["📊 <b>Ranking</b> (AI x0.4 + History x0.3 + Novelty x0.3)"]
+    lines = [REPORT_RANKING_HEADER]
 
     for i, post in enumerate(ranked[:5], 1):
         composite = post.get("composite_score", 0)
@@ -272,9 +266,11 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
         if pattern_name:
             perf = await kb.get_pattern_performance(pattern_name)
             enrichment["pattern_rationale"] = (
-                f"{perf.avg_engagement_rate:.2%} avg ER over {perf.times_used} uses"
+                ENRICHMENT_PATTERN_RATIONALE.format(
+                    avg_er=perf.avg_engagement_rate, times_used=perf.times_used
+                )
                 if perf.times_used > 0
-                else "New pattern (no history yet)"
+                else ENRICHMENT_NEW_PATTERN
             )
     except Exception as e:
         logger.warning("Failed to fetch pattern performance for enrichment: %s", e)
@@ -311,33 +307,29 @@ async def send_approval_request(
     score = selected_post.get("composite_score", 0)
     pattern = escape(selected_post.get("pattern_used", "unknown"))
 
-    message = (
-        f"📝 <b>New Post for Approval</b> (Cycle #{cycle_number})\n"
-        f"👥 Followers: {follower_count}\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"{content}\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n\n"
+    message = APPROVAL_REQUEST_HEADER.format(
+        cycle=cycle_number, followers=follower_count, content=content
     )
 
     if enrichment and "avg_score" in enrichment:
         avg = enrichment["avg_score"]
         diff = score - avg
         sign = "+" if diff >= 0 else ""
-        message += f"🎯 Score: <b>{score:.1f}/10</b> ({sign}{diff:.1f} vs avg {avg:.1f})\n"
+        message += APPROVAL_SCORE_WITH_AVG.format(score=score, sign=sign, diff=diff, avg=avg)
     else:
-        message += f"🎯 Score: <b>{score:.1f}/10</b>\n"
+        message += APPROVAL_SCORE.format(score=score)
 
     if enrichment and "pattern_rationale" in enrichment:
         rationale = escape(enrichment["pattern_rationale"])
-        message += f"🧩 Pattern: <b>{pattern}</b> — {rationale}\n"
+        message += APPROVAL_PATTERN_WITH_RATIONALE.format(pattern=pattern, rationale=rationale)
     else:
-        message += f"🧩 Pattern: <b>{pattern}</b>\n"
+        message += APPROVAL_PATTERN.format(pattern=pattern)
 
     if enrichment and "optimal_time" in enrichment:
-        message += f"⏰ Best publish time: {escape(enrichment['optimal_time'])}\n"
+        message += APPROVAL_BEST_TIME.format(time=escape(enrichment["optimal_time"]))
 
     if enrichment and "recent_metrics" in enrichment:
-        message += "\n📈 <b>Recent posts:</b>\n"
+        message += APPROVAL_RECENT_POSTS_HEADER
         for i, m in enumerate(enrichment["recent_metrics"][:3], 1):
             er = m["engagement_rate"]
             likes = m["likes"]
@@ -346,7 +338,7 @@ async def send_approval_request(
             message += f'  {i}. {er:.2%} ER | {likes}L {replies}R | "{preview}..."\n'
 
     if alternatives:
-        message += "\n<b>Alternatives:</b>\n"
+        message += APPROVAL_ALTERNATIVES_HEADER
         for i, alt in enumerate(alternatives, 1):
             alt_content = escape(alt.get("content", "")[:150])
             alt_pattern = escape(alt.get("pattern_used", "?"))

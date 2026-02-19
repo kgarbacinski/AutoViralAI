@@ -7,6 +7,58 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.dependencies import get_knowledge_base, get_orchestrator
+from bot.messages import (
+    ALREADY_PAUSED,
+    ALREADY_RUNNING,
+    CONFIG_FETCH_ERROR,
+    CONFIG_HEADER,
+    CONFIG_NOT_FOUND,
+    FORCE_ALREADY_RUNNING,
+    FORCE_PENDING_APPROVALS,
+    FORCE_STARTED,
+    FORCE_TOO_MANY_TASKS,
+    HISTORY_FETCH_ERROR,
+    HISTORY_HEADER,
+    HISTORY_METRICS_PENDING,
+    HISTORY_NO_POSTS,
+    KB_NOT_AVAILABLE,
+    LEARN_COMPLETED,
+    LEARN_COMPLETED_KB_UNAVAILABLE,
+    LEARN_COMPLETED_SUMMARY_ERROR,
+    LEARN_KEY_LEARNINGS,
+    LEARN_METRICS_DELAY,
+    LEARN_NO_METRICS_YET,
+    LEARN_NOTHING_TO_ANALYZE,
+    LEARN_PIPELINE_FAILED,
+    LEARN_POSTS_WAITING,
+    LEARN_RUN_AGAIN,
+    LEARN_STARTED,
+    LEARN_STRATEGY_ITERATION,
+    METRICS_AVG_ER,
+    METRICS_ERROR,
+    METRICS_HEADER,
+    METRICS_KEY_LEARNINGS_HEADER,
+    METRICS_LAST_5_ER,
+    METRICS_NONE,
+    METRICS_POSTS_TRACKED,
+    METRICS_TOP_PATTERNS_HEADER,
+    METRICS_TOTALS,
+    METRICS_TREND_DOWN,
+    METRICS_TREND_FLAT,
+    METRICS_TREND_UP,
+    ORCHESTRATOR_NOT_AVAILABLE,
+    PAUSED_SUCCESS,
+    PIPELINE_FAILED,
+    RESEARCH_FAILED,
+    RESEARCH_FOUND,
+    RESEARCH_NO_RESULTS,
+    RESEARCH_STARTED,
+    RESEARCH_TOP_BY_ENGAGEMENT,
+    RESUMED_SUCCESS,
+    SCHEDULE_AI_TIMES_HEADER,
+    SCHEDULE_HEADER,
+    SCHEDULE_NO_JOBS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +90,10 @@ def _track_task(task: asyncio.Task) -> None:
 async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     kb = get_knowledge_base()
     if not kb:
-        await update.message.reply_text("Knowledge base not available.")
+        await update.message.reply_text(KB_NOT_AVAILABLE)
         return
 
-    lines = ["📊 <b>Performance Metrics</b>\n"]
+    lines = [METRICS_HEADER]
 
     try:
         metrics_history = await kb.get_metrics_history(limit=50)
@@ -55,27 +107,29 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
             last_5_er = [m.engagement_rate for m in metrics_history[:5]]
             avg_last_5 = sum(last_5_er) / len(last_5_er) if last_5_er else 0
             if avg_last_5 > avg_er:
-                trend = "📈 up"
+                trend = METRICS_TREND_UP
             elif avg_last_5 < avg_er:
-                trend = "📉 down"
+                trend = METRICS_TREND_DOWN
             else:
-                trend = "➡️ flat"
+                trend = METRICS_TREND_FLAT
 
-            lines.append(f"Avg ER: {avg_er:.2%} (trend: {trend})")
-            lines.append(f"Last 5 avg ER: {avg_last_5:.2%}")
-            lines.append(f"Total: {all_views} views, {all_likes} likes, {all_replies} replies")
-            lines.append(f"Posts tracked: {len(metrics_history)}")
+            lines.append(METRICS_AVG_ER.format(avg_er=avg_er, trend=trend))
+            lines.append(METRICS_LAST_5_ER.format(avg_last_5=avg_last_5))
+            lines.append(
+                METRICS_TOTALS.format(views=all_views, likes=all_likes, replies=all_replies)
+            )
+            lines.append(METRICS_POSTS_TRACKED.format(count=len(metrics_history)))
         else:
-            lines.append("No metrics collected yet.")
+            lines.append(METRICS_NONE)
     except Exception as e:
         logger.error("Error fetching metrics: %s", e)
-        lines.append("Error fetching metrics.")
+        lines.append(METRICS_ERROR)
 
     try:
         patterns = await kb.get_all_pattern_performances()
         if patterns:
             sorted_patterns = sorted(patterns, key=lambda p: p.effectiveness_score, reverse=True)
-            lines.append("\n🧩 <b>Top Patterns:</b>")
+            lines.append(METRICS_TOP_PATTERNS_HEADER)
             for i, p in enumerate(sorted_patterns[:3], 1):
                 lines.append(
                     f"  {i}. <b>{escape(p.pattern_name)}</b> — "
@@ -88,7 +142,7 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
     try:
         strategy = await kb.get_strategy()
         if strategy.key_learnings:
-            lines.append("\n🧠 <b>Key Learnings:</b>")
+            lines.append(METRICS_KEY_LEARNINGS_HEADER)
             for learning in strategy.key_learnings[:3]:
                 lines.append(f"  • {escape(learning)}")
     except Exception as e:
@@ -100,39 +154,39 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
 async def handle_pause_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     orchestrator = get_orchestrator()
     if not orchestrator:
-        await update.message.reply_text("Orchestrator not available.")
+        await update.message.reply_text(ORCHESTRATOR_NOT_AVAILABLE)
         return
 
     if orchestrator.is_paused:
-        await update.message.reply_text("Already paused.")
+        await update.message.reply_text(ALREADY_PAUSED)
         return
 
     orchestrator.pause_all_jobs()
-    await update.message.reply_text("All scheduled pipelines paused. Use /resume to restart.")
+    await update.message.reply_text(PAUSED_SUCCESS)
 
 
 async def handle_resume_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     orchestrator = get_orchestrator()
     if not orchestrator:
-        await update.message.reply_text("Orchestrator not available.")
+        await update.message.reply_text(ORCHESTRATOR_NOT_AVAILABLE)
         return
 
     if not orchestrator.is_paused:
-        await update.message.reply_text("Pipelines are already running.")
+        await update.message.reply_text(ALREADY_RUNNING)
         return
 
     orchestrator.resume_all_jobs()
-    await update.message.reply_text("All scheduled pipelines resumed.")
+    await update.message.reply_text(RESUMED_SUCCESS)
 
 
 async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     orchestrator = get_orchestrator()
     kb = get_knowledge_base()
     if not orchestrator:
-        await update.message.reply_text("Orchestrator not available.")
+        await update.message.reply_text(ORCHESTRATOR_NOT_AVAILABLE)
         return
 
-    lines = ["🗓 <b>Scheduled Jobs</b>\n"]
+    lines = [SCHEDULE_HEADER]
 
     jobs = orchestrator.get_scheduled_jobs()
     if jobs:
@@ -141,13 +195,13 @@ async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_
             next_run = job.get("next_run_time", "N/A")
             lines.append(f"  {escape(job['id'])}: {status} | next: {next_run}")
     else:
-        lines.append("  No jobs scheduled.")
+        lines.append(SCHEDULE_NO_JOBS)
 
     if kb:
         try:
             strategy = await kb.get_strategy()
             if strategy.optimal_posting_times:
-                lines.append("\n⏰ <b>AI-Recommended Times:</b>")
+                lines.append(SCHEDULE_AI_TIMES_HEADER)
                 for t in strategy.optimal_posting_times:
                     lines.append(f"  {escape(t)}")
         except Exception as e:
@@ -159,21 +213,21 @@ async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_
 async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     kb = get_knowledge_base()
     if not kb:
-        await update.message.reply_text("Knowledge base not available.")
+        await update.message.reply_text(KB_NOT_AVAILABLE)
         return
 
     try:
         posts = await kb.get_recent_posts(limit=10)
     except Exception as e:
         logger.error("Error fetching recent posts: %s", e)
-        await update.message.reply_text("Error fetching post history.")
+        await update.message.reply_text(HISTORY_FETCH_ERROR)
         return
 
     if not posts:
-        await update.message.reply_text("No posts published yet.")
+        await update.message.reply_text(HISTORY_NO_POSTS)
         return
 
-    lines = ["📜 <b>Recent Posts</b>\n"]
+    lines = [HISTORY_HEADER]
 
     try:
         metrics_map = {}
@@ -190,7 +244,7 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
         if m:
             metrics_str = f"✅ {m.engagement_rate:.2%} ER | {m.likes}L {m.replies}R"
         else:
-            metrics_str = "⏳ pending"
+            metrics_str = HISTORY_METRICS_PENDING
         lines.append(
             f"{i}. [<b>{pattern}</b>] {post.composite_score:.1f}/10\n"
             f'   "{preview}..."\n'
@@ -203,30 +257,26 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
 async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     orchestrator = get_orchestrator()
     if not orchestrator:
-        await update.message.reply_text("Orchestrator not available.")
+        await update.message.reply_text(ORCHESTRATOR_NOT_AVAILABLE)
         return
 
     if orchestrator.pending_approvals:
-        await update.message.reply_text(
-            "Cannot force: there are pending approvals. Approve or reject them first."
-        )
+        await update.message.reply_text(FORCE_PENDING_APPROVALS)
         return
 
     active_tasks = sum(1 for t in _background_tasks if not t.done())
     if active_tasks >= MAX_CONCURRENT_BACKGROUND_TASKS:
-        await update.message.reply_text(
-            f"Too many tasks running ({active_tasks}). Wait for current tasks to finish."
-        )
+        await update.message.reply_text(FORCE_TOO_MANY_TASKS.format(active_tasks=active_tasks))
         return
 
     running_creation = any(
         t.get_name() == "force_creation" and not t.done() for t in _background_tasks
     )
     if running_creation:
-        await update.message.reply_text("A creation pipeline is already running.")
+        await update.message.reply_text(FORCE_ALREADY_RUNNING)
         return
 
-    await update.message.reply_text("⚡ Starting creation pipeline... This may take a few minutes.")
+    await update.message.reply_text(FORCE_STARTED)
 
     async def _run_and_notify():
         try:
@@ -236,7 +286,7 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
                     chat_id=orchestrator.telegram_chat_id,
-                    text="Pipeline failed. Check server logs for details.",
+                    text=PIPELINE_FAILED,
                 )
 
     _track_task(asyncio.create_task(_run_and_notify(), name="force_creation"))
@@ -244,7 +294,7 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def _build_learn_summary(kb) -> str:
     if not kb:
-        return "Learning cycle completed. (Knowledge base not available)"
+        return LEARN_COMPLETED_KB_UNAVAILABLE
 
     parts = []
 
@@ -253,11 +303,11 @@ async def _build_learn_summary(kb) -> str:
         strategy = await kb.get_strategy()
 
         if strategy.key_learnings:
-            parts.append("Learning cycle completed.\n")
-            parts.append("Key learnings:")
+            parts.append(LEARN_COMPLETED)
+            parts.append(LEARN_KEY_LEARNINGS)
             for learning in strategy.key_learnings[:5]:
                 parts.append(f"  - {learning}")
-            parts.append(f"\nStrategy iteration: {strategy.iteration}")
+            parts.append(LEARN_STRATEGY_ITERATION.format(iteration=strategy.iteration))
         elif pending:
             now = datetime.now(UTC)
             next_checks = []
@@ -268,20 +318,16 @@ async def _build_learn_summary(kb) -> str:
                     preview = post.content[:50] + "..." if len(post.content) > 50 else post.content
                     next_checks.append(f'  - "{preview}" ({hours_left:.0f}h left)')
 
-            parts.append("Learning cycle completed — no metrics ready yet.\n")
-            parts.append(f"Posts waiting for metrics check ({len(pending)}):")
+            parts.append(LEARN_NO_METRICS_YET)
+            parts.append(LEARN_POSTS_WAITING.format(count=len(pending)))
             parts.extend(next_checks)
-            parts.append("\nMetrics are collected 24h after publishing.")
-            parts.append("Run /learn again after the check time passes.")
+            parts.append(LEARN_METRICS_DELAY)
+            parts.append(LEARN_RUN_AGAIN)
         else:
-            parts.append(
-                "Learning cycle completed — nothing to analyze.\n"
-                "No published posts are pending metrics collection.\n"
-                "Publish a post first, then wait 24h for /learn to gather insights."
-            )
+            parts.append(LEARN_NOTHING_TO_ANALYZE)
     except Exception:
         logger.exception("Failed to build learn summary")
-        parts.append("Learning cycle completed. (Could not build detailed summary)")
+        parts.append(LEARN_COMPLETED_SUMMARY_ERROR)
 
     return "\n".join(parts)
 
@@ -289,13 +335,10 @@ async def _build_learn_summary(kb) -> str:
 async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     orchestrator = get_orchestrator()
     if not orchestrator:
-        await update.message.reply_text("Orchestrator not available.")
+        await update.message.reply_text(ORCHESTRATOR_NOT_AVAILABLE)
         return
 
-    await update.message.reply_text(
-        "🧠 Starting learning cycle... Collecting metrics,"
-        " analyzing performance, updating strategy."
-    )
+    await update.message.reply_text(LEARN_STARTED)
 
     async def _run_and_notify():
         try:
@@ -312,7 +355,7 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
                     chat_id=orchestrator.telegram_chat_id,
-                    text="Learning pipeline failed. Check server logs for details.",
+                    text=LEARN_PIPELINE_FAILED,
                 )
 
     _track_task(asyncio.create_task(_run_and_notify(), name="learn_pipeline"))
@@ -321,25 +364,27 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
 async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     orchestrator = get_orchestrator()
     if not orchestrator:
-        await update.message.reply_text("Orchestrator not available.")
+        await update.message.reply_text(ORCHESTRATOR_NOT_AVAILABLE)
         return
 
-    await update.message.reply_text("🔍 Running viral research... This may take a minute.")
+    await update.message.reply_text(RESEARCH_STARTED)
 
     async def _run_and_notify():
         try:
             viral_posts = await orchestrator.run_research_only()
 
             if not viral_posts:
-                text = "Research complete. No viral posts found."
+                text = RESEARCH_NO_RESULTS
             else:
                 hn_count = sum(1 for p in viral_posts if p.get("platform") == "hackernews")
                 threads_count = sum(1 for p in viral_posts if p.get("platform") == "threads")
 
                 lines = [
-                    f"Found {len(viral_posts)} viral posts ({hn_count} HN, {threads_count} Threads)"
+                    RESEARCH_FOUND.format(
+                        total=len(viral_posts), hn=hn_count, threads=threads_count
+                    )
                 ]
-                lines.append("\nTop by engagement:")
+                lines.append(RESEARCH_TOP_BY_ENGAGEMENT)
 
                 sorted_posts = sorted(
                     viral_posts,
@@ -365,7 +410,7 @@ async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
                     chat_id=orchestrator.telegram_chat_id,
-                    text="Research failed. Check server logs for details.",
+                    text=RESEARCH_FAILED,
                 )
 
     _track_task(asyncio.create_task(_run_and_notify(), name="research"))
@@ -376,18 +421,18 @@ async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TY
 
     kb = get_knowledge_base()
     if not kb:
-        await update.message.reply_text("Knowledge base not available.")
+        await update.message.reply_text(KB_NOT_AVAILABLE)
         return
 
     try:
         niche = await kb.get_niche_config()
     except Exception as e:
         logger.error("Error fetching niche config: %s", e)
-        await update.message.reply_text("Error fetching configuration.")
+        await update.message.reply_text(CONFIG_FETCH_ERROR)
         return
 
     if not niche:
-        await update.message.reply_text("No configuration found. Run setup first.")
+        await update.message.reply_text(CONFIG_NOT_FOUND)
         return
 
     posting_times = (
@@ -396,7 +441,7 @@ async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TY
 
     avoid = escape(", ".join(niche.avoid_topics)) if niche.avoid_topics else "none"
     lines = [
-        "🔧 <b>Current Configuration</b>\n",
+        CONFIG_HEADER,
         f"Tone: {escape(niche.voice.tone)}",
         f"Persona: {escape(niche.voice.persona)}",
         f"Language: {escape(niche.voice.language)}",

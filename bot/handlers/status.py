@@ -5,6 +5,12 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.dependencies import get_knowledge_base, get_orchestrator
+from bot.messages import (
+    STATUS_HEADER,
+    STATUS_ORCHESTRATOR_UNAVAILABLE,
+    STATUS_PAUSED,
+    STATUS_RUNNING,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +19,10 @@ async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TY
     orchestrator = get_orchestrator()
     kb = get_knowledge_base()
 
-    lines = ["🤖 <b>AutoViralAI Status</b>\n"]
+    lines = [STATUS_HEADER]
 
     if orchestrator:
-        state = "🟡 Paused" if orchestrator.is_paused else "🟢 Running"
+        state = STATUS_PAUSED if orchestrator.is_paused else STATUS_RUNNING
         lines.append(f"State: {state}")
         lines.append(
             f"📋 Cycles: {orchestrator.creation_cycle} creation, "
@@ -38,7 +44,7 @@ async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TY
         if next_runs:
             lines.append(f"⏰ Next run: {next_runs[0]}")
     else:
-        lines.append("State: Orchestrator not available")
+        lines.append(STATUS_ORCHESTRATOR_UNAVAILABLE)
 
     if kb:
         try:

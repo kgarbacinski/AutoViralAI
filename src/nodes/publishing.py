@@ -1,6 +1,13 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
+from src.messages import (
+    PUBLISH_CONTENT_TOO_LONG,
+    PUBLISH_EMPTY_CONTENT,
+    PUBLISH_FAILED,
+    PUBLISH_NO_POST,
+    SCHEDULE_NO_PUBLISHED_POST,
+)
 from src.models.publishing import PublishedPost
 from src.models.state import CreationPipelineState
 from src.store.knowledge_base import KnowledgeBase
@@ -21,20 +28,22 @@ async def publish_post(
     if not selected:
         return {
             "published_post": None,
-            "errors": ["publish_post: No post to publish"],
+            "errors": [PUBLISH_NO_POST],
         }
 
     content = selected.get("content", "")
     if not content:
         return {
             "published_post": None,
-            "errors": ["publish_post: Post content is empty"],
+            "errors": [PUBLISH_EMPTY_CONTENT],
         }
     if len(content) > THREADS_MAX_LENGTH:
         return {
             "published_post": None,
             "errors": [
-                f"publish_post: Content exceeds {THREADS_MAX_LENGTH} chars ({len(content)})"
+                PUBLISH_CONTENT_TOO_LONG.format(
+                    max_length=THREADS_MAX_LENGTH, actual_length=len(content)
+                )
             ],
         }
 
@@ -43,7 +52,7 @@ async def publish_post(
     except Exception as e:
         return {
             "published_post": None,
-            "errors": [f"publish_post: Failed to publish: {e}"],
+            "errors": [PUBLISH_FAILED.format(error=e)],
         }
 
     follower_count = state.get("current_follower_count", 0)
@@ -80,7 +89,7 @@ async def schedule_metrics_check(
 ) -> dict:
     published = state.get("published_post")
     if not published:
-        return {"errors": ["schedule_metrics_check: No published post to schedule"]}
+        return {"errors": [SCHEDULE_NO_PUBLISHED_POST]}
 
     post = PublishedPost.model_validate(published)
     await kb.add_pending_metrics(post)
