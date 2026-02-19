@@ -388,9 +388,7 @@ async def send_approval_request(
             alt_content = escape(alt.get("content", "")[:150])
             alt_pattern = escape(alt.get("pattern_used", "?"))
             message += (
-                f"\n{i}. [{alt_pattern} | "
-                f"{alt.get('composite_score', 0):.1f}]\n"
-                f"{alt_content}...\n"
+                f"\n{i}. [{alt_pattern} | {alt.get('composite_score', 0):.1f}]\n{alt_content}...\n"
             )
 
     keyboard = [
