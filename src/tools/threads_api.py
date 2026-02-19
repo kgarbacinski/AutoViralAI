@@ -1,10 +1,14 @@
 """Threads API wrapper with mock implementation for development."""
 
+import asyncio
+import logging
 import random
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 class ThreadsClient(ABC):
@@ -109,6 +113,8 @@ class RealThreadsClient(ThreadsClient):
         create_resp.raise_for_status()
         container_id = create_resp.json()["id"]
 
+        await self._wait_for_container(container_id)
+
         publish_resp = await self._client.post(
             f"{self.base_url}/{self.user_id}/threads_publish",
             params={
@@ -118,6 +124,30 @@ class RealThreadsClient(ThreadsClient):
         )
         publish_resp.raise_for_status()
         return publish_resp.json()["id"]
+
+    async def _wait_for_container(
+        self, container_id: str, *, max_attempts: int = 10, interval: float = 2.0
+    ) -> None:
+        """Poll container status until FINISHED or timeout."""
+        for attempt in range(1, max_attempts + 1):
+            resp = await self._client.get(
+                f"{self.base_url}/{container_id}",
+                params={
+                    "fields": "status",
+                    "access_token": self.access_token,
+                },
+            )
+            resp.raise_for_status()
+            status = resp.json().get("status")
+            logger.info(f"Container {container_id} status: {status} (attempt {attempt})")
+
+            if status == "FINISHED":
+                return
+            if status == "ERROR":
+                error_msg = resp.json().get("error_message", "unknown error")
+                raise RuntimeError(f"Threads container {container_id} failed: {error_msg}")
+
+            await asyncio.sleep(interval)
 
     async def get_post_metrics(self, threads_id: str) -> dict:
         resp = await self._client.get(
