@@ -92,14 +92,17 @@ class RealThreadsClient(ThreadsClient):
 
     async def get_follower_count(self) -> int:
         resp = await self._client.get(
-            f"{self.base_url}/{self.user_id}",
+            f"{self.base_url}/{self.user_id}/threads_insights",
             params={
-                "fields": "followers_count",
+                "metric": "followers_count",
                 "access_token": self.access_token,
             },
         )
         resp.raise_for_status()
-        return resp.json()["followers_count"]
+        data = resp.json().get("data", [])
+        if data:
+            return data[0].get("total_value", {}).get("value", 0)
+        return 0
 
     async def publish_post(self, content: str) -> str:
         create_resp = await self._client.post(
