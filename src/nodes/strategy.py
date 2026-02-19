@@ -1,5 +1,3 @@
-"""Strategy adjustment node - LLM synthesizes updated strategy from learnings."""
-
 import logging
 
 from langchain_anthropic import ChatAnthropic
@@ -19,7 +17,6 @@ async def adjust_strategy(
     llm: ChatAnthropic,
     kb: KnowledgeBase,
 ) -> dict:
-    """Use LLM to generate an updated content strategy based on performance data."""
     analysis = state.get("performance_analysis")
     if not analysis:
         return {

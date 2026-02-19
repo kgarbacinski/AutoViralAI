@@ -1,5 +1,3 @@
-"""Goal check node - determines if we've reached target followers."""
-
 from src.models.state import CreationPipelineState
 from src.tools.threads_api import ThreadsClient
 
@@ -9,10 +7,6 @@ async def goal_check(
     *,
     threads_client: ThreadsClient,
 ) -> dict:
-    """Check current follower count against target.
-
-    Returns updated state with goal_reached flag.
-    """
     try:
         current = await threads_client.get_follower_count()
     except Exception as e:

@@ -1,11 +1,7 @@
-"""Publishing and metrics models."""
-
 from pydantic import BaseModel, Field
 
 
 class PublishedPost(BaseModel):
-    """A post that has been published to Threads."""
-
     threads_id: str = Field(description="Threads media container ID")
     content: str
     pattern_used: str
@@ -21,8 +17,6 @@ class PublishedPost(BaseModel):
 
 
 class PostMetrics(BaseModel):
-    """Collected engagement metrics for a published post."""
-
     threads_id: str
     content: str = ""
     pattern_used: str = ""

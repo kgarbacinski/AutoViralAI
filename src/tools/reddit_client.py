@@ -1,5 +1,3 @@
-"""Reddit API wrapper using asyncpraw for viral content research."""
-
 from __future__ import annotations
 
 import asyncio
@@ -34,8 +32,6 @@ class RedditResearcher(ABC):
 
 
 class MockRedditResearcher(RedditResearcher):
-    """Mock for development - returns sample viral posts."""
-
     async def search_viral_posts(
         self, subreddits: list[str], query: str, limit: int = 20
     ) -> list[ViralPost]:
@@ -125,8 +121,6 @@ class MockRedditResearcher(RedditResearcher):
 
 
 class RealRedditResearcher(RedditResearcher):
-    """Real Reddit client using asyncpraw (async-native)."""
-
     def __init__(self, client_id: str, client_secret: str, user_agent: str):
         self._reddit = asyncpraw.Reddit(
             client_id=client_id,
@@ -149,7 +143,6 @@ class RealRedditResearcher(RedditResearcher):
         return posts
 
     async def _search_subreddit(self, sub_name: str, query: str, limit: int) -> list[ViralPost]:
-        """Search a single subreddit for viral posts."""
         posts = []
         subreddit = await self._reddit.subreddit(sub_name)
         async for submission in subreddit.search(
@@ -177,7 +170,6 @@ class RealRedditResearcher(RedditResearcher):
 
 
 def get_reddit_researcher(settings: Settings) -> RedditResearcher:
-    """Factory: returns real client in production, mock in development."""
     if settings.is_production:
         missing = []
         if not settings.reddit_client_id:

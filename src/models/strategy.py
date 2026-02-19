@@ -1,5 +1,3 @@
-"""Strategy and configuration models."""
-
 from typing import ClassVar
 
 from pydantic import BaseModel, Field
@@ -25,8 +23,6 @@ class ContentPillar(BaseModel):
 
 
 class AccountNiche(BaseModel):
-    """Full account niche configuration."""
-
     niche: str = "tech"
     sub_niche: str = "programming & startups"
     description: str = ""
@@ -43,8 +39,6 @@ class AccountNiche(BaseModel):
 
 
 class PatternPerformance(BaseModel):
-    """Cumulative performance data for a content pattern."""
-
     pattern_name: str
     times_used: int = 0
     total_views: int = 0
@@ -66,7 +60,6 @@ class PatternPerformance(BaseModel):
 
     @property
     def effectiveness_score(self) -> float:
-        """Calculate overall effectiveness (0-10 scale)."""
         if self.times_used == 0:
             return self.EXPLORATION_BONUS
         engagement_component = min(self.avg_engagement_rate * 100, self.MAX_SCORE)
@@ -78,8 +71,6 @@ class PatternPerformance(BaseModel):
 
 
 class ContentStrategy(BaseModel):
-    """Current content strategy derived from learning loop."""
-
     preferred_patterns: list[str] = Field(
         default_factory=list,
         description="Pattern names ranked by effectiveness",

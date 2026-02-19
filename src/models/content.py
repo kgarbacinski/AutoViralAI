@@ -1,13 +1,9 @@
-"""Content generation and ranking models."""
-
 from typing import ClassVar, Literal
 
 from pydantic import BaseModel, Field
 
 
 class PostVariant(BaseModel):
-    """A generated post variant."""
-
     content: str = Field(description="The actual post text (max 500 chars for Threads)")
     pattern_used: str = Field(description="Name of the content pattern used")
     pillar: str = Field(description="Content pillar this post belongs to")
@@ -23,8 +19,6 @@ class PostVariant(BaseModel):
 
 
 class RankedPost(BaseModel):
-    """A post variant with multi-signal scoring."""
-
     AI_WEIGHT: ClassVar[float] = 0.4
     HISTORY_WEIGHT: ClassVar[float] = 0.3
     NOVELTY_WEIGHT: ClassVar[float] = 0.3

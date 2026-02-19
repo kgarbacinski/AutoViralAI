@@ -1,9 +1,3 @@
-"""Metrics & Learning Pipeline - Graph 2.
-
-Flow:
-START -> collect_metrics -> analyze_performance -> update_knowledge_base -> adjust_strategy -> END
-"""
-
 from functools import partial
 
 from langchain_anthropic import ChatAnthropic
@@ -24,11 +18,6 @@ def build_learning_pipeline(
     store,
     threads_client: ThreadsClient | None = None,
 ) -> StateGraph:
-    """Build the learning pipeline graph.
-
-    Accepts pre-created clients to enable reuse across cycles.
-    Falls back to creating new clients from settings if not provided.
-    """
     llm = ChatAnthropic(
         model=settings.llm_model,
         api_key=settings.anthropic_api_key,

@@ -1,15 +1,8 @@
-"""Embedding utilities for novelty scoring.
-
-Uses lightweight hash-based embeddings — detects exact duplicate content only;
-swap in a real embedding model for semantic similarity.
-"""
-
 import hashlib
 import math
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
-    """Compute cosine similarity between two vectors."""
     if len(a) != len(b):
         raise ValueError(f"Vector length mismatch: {len(a)} vs {len(b)}")
     dot = sum(x * y for x, y in zip(a, b, strict=True))
@@ -21,14 +14,7 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
 
 
 class EmbeddingClient:
-    """Hash-based text embeddings for novelty scoring.
-
-    The interface is async-ready so swapping in a real embedding API
-    (OpenAI, Cohere, etc.) only requires changing the implementation.
-    """
-
     async def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        """Compute deterministic embeddings from text content."""
         return self._embed_texts_sync(texts)
 
     async def embed_text(self, text: str) -> list[float]:

@@ -1,5 +1,3 @@
-"""API route dependencies."""
-
 import hmac
 import logging
 
@@ -11,11 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 async def verify_api_key(x_api_key: str = Header(default="")) -> None:
-    """Verify the API key from the X-Api-Key header.
-
-    If API_SECRET_KEY is not configured, all requests are rejected
-    on production and allowed on development.
-    """
     settings = get_settings()
 
     if not settings.api_secret_key:

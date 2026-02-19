@@ -1,16 +1,3 @@
-"""Content Creation Pipeline - Graph 1.
-
-Flow:
-START -> goal_check -> (goal reached? -> END)
-                    -> research_viral_content
-                    -> extract_patterns
-                    -> generate_post_variants
-                    -> rank_and_select
-                    -> human_approval (interrupt)
-                        -> (approve/edit) -> publish_post -> schedule_metrics_check -> END
-                        -> (reject) -> generate_post_variants (loop back)
-"""
-
 from functools import partial
 
 from langchain_anthropic import ChatAnthropic
@@ -40,11 +27,6 @@ def build_creation_pipeline(
     scraper: ThreadsScraper | None = None,
     embedding_client: EmbeddingClient | None = None,
 ) -> StateGraph:
-    """Build the creation pipeline graph.
-
-    Accepts pre-created clients to enable reuse across cycles.
-    Falls back to creating new clients from settings if not provided.
-    """
     llm = ChatAnthropic(
         model=settings.llm_model,
         api_key=settings.anthropic_api_key,

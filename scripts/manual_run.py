@@ -1,8 +1,4 @@
-"""Manual single-cycle run for testing.
-
-Usage:
-    uv run python scripts/manual_run.py [--pipeline creation|learning] [--auto-approve]
-"""
+# Usage: uv run python scripts/manual_run.py [--pipeline creation|learning] [--auto-approve]
 
 import argparse
 import asyncio
@@ -27,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 async def init_niche_config(kb: KnowledgeBase) -> None:
-    """Initialize niche config in the store if not present."""
     existing = await kb.get_niche_config()
     if existing:
         return
@@ -68,7 +63,6 @@ async def init_niche_config(kb: KnowledgeBase) -> None:
 
 
 async def run_creation_pipeline(auto_approve: bool = False) -> None:
-    """Run a single creation pipeline cycle."""
     settings = get_settings()
     store = create_store(settings)
     checkpointer = create_checkpointer(settings)
@@ -116,7 +110,6 @@ async def run_creation_pipeline(auto_approve: bool = False) -> None:
             logger.info("Auto-approving...")
             decision = {"decision": "approve"}
         else:
-            # Interactive approval
             selected = state.values.get("selected_post", {})
             print(f"\nPost for approval:\n{selected.get('content', 'N/A')}")
             print(f"Pattern: {selected.get('pattern_used', 'N/A')}")
@@ -157,7 +150,6 @@ async def run_creation_pipeline(auto_approve: bool = False) -> None:
 
 
 async def run_learning_pipeline() -> None:
-    """Run a single learning pipeline cycle."""
     settings = get_settings()
     store = create_store(settings)
     checkpointer = create_checkpointer(settings)

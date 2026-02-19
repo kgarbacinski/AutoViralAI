@@ -1,5 +1,3 @@
-"""Prompts for post ranking and scoring."""
-
 RANK_POSTS_SYSTEM = """\
 You are an expert at predicting social media virality on Threads.
 You evaluate posts on their potential to drive engagement, shares, and follower growth.

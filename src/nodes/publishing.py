@@ -1,5 +1,3 @@
-"""Publishing node - publishes approved posts to Threads."""
-
 import logging
 from datetime import UTC, datetime, timedelta
 
@@ -17,7 +15,6 @@ async def publish_post(
     threads_client: ThreadsClient,
     kb: KnowledgeBase,
 ) -> dict:
-    """Publish the approved post to Threads and save to knowledge base."""
     selected = state.get("selected_post")
     if not selected:
         return {
@@ -72,7 +69,6 @@ async def schedule_metrics_check(
     *,
     kb: KnowledgeBase,
 ) -> dict:
-    """Register the published post for future metrics collection."""
     published = state.get("published_post")
     if not published:
         return {}

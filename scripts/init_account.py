@@ -1,8 +1,4 @@
-"""Initialize account - load niche config into the store.
-
-Usage:
-    uv run python scripts/init_account.py
-"""
+# Usage: uv run python scripts/init_account.py
 
 import asyncio
 import logging

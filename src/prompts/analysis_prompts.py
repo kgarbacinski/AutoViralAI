@@ -1,5 +1,3 @@
-"""Prompts for performance analysis in the learning pipeline."""
-
 ANALYZE_PERFORMANCE_SYSTEM = """\
 You are a data-driven social media strategist analyzing post performance.
 Your goal is to identify what's working, what's not, and why.

@@ -1,5 +1,3 @@
-"""Performance analysis node - LLM analyzes what's working and what's not."""
-
 import logging
 
 from langchain_anthropic import ChatAnthropic
@@ -14,8 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class PerformanceAnalysis(BaseModel):
-    """Structured output for performance analysis."""
-
     top_performers: list[str] = Field(description="What posts worked and why")
     underperformers: list[str] = Field(description="What posts didn't work and why")
     pattern_insights: list[str] = Field(description="Insights about content patterns")
@@ -31,7 +27,6 @@ async def analyze_performance(
     llm: ChatAnthropic,
     kb: KnowledgeBase,
 ) -> dict:
-    """Analyze post performance to extract learnings."""
     collected = state.get("collected_metrics", [])
     if not collected:
         return {

@@ -1,5 +1,3 @@
-"""Telegram callback handlers for post approval."""
-
 import logging
 from datetime import UTC, datetime, timedelta
 
@@ -22,7 +20,6 @@ REJECT_REASONS = {
 
 
 async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle inline button callbacks for Approve/Edit/Reject/Later/Feedback."""
     query = update.callback_query
     authorized = get_authorized_chat_id()
     if not authorized or query.message.chat.id != authorized:
@@ -41,7 +38,6 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
     action = parts[0]
     thread_id = parts[1]
 
-    # --- Approve ---
     if action == "approve":
         decision = {"decision": "approve"}
         await query.edit_message_text(
@@ -49,7 +45,6 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         )
         await _resume_graph(thread_id, decision)
 
-    # --- Reject → show reason buttons ---
     elif action == "reject":
         keyboard = []
         for code, label in REJECT_REASONS.items():
@@ -59,7 +54,6 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
 
-    # --- Reject feedback selection ---
     elif action == "rjfb":
         reason_code = parts[2] if len(parts) > 2 else "other"
         if reason_code == "other":
@@ -76,7 +70,6 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         )
         await _resume_graph(thread_id, decision)
 
-    # --- Edit ---
     elif action == "edit":
         await query.edit_message_text(
             f"{query.message.text}\n\n--- EDIT MODE ---\n"
@@ -84,7 +77,6 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         )
         context.user_data["awaiting_edit"] = thread_id
 
-    # --- Use alternative ---
     elif action == "alt":
         try:
             alt_index = int(parts[2]) if len(parts) > 2 else 0
@@ -96,7 +88,6 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
         )
         await _resume_graph(thread_id, decision)
 
-    # --- Publish Later → show time options ---
     elif action == "later":
         keyboard = [
             [
@@ -116,7 +107,6 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
 
-    # --- Publish at selected time ---
     elif action == "pub_at":
         time_code = parts[2] if len(parts) > 2 else "1h"
         publish_at = _resolve_publish_time(time_code)
@@ -132,7 +122,6 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
 
 
 async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle text messages — used when user sends edited post content after clicking Edit."""
     authorized = get_authorized_chat_id()
     if not authorized or update.message.chat.id != authorized:
         return
@@ -158,7 +147,6 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 
 async def handle_reject_feedback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle typed rejection feedback after selecting 'Other'."""
     authorized = get_authorized_chat_id()
     if not authorized or update.message.chat.id != authorized:
         return
@@ -184,7 +172,6 @@ async def handle_reject_feedback_text(update: Update, context: ContextTypes.DEFA
 
 
 def _resolve_publish_time(code: str) -> datetime:
-    """Convert a time code to a UTC datetime."""
     now = datetime.now(UTC)
 
     if code == "1h":
@@ -205,7 +192,6 @@ def _resolve_publish_time(code: str) -> datetime:
 
 
 async def _resume_graph(thread_id: str, decision: dict) -> None:
-    """Resume the paused graph with the human's decision via the orchestrator."""
     orchestrator = get_orchestrator()
     if orchestrator is None:
         logger.error("Orchestrator not set — cannot resume graph")

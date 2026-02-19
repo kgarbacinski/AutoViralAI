@@ -1,5 +1,3 @@
-"""Command handlers for Telegram bot."""
-
 import asyncio
 import logging
 from datetime import UTC, datetime
@@ -16,7 +14,6 @@ _background_tasks: set[asyncio.Task] = set()
 
 
 async def cancel_background_tasks() -> None:
-    """Cancel all running background tasks. Called during shutdown."""
     tasks = list(_background_tasks)
     for task in tasks:
         task.cancel()
@@ -26,7 +23,6 @@ async def cancel_background_tasks() -> None:
 
 
 def _track_task(task: asyncio.Task) -> None:
-    """Add task to background set and register cleanup + error logging callback."""
     _background_tasks.add(task)
 
     def _on_done(t: asyncio.Task) -> None:
@@ -38,7 +34,6 @@ def _track_task(task: asyncio.Task) -> None:
 
 
 async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /metrics — show performance metrics and top patterns."""
     kb = get_knowledge_base()
     if not kb:
         await update.message.reply_text("Knowledge base not available.")
@@ -46,7 +41,6 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
 
     lines = ["📊 <b>Performance Metrics</b>\n"]
 
-    # Overall metrics
     try:
         metrics_history = await kb.get_metrics_history(limit=50)
         if metrics_history:
@@ -56,7 +50,6 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
             all_views = sum(m.views for m in metrics_history)
             avg_er = sum(all_er) / len(all_er)
 
-            # Trend: last 5 vs all
             last_5_er = [m.engagement_rate for m in metrics_history[:5]]
             avg_last_5 = sum(last_5_er) / len(last_5_er) if last_5_er else 0
             if avg_last_5 > avg_er:
@@ -76,7 +69,6 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
         logger.error("Error fetching metrics: %s", e)
         lines.append("Error fetching metrics.")
 
-    # Top patterns
     try:
         patterns = await kb.get_all_pattern_performances()
         if patterns:
@@ -91,7 +83,6 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
     except Exception as e:
         logger.error("Error fetching patterns: %s", e)
 
-    # Key learnings from strategy
     try:
         strategy = await kb.get_strategy()
         if strategy.key_learnings:
@@ -105,7 +96,6 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def handle_pause_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /pause — pause all scheduled pipelines."""
     orchestrator = get_orchestrator()
     if not orchestrator:
         await update.message.reply_text("Orchestrator not available.")
@@ -120,7 +110,6 @@ async def handle_pause_command(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def handle_resume_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /resume — resume all scheduled pipelines."""
     orchestrator = get_orchestrator()
     if not orchestrator:
         await update.message.reply_text("Orchestrator not available.")
@@ -135,7 +124,6 @@ async def handle_resume_command(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /schedule — show scheduled jobs and optimal times."""
     orchestrator = get_orchestrator()
     kb = get_knowledge_base()
     if not orchestrator:
@@ -153,7 +141,6 @@ async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_
     else:
         lines.append("  No jobs scheduled.")
 
-    # AI-recommended times from strategy
     if kb:
         try:
             strategy = await kb.get_strategy()
@@ -168,7 +155,6 @@ async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_
 
 
 async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /history — last 10 published posts."""
     kb = get_knowledge_base()
     if not kb:
         await update.message.reply_text("Knowledge base not available.")
@@ -187,7 +173,6 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
 
     lines = ["📜 <b>Recent Posts</b>\n"]
 
-    # Get metrics for comparison
     try:
         metrics_map = {}
         metrics_history = await kb.get_metrics_history(limit=50)
@@ -214,7 +199,6 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /force — trigger creation pipeline immediately."""
     orchestrator = get_orchestrator()
     if not orchestrator:
         await update.message.reply_text("Orchestrator not available.")
@@ -243,14 +227,12 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def _build_learn_summary(kb) -> str:
-    """Build a detailed summary message after the learning pipeline finishes."""
     if not kb:
         return "Learning cycle completed. (Knowledge base not available)"
 
     parts = []
 
     try:
-        # Check pending posts — anything still waiting?
         pending = await kb.get_pending_metrics_posts()
         strategy = await kb.get_strategy()
 
@@ -261,7 +243,6 @@ async def _build_learn_summary(kb) -> str:
                 parts.append(f"  - {learning}")
             parts.append(f"\nStrategy iteration: {strategy.iteration}")
         elif pending:
-            # Pipeline ran but metrics weren't ready yet
             now = datetime.now(UTC)
             next_checks = []
             for post in pending[:3]:
@@ -290,7 +271,6 @@ async def _build_learn_summary(kb) -> str:
 
 
 async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /learn — manually trigger the learning pipeline."""
     orchestrator = get_orchestrator()
     if not orchestrator:
         await update.message.reply_text("Orchestrator not available.")
@@ -323,7 +303,6 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /research — run standalone viral research."""
     orchestrator = get_orchestrator()
     if not orchestrator:
         await update.message.reply_text("Orchestrator not available.")
@@ -376,7 +355,6 @@ async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_
 
 
 async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /config — show current config with edit buttons."""
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
     kb = get_knowledge_base()

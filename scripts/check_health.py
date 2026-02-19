@@ -1,8 +1,4 @@
-"""Health check script.
-
-Usage:
-    uv run python scripts/check_health.py
-"""
+# Usage: uv run python scripts/check_health.py
 
 import asyncio
 import sys
@@ -23,7 +19,6 @@ async def main():
     print(f"Target followers: {settings.target_followers}")
     print()
 
-    # Check store
     store = create_store(settings)
     kb = KnowledgeBase(store=store, account_id=settings.account_id)
 
@@ -43,7 +38,6 @@ async def main():
     performances = await kb.get_all_pattern_performances()
     print(f"Pattern performances: {len(performances)}")
 
-    # Check Threads client
     threads = get_threads_client(settings)
     print(f"\nThreads client: {type(threads).__name__}")
     try:

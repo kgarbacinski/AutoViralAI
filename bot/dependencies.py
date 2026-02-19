@@ -1,5 +1,3 @@
-"""Shared dependency getters/setters for bot handlers."""
-
 from __future__ import annotations
 
 import logging

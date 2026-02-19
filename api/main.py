@@ -1,5 +1,3 @@
-"""FastAPI application - webhook + status endpoints."""
-
 import logging
 from contextlib import AsyncExitStack, asynccontextmanager
 
@@ -29,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 async def _init_niche_config(kb: KnowledgeBase) -> None:
-    """Load niche config from YAML into the store if not already present."""
     existing = await kb.get_niche_config()
     if existing:
         logger.info("Niche config already in store, skipping init")
@@ -73,12 +70,10 @@ async def _init_niche_config(kb: KnowledgeBase) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan — startup and shutdown."""
     settings = get_settings()
     logger.info("Starting agent in %s mode", settings.env)
 
     async with AsyncExitStack() as exit_stack:
-        # 1. Persistence setup
         if settings.is_production and not settings.postgres_uri:
             raise RuntimeError("POSTGRES_URI is required in production mode")
         if settings.is_production:
@@ -93,12 +88,10 @@ async def lifespan(app: FastAPI):
             store = create_store(settings)
             checkpointer = create_checkpointer(settings)
 
-        # 2. Niche config → Knowledge Base
         kb = KnowledgeBase(store=store, account_id=settings.account_id)
         set_knowledge_base(kb)
         await _init_niche_config(kb)
 
-        # 3. Telegram bot
         bot_app = None
         if settings.telegram_chat_id:
             set_authorized_chat_id(settings.telegram_chat_id)
@@ -119,7 +112,6 @@ async def lifespan(app: FastAPI):
         else:
             logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled")
 
-        # 4. Orchestrator
         orchestrator = PipelineOrchestrator(
             settings=settings,
             store=store,
@@ -130,14 +122,12 @@ async def lifespan(app: FastAPI):
         set_orchestrator(orchestrator)
         orchestrator.start()
 
-        # Expose on app.state for status endpoint
         app.state.orchestrator = orchestrator
 
         logger.info("Agent fully started")
 
         yield
 
-        # Shutdown
         logger.info("Shutting down agent...")
         await cancel_background_tasks()
         await orchestrator.stop()

@@ -1,5 +1,3 @@
-"""Pydantic models and state schemas."""
-
 from src.models.content import PostVariant, RankedPost
 from src.models.publishing import PostMetrics, PublishedPost
 from src.models.research import ContentPattern, ViralPost

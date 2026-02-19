@@ -1,5 +1,3 @@
-"""Apify wrapper for scraping Threads viral content."""
-
 from __future__ import annotations
 
 import logging
@@ -33,8 +31,6 @@ class ThreadsScraper(ABC):
 
 
 class MockThreadsScraper(ThreadsScraper):
-    """Mock scraper returning sample Threads viral posts."""
-
     async def scrape_viral_posts(self, hashtags: list[str], limit: int = 20) -> list[ViralPost]:
         return [
             ViralPost(
@@ -88,8 +84,6 @@ class MockThreadsScraper(ThreadsScraper):
 
 
 class RealThreadsScraper(ThreadsScraper):
-    """Real Apify-based Threads scraper."""
-
     def __init__(self, api_token: str):
         self.client = ApifyClientAsync(api_token)
 
@@ -146,7 +140,6 @@ class RealThreadsScraper(ThreadsScraper):
 
 
 def get_threads_scraper(settings: Settings) -> ThreadsScraper:
-    """Factory: returns real scraper in production, mock in development."""
     if settings.is_production:
         if not settings.apify_api_token:
             raise ValueError(

@@ -1,5 +1,3 @@
-"""Callback handlers for /config inline buttons."""
-
 import logging
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -26,7 +24,6 @@ LANGUAGE_OPTIONS = [
 
 
 async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle cfg:* callback queries for configuration changes."""
     query = update.callback_query
     authorized = get_authorized_chat_id()
     if not authorized or query.message.chat.id != authorized:
@@ -44,7 +41,6 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
     setting = parts[1]
     value = parts[2] if len(parts) > 2 else None
 
-    # --- Show options for a setting ---
     if value is None:
         if setting == "tone":
             keyboard = [
@@ -105,7 +101,6 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
 
         return
 
-    # --- Apply a value ---
     kb = get_knowledge_base()
     if not kb:
         await query.edit_message_text("Knowledge base not available.")
@@ -165,14 +160,12 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
                 await query.edit_message_text("Orchestrator not available.")
                 return
 
-            # Update niche config
             time_str = f"{hour:02d}:00"
             if time_str not in niche.preferred_posting_times:
                 niche.preferred_posting_times.append(time_str)
                 niche.preferred_posting_times.sort()
                 await kb.save_niche_config(niche)
 
-            # Reschedule the creation jobs
             orchestrator.reschedule_creation_jobs(niche.preferred_posting_times)
             await query.edit_message_text(
                 f"Schedule updated. Posting times: {', '.join(niche.preferred_posting_times)}\n"
@@ -185,7 +178,6 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def handle_config_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle text input for config settings (e.g., avoid topic)."""
     authorized = get_authorized_chat_id()
     if not authorized or update.message.chat.id != authorized:
         return

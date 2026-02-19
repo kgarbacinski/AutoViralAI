@@ -1,12 +1,8 @@
-"""State schemas for both LangGraph pipelines."""
-
 import operator
 from typing import Annotated, TypedDict
 
 
 class CreationPipelineState(TypedDict):
-    """State for the Content Creation Pipeline (Graph 1)."""
-
     current_follower_count: int
     target_follower_count: int
     goal_reached: bool
@@ -29,8 +25,6 @@ class CreationPipelineState(TypedDict):
 
 
 class LearningPipelineState(TypedDict):
-    """State for the Metrics & Learning Pipeline (Graph 2)."""
-
     posts_to_check: list[dict]
     collected_metrics: list[dict]
 

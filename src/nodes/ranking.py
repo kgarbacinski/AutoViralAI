@@ -1,5 +1,3 @@
-"""Ranking node - multi-signal scoring of post variants."""
-
 import asyncio
 import logging
 
@@ -21,8 +19,6 @@ DEFAULT_HISTORY_SCORE = 5.0
 
 
 class AIScoreResult(BaseModel):
-    """Structured output for AI scoring."""
-
     class PostScore(BaseModel):
         index: int = Field(description="0-based index of the variant")
         ai_score: float = Field(ge=0.0, le=10.0)
@@ -38,7 +34,6 @@ async def rank_and_select(
     kb: KnowledgeBase,
     embedding_client: EmbeddingClient | None = None,
 ) -> dict:
-    """Score and rank post variants using AI + history + novelty signals."""
     variants = state.get("generated_variants", [])
     if not variants:
         return {
@@ -96,7 +91,6 @@ async def rank_and_select(
     if embedding_client is None:
         embedding_client = EmbeddingClient()
 
-    # Precompute embeddings for all variants + recent posts in one batch
     variant_texts = [v.get("content", "") for v in variants]
     all_texts = variant_texts + recent_contents
     all_embeddings = await embedding_client.embed_texts(all_texts) if all_texts else []
@@ -108,7 +102,6 @@ async def rank_and_select(
         ai_score, reasoning = ai_scores.get(i, (DEFAULT_AI_SCORE, "No score available"))
         history_score = pattern_scores.get(v.get("pattern_used", ""), DEFAULT_HISTORY_SCORE)
 
-        # Compute novelty from precomputed embeddings
         if recent_embs:
             similarities = [cosine_similarity(variant_embs[i], emb) for emb in recent_embs]
             avg_similarity = sum(similarities) / len(similarities)
@@ -127,7 +120,7 @@ async def rank_and_select(
                 pattern_history_score=history_score,
                 novelty_score=novelty,
                 composite_score=composite,
-                rank=0,  # Set after sorting
+                rank=0,
                 reasoning=reasoning,
             )
         )

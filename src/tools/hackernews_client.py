@@ -1,9 +1,3 @@
-"""Hacker News API client for viral tech content research.
-
-Uses the free Firebase-based HN API — no auth required.
-https://github.com/HackerNews/API
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -25,8 +19,6 @@ MIN_HN_SCORE = 50
 
 
 class HackerNewsClient(ABC):
-    """Abstract HackerNews client for viral content research."""
-
     @abstractmethod
     async def get_viral_posts(self, limit: int = 30) -> list[ViralPost]: ...
 
@@ -41,8 +33,6 @@ class HackerNewsClient(ABC):
 
 
 class MockHackerNewsClient(HackerNewsClient):
-    """Mock client for development — returns sample HN posts."""
-
     async def get_viral_posts(self, limit: int = 30) -> list[ViralPost]:
         return [
             ViralPost(
@@ -73,14 +63,10 @@ class MockHackerNewsClient(HackerNewsClient):
 
 
 class RealHackerNewsClient(HackerNewsClient):
-    """Real HN client — fetches top/best stories via Firebase API."""
-
     def __init__(self, timeout: float = 20.0):
         self._client = httpx.AsyncClient(timeout=timeout)
 
     async def get_viral_posts(self, limit: int = 30) -> list[ViralPost]:
-        """Get top HN stories as viral post research material."""
-        # Fetch top + best story IDs concurrently
         top_resp, best_resp = await asyncio.gather(
             self._client.get(f"{HN_BASE_URL}/topstories.json"),
             self._client.get(f"{HN_BASE_URL}/beststories.json"),
@@ -98,7 +84,6 @@ class RealHackerNewsClient(HackerNewsClient):
         except httpx.HTTPStatusError:
             logger.warning("Failed to fetch HN best stories")
 
-        # Deduplicate, keep order
         seen = set()
         all_ids = []
         for sid in top_ids + best_ids:
@@ -106,7 +91,6 @@ class RealHackerNewsClient(HackerNewsClient):
                 seen.add(sid)
                 all_ids.append(sid)
 
-        # Fetch story details concurrently
         tasks = [self._fetch_story(sid) for sid in all_ids[:limit]]
         stories = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -159,7 +143,6 @@ class RealHackerNewsClient(HackerNewsClient):
 
 
 def get_hackernews_client(settings: Settings) -> HackerNewsClient:
-    """Factory: returns real client in production, mock in development."""
     if settings.is_production:
         return RealHackerNewsClient()
     return MockHackerNewsClient()

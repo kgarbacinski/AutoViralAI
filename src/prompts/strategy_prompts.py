@@ -1,5 +1,3 @@
-"""Prompts for strategy adjustment in the learning pipeline."""
-
 ADJUST_STRATEGY_SYSTEM = """\
 You are a growth strategist optimizing a Threads account's content strategy.
 Based on performance data and analysis, you update the strategy to improve results.

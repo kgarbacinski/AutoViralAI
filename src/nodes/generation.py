@@ -1,5 +1,3 @@
-"""Post variant generation node - LLM creates post variants using patterns."""
-
 import logging
 
 from langchain_anthropic import ChatAnthropic
@@ -16,8 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class GenerationResult(BaseModel):
-    """Structured output wrapper for post generation."""
-
     variants: list[PostVariant] = Field(description="Exactly 5 post variants")
 
 
@@ -27,7 +23,6 @@ async def generate_post_variants(
     llm: ChatAnthropic,
     kb: KnowledgeBase,
 ) -> dict:
-    """Generate 5 post variants using different patterns and pillars."""
     patterns = state.get("extracted_patterns", [])
     if not patterns:
         return {

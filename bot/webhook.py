@@ -1,5 +1,3 @@
-"""Webhook endpoint for Telegram bot integration with FastAPI."""
-
 import hmac
 import logging
 import os
@@ -27,11 +25,9 @@ def set_webhook_secret(secret: str) -> None:
 
 @router.post("/webhook/telegram")
 async def telegram_webhook(request: Request):
-    """Receive Telegram webhook updates."""
     if _bot_app is None:
         raise HTTPException(status_code=503, detail="Bot not initialized")
 
-    # Verify webhook secret token (constant-time comparison)
     if _webhook_secret:
         token = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
         if not hmac.compare_digest(token, _webhook_secret):

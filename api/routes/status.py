@@ -1,5 +1,3 @@
-"""Status and health endpoints."""
-
 from fastapi import APIRouter, Depends, Request
 
 from api.routes import verify_api_key
@@ -9,7 +7,6 @@ router = APIRouter()
 
 @router.get("/status")
 async def get_status(request: Request, _=Depends(verify_api_key)):
-    """Get agent status overview with live orchestrator data."""
     orchestrator = getattr(request.app.state, "orchestrator", None)
 
     if orchestrator is None:

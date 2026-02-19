@@ -1,5 +1,3 @@
-"""Metrics collection node - gathers engagement data for published posts."""
-
 import logging
 from datetime import UTC, datetime
 
@@ -17,14 +15,12 @@ async def collect_metrics(
     threads_client: ThreadsClient,
     kb: KnowledgeBase,
 ) -> dict:
-    """Collect metrics for posts that are due for checking."""
     pending = await kb.get_pending_metrics_posts()
     now = datetime.now(UTC)
 
     collected = []
     errors = []
 
-    # Fetch follower count once for all posts in this cycle
     current_followers = None
     try:
         current_followers = await threads_client.get_follower_count()

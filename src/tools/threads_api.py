@@ -1,5 +1,3 @@
-"""Threads API wrapper with mock implementation for development."""
-
 from __future__ import annotations
 
 import asyncio
@@ -18,25 +16,17 @@ logger = logging.getLogger(__name__)
 
 
 class ThreadsClient(ABC):
-    """Abstract Threads API client."""
-
     @abstractmethod
     async def get_follower_count(self) -> int: ...
 
     @abstractmethod
-    async def publish_post(self, content: str) -> str:
-        """Publish a post. Returns the media container ID."""
-        ...
+    async def publish_post(self, content: str) -> str: ...
 
     @abstractmethod
-    async def get_post_metrics(self, threads_id: str) -> dict:
-        """Get engagement metrics for a post."""
-        ...
+    async def get_post_metrics(self, threads_id: str) -> dict: ...
 
     @abstractmethod
-    async def get_user_posts(self, limit: int = 25) -> list[dict]:
-        """Get recent posts from the authenticated user."""
-        ...
+    async def get_user_posts(self, limit: int = 25) -> list[dict]: ...
 
     async def close(self) -> None:
         pass
@@ -49,8 +39,6 @@ class ThreadsClient(ABC):
 
 
 class MockThreadsClient(ThreadsClient):
-    """Mock client for development - returns fake but realistic data."""
-
     def __init__(self, initial_followers: int = 12):
         self._follower_count = initial_followers
         self._posts: dict[str, dict] = {}
@@ -93,8 +81,6 @@ class MockThreadsClient(ThreadsClient):
 
 
 class RealThreadsClient(ThreadsClient):
-    """Real Threads API client - to be implemented when API access is granted."""
-
     TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 
     def __init__(self, access_token: str, user_id: str):
@@ -144,7 +130,6 @@ class RealThreadsClient(ThreadsClient):
     async def _wait_for_container(
         self, container_id: str, *, max_attempts: int = 10, interval: float = 2.0
     ) -> None:
-        """Poll container status until FINISHED or timeout."""
         for attempt in range(1, max_attempts + 1):
             resp = await self._client.get(
                 f"{self.base_url}/{container_id}",
@@ -210,7 +195,6 @@ class RealThreadsClient(ThreadsClient):
 
 
 def get_threads_client(settings: Settings) -> ThreadsClient:
-    """Factory: returns real client in production, mock in development."""
     if settings.is_production:
         if not settings.threads_access_token:
             raise ValueError(

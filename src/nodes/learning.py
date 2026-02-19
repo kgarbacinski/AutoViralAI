@@ -1,5 +1,3 @@
-"""Learning node - updates pattern performance data in the knowledge base."""
-
 from datetime import UTC, datetime
 
 from src.models.state import LearningPipelineState
@@ -11,7 +9,6 @@ async def update_knowledge_base(
     *,
     kb: KnowledgeBase,
 ) -> dict:
-    """Update pattern performance records based on collected metrics."""
     collected = state.get("collected_metrics", [])
     if not collected:
         return {"pattern_updates": []}

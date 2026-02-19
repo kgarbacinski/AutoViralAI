@@ -1,5 +1,3 @@
-"""Knowledge base operations wrapping LangGraph Store."""
-
 from datetime import UTC, datetime
 
 from langgraph.store.base import BaseStore
@@ -17,8 +15,6 @@ from src.store.namespaces import (
 
 
 class KnowledgeBase:
-    """Wrapper around LangGraph Store for typed read/write operations."""
-
     def __init__(self, store: BaseStore, account_id: str):
         self.store = store
         self.account_id = account_id
@@ -105,6 +101,5 @@ class KnowledgeBase:
         return [PostMetrics.model_validate(item.value) for item in items]
 
     async def get_recent_post_contents(self, limit: int = 20) -> list[str]:
-        """Get content strings of recent posts for novelty scoring."""
         posts = await self.get_recent_posts(limit=limit)
         return [p.content for p in posts]

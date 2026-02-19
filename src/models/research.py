@@ -1,11 +1,7 @@
-"""Research-related models for viral content discovery and pattern extraction."""
-
 from pydantic import BaseModel, Field
 
 
 class ViralPost(BaseModel):
-    """A discovered viral post from any platform."""
-
     platform: str = Field(description="Source platform: threads, reddit, x")
     author: str = ""
     content: str
@@ -24,8 +20,6 @@ class ViralPost(BaseModel):
 
 
 class ContentPattern(BaseModel):
-    """An extracted content pattern from viral posts analysis."""
-
     name: str = Field(description="Short pattern name, e.g. 'contrarian_hot_take'")
     description: str = Field(description="What makes this pattern work")
     structure: str = Field(description="Template structure, e.g. 'Hook -> Evidence -> CTA'")

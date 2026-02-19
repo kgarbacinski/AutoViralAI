@@ -1,5 +1,3 @@
-"""Configuration endpoints."""
-
 import yaml
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -11,7 +9,6 @@ router = APIRouter()
 
 @router.get("/config/niche")
 async def get_niche_config(_=Depends(verify_api_key)):
-    """Get current niche configuration."""
     settings = get_settings()
     config_path = settings.niche_config_path
 

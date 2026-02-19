@@ -1,5 +1,3 @@
-"""Prompts for pattern extraction from viral content."""
-
 EXTRACT_PATTERNS_SYSTEM = """\
 You are an expert social media analyst specializing in viral content mechanics.
 Your job is to analyze viral posts and extract reusable content patterns.

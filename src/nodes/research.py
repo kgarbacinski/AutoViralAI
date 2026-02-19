@@ -1,5 +1,3 @@
-"""Research node - discovers viral content in the niche."""
-
 import asyncio
 import hashlib
 
@@ -18,20 +16,17 @@ async def research_viral_content(
     scraper: ThreadsScraper,
     kb: KnowledgeBase,
 ) -> dict:
-    """Search for viral posts across HackerNews and Threads."""
     niche_config = await kb.get_niche_config()
 
     all_posts = []
     errors = []
 
-    # Prepare hashtags for Threads scraper
     hashtags = []
     if niche_config:
         hashtags = niche_config.hashtags_primary + niche_config.hashtags_secondary
     if not hashtags:
         hashtags = DEFAULT_HASHTAGS
 
-    # Fetch HN and Threads concurrently
     hn_result, threads_result = await asyncio.gather(
         hn.get_viral_posts(limit=30),
         scraper.scrape_viral_posts(hashtags=hashtags, limit=20),
@@ -48,7 +43,6 @@ async def research_viral_content(
     else:
         all_posts.extend([p.model_dump() for p in threads_result])
 
-    # Deduplicate by content hash
     seen_hashes = set()
     unique_posts = []
     for post in all_posts:

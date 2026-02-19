@@ -1,17 +1,9 @@
-"""Human approval node - uses LangGraph interrupt() for human-in-the-loop."""
-
 from langgraph.types import interrupt
 
 from src.models.state import CreationPipelineState
 
 
 async def human_approval(state: CreationPipelineState) -> dict:
-    """Present the top-ranked post for human approval via interrupt.
-
-    The interrupt mechanism pauses the graph and waits for human input.
-    In production, a Telegram bot picks up the interrupt and presents
-    the post to the user with Approve/Edit/Reject buttons.
-    """
     selected = state.get("selected_post")
     ranked = state.get("ranked_posts", [])
 
@@ -45,7 +37,7 @@ async def human_approval(state: CreationPipelineState) -> dict:
 
     use_alternative = decision.get("use_alternative")
     if use_alternative is not None and human_decision == "approve":
-        alt_index = use_alternative + 1  # alternatives are ranked[1:3], callback sends 0-based
+        alt_index = use_alternative + 1
         if 0 < alt_index < len(ranked):
             selected = ranked[alt_index]
 

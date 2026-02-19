@@ -1,5 +1,3 @@
-"""Prompts for post variant generation."""
-
 GENERATE_VARIANTS_SYSTEM = """\
 You are an expert social media content creator for the {niche} niche on Threads.
 You write posts that are engaging, authentic, and drive meaningful conversations.

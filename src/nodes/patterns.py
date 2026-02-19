@@ -1,5 +1,3 @@
-"""Pattern extraction node - LLM analyzes viral posts to find reusable patterns."""
-
 import logging
 
 from langchain_anthropic import ChatAnthropic
@@ -16,8 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class PatternExtractionResult(BaseModel):
-    """Wrapper for structured output - list of patterns."""
-
     patterns: list[ContentPattern] = Field(description="3-5 extracted content patterns")
 
 
@@ -27,7 +23,6 @@ async def extract_patterns(
     llm: ChatAnthropic,
     kb: KnowledgeBase,
 ) -> dict:
-    """Use LLM to extract content patterns from viral posts."""
     viral_posts = state.get("viral_posts", [])
     if not viral_posts:
         return {
@@ -53,7 +48,7 @@ async def extract_patterns(
         f"Content: {p.get('content', '')}\n"
         f"Engagement: {p.get('likes', 0)} likes, {p.get('replies', 0)} replies, "
         f"{p.get('reposts', 0)} reposts"
-        for i, p in enumerate(viral_posts[:15])  # Limit to 15 posts
+        for i, p in enumerate(viral_posts[:15])
     )
 
     structured_llm = llm.with_structured_output(PatternExtractionResult)

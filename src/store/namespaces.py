@@ -1,6 +1,3 @@
-"""LangGraph Store namespace constants."""
-
-
 def ns_config(account_id: str) -> tuple[str, str]:
     return ("config", account_id)
 
