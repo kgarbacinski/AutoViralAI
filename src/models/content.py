@@ -42,7 +42,7 @@ class RankedPost(BaseModel):
         le=10.0,
         description="Weighted composite: 0.4*ai + 0.3*history + 0.3*novelty",
     )
-    rank: int = Field(ge=1, description="Rank among variants (1 = best)")
+    rank: int = Field(ge=0, description="Rank among variants (1 = best, 0 = unranked)")
     reasoning: str = ""
 
     @classmethod
