@@ -79,7 +79,9 @@ async def generate_post_variants(
                         niche=niche_config.niche if niche_config else "tech",
                         voice_tone=niche_config.voice.tone if niche_config else "conversational",
                         voice_persona=niche_config.voice.persona if niche_config else "tech expert",
-                        style_notes="\n".join(niche_config.voice.style_notes) if niche_config else "",
+                        style_notes="\n".join(niche_config.voice.style_notes)
+                        if niche_config
+                        else "",
                         patterns=patterns_text,
                         pillars=pillars_text,
                         avoid_topics=avoid_text,

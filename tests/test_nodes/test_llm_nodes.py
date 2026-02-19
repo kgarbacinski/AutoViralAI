@@ -36,9 +36,7 @@ def _mock_llm_failing(error: Exception | None = None):
     mock = MagicMock()
     mock_structured = MagicMock()
     mock.with_structured_output.return_value = mock_structured
-    mock_structured.ainvoke = AsyncMock(
-        side_effect=error or RuntimeError("LLM unavailable")
-    )
+    mock_structured.ainvoke = AsyncMock(side_effect=error or RuntimeError("LLM unavailable"))
     return mock
 
 
@@ -131,9 +129,7 @@ async def test_extract_success(kb):
     llm = _mock_llm(PatternExtractionResult(patterns=[pattern]))
 
     state = {
-        "viral_posts": [
-            {"platform": "threads", "content": "Hot take: X is dead", "likes": 500}
-        ],
+        "viral_posts": [{"platform": "threads", "content": "Hot take: X is dead", "likes": 500}],
     }
 
     result = await extract_patterns(state, llm=llm, kb=kb)

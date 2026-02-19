@@ -142,7 +142,9 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     del context.user_data["awaiting_edit"]
 
     if len(edited_content) > 500:
-        await update.message.reply_text("Post too long (max 500 characters for Threads). Try again.")
+        await update.message.reply_text(
+            "Post too long (max 500 characters for Threads). Try again."
+        )
         context.user_data["awaiting_edit"] = thread_id
         return
 

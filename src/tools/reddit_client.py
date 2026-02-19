@@ -128,9 +128,7 @@ class RealRedditResearcher(RedditResearcher):
             posts.extend(result)
         return posts
 
-    async def _search_subreddit(
-        self, sub_name: str, query: str, limit: int
-    ) -> list[ViralPost]:
+    async def _search_subreddit(self, sub_name: str, query: str, limit: int) -> list[ViralPost]:
         """Search a single subreddit for viral posts."""
         posts = []
         subreddit = await self._reddit.subreddit(sub_name)

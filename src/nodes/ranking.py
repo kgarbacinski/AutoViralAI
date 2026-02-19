@@ -83,12 +83,8 @@ async def rank_and_select(
     ai_scores = {s.index: (s.ai_score, s.reasoning) for s in ai_result.scores}
 
     unique_patterns = list({v.get("pattern_used", "") for v in variants})
-    perf_results = await asyncio.gather(
-        *[kb.get_pattern_performance(p) for p in unique_patterns]
-    )
-    pattern_scores = {
-        p: perf.effectiveness_score for p, perf in zip(unique_patterns, perf_results)
-    }
+    perf_results = await asyncio.gather(*[kb.get_pattern_performance(p) for p in unique_patterns])
+    pattern_scores = {p: perf.effectiveness_score for p, perf in zip(unique_patterns, perf_results)}
 
     recent_contents = await kb.get_recent_post_contents(limit=20)
     if embedding_client is None:
