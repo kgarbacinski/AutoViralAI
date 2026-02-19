@@ -1,6 +1,7 @@
 """Telegram bot setup for human-in-the-loop approval."""
 
 import logging
+from html import escape
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -25,24 +26,24 @@ TELEGRAM_MAX_MESSAGE_LENGTH = 4096
 
 
 HELP_TEXT = (
-    "*AutoViralAI — Command Reference*\n\n"
-    "*Monitoring*\n"
+    "🤖 <b>AutoViralAI — Command Reference</b>\n\n"
+    "📊 <b>Monitoring</b>\n"
     "/status — Live agent status (running/paused, cycles, pending approvals, next run)\n"
     "/metrics — Performance metrics: avg ER, trend, top patterns, key learnings\n"
     "/history — Last 10 published posts with scores and engagement data\n"
     "/schedule — Scheduled jobs and AI-recommended posting times\n\n"
-    "*Pipeline Control*\n"
+    "⚙️ <b>Pipeline Control</b>\n"
     "/force — Trigger creation pipeline now (blocked if approvals pending)\n"
     "/learn — Trigger learning pipeline (collect metrics, analyze, update strategy)\n"
     "/research — Run standalone viral research without the full pipeline\n"
     "/pause — Pause all scheduled pipelines\n"
     "/resume — Resume paused pipelines\n\n"
-    "*Configuration*\n"
+    "🔧 <b>Configuration</b>\n"
     "/config — View and edit: tone, language, hashtags, max posts/day, posting schedule, avoid topics\n\n"
-    "*Other*\n"
+    "📎 <b>Other</b>\n"
     "/start — Welcome message\n"
     "/help — This command reference\n\n"
-    "_When a post is ready, I'll send a pipeline report + approval message with buttons._"
+    "<i>When a post is ready, I'll send a pipeline report + approval message with buttons.</i>"
 )
 
 
@@ -57,7 +58,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /help command — show all available commands."""
-    await update.message.reply_text(HELP_TEXT, parse_mode="Markdown")
+    await update.message.reply_text(HELP_TEXT, parse_mode="HTML")
 
 
 def create_bot(token: str) -> Application:
@@ -155,7 +156,7 @@ async def send_pipeline_report(app: Application, chat_id: str, state_values: dic
 
     for msg in messages:
         try:
-            await app.bot.send_message(chat_id=chat_id, text=msg)
+            await app.bot.send_message(chat_id=chat_id, text=msg, parse_mode="HTML")
         except Exception as e:
             logger.error(f"Failed to send pipeline report section: {e}")
 
@@ -164,31 +165,31 @@ def _build_research_section(viral_posts: list[dict]) -> str:
     hn_count = sum(1 for p in viral_posts if p.get("platform") == "hackernews")
     threads_count = sum(1 for p in viral_posts if p.get("platform") == "threads")
 
-    lines = [f"Research (found {len(viral_posts)} viral posts)"]
+    lines = [f"🔍 <b>Research</b> (found {len(viral_posts)} viral posts)"]
     lines.append(f"Sources: {hn_count} from HackerNews, {threads_count} from Threads")
 
     # Top 3 by engagement
     sorted_posts = sorted(viral_posts, key=lambda p: p.get("engagement_rate", 0), reverse=True)
-    lines.append("Top 3 by engagement:")
+    lines.append("\nTop 3 by engagement:")
     for i, post in enumerate(sorted_posts[:3], 1):
-        content = post.get("content", "")[:80]
+        content = escape(post.get("content", "")[:80])
         er = post.get("engagement_rate", 0)
         likes = post.get("likes", 0)
-        lines.append(f'  {i}. "{content}..." - {er:.1%} ER, {likes} likes')
+        lines.append(f'  {i}. "{content}..." — {er:.1%} ER, {likes} likes')
 
     return "\n".join(lines)
 
 
 def _build_patterns_section(patterns: list[dict]) -> str:
-    lines = [f"Patterns Extracted ({len(patterns)} patterns)"]
+    lines = [f"🧩 <b>Patterns Extracted</b> ({len(patterns)} patterns)"]
 
     for i, pat in enumerate(patterns[:5], 1):
-        name = pat.get("name", "?")
-        hook = pat.get("hook_type", "?")
-        desc = pat.get("description", "")[:100]
-        structure = pat.get("structure", "?")
+        name = escape(pat.get("name", "?"))
+        hook = escape(pat.get("hook_type", "?"))
+        desc = escape(pat.get("description", "")[:100])
+        structure = escape(pat.get("structure", "?"))
         src_count = pat.get("source_posts_count", 0)
-        lines.append(f"  {i}. {name} ({hook} hook)")
+        lines.append(f"  {i}. <b>{name}</b> ({hook} hook)")
         lines.append(f'     "{desc}"')
         lines.append(f"     Structure: {structure}")
         lines.append(f"     Found in {src_count} viral posts")
@@ -198,13 +199,13 @@ def _build_patterns_section(patterns: list[dict]) -> str:
 
 
 def _build_generation_section(variants: list[dict]) -> str:
-    lines = [f"Generated {len(variants)} Variants"]
+    lines = [f"✍️ <b>Generated {len(variants)} Variants</b>"]
 
     for i, var in enumerate(variants[:5], 1):
-        pattern = var.get("pattern_used", "?")
-        pillar = var.get("pillar", "?")
+        pattern = escape(var.get("pattern_used", "?"))
+        pillar = escape(var.get("pillar", "?"))
         est = var.get("estimated_engagement", 0)
-        content = var.get("content", "")[:100]
+        content = escape(var.get("content", "")[:100])
         lines.append(f"  {i}. [{pattern}] [{pillar}] est: {est}")
         lines.append(f'     "{content}..."')
 
@@ -212,17 +213,17 @@ def _build_generation_section(variants: list[dict]) -> str:
 
 
 def _build_ranking_section(ranked: list[dict]) -> str:
-    lines = ["Ranking (AI x0.4 + History x0.3 + Novelty x0.3)"]
+    lines = ["📊 <b>Ranking</b> (AI x0.4 + History x0.3 + Novelty x0.3)"]
 
     for i, post in enumerate(ranked[:5], 1):
         composite = post.get("composite_score", 0)
         ai = post.get("ai_score", 0)
         hist = post.get("pattern_history_score", 0)
         novelty = post.get("novelty_score", 0)
-        pattern = post.get("pattern_used", "?")
-        pillar = post.get("pillar", "?")
-        reasoning = post.get("reasoning", "")[:100]
-        star = " *" if i == 1 else ""
+        pattern = escape(post.get("pattern_used", "?"))
+        pillar = escape(post.get("pillar", "?"))
+        reasoning = escape(post.get("reasoning", "")[:100])
+        star = " ⭐" if i == 1 else ""
         lines.append(f"  #{i}{star} {composite:.1f}/10  [AI:{ai:.1f} H:{hist:.1f} N:{novelty:.1f}]")
         lines.append(f"     Pattern: {pattern} | Pillar: {pillar}")
         if reasoning:
@@ -339,16 +340,16 @@ async def send_approval_request(
     enrichment: dict | None = None,
 ) -> None:
     """Send a post approval request to the user via Telegram."""
-    content = selected_post.get("content", "")
+    content = escape(selected_post.get("content", ""))
     score = selected_post.get("composite_score", 0)
-    pattern = selected_post.get("pattern_used", "unknown")
+    pattern = escape(selected_post.get("pattern_used", "unknown"))
 
     message = (
-        f"*New Post for Approval* (Cycle #{cycle_number})\n"
-        f"Followers: {follower_count}\n\n"
-        f"---\n"
+        f"📝 <b>New Post for Approval</b> (Cycle #{cycle_number})\n"
+        f"👥 Followers: {follower_count}\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{content}\n"
-        f"---\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
     # Score line with benchmark comparison
@@ -356,37 +357,40 @@ async def send_approval_request(
         avg = enrichment["avg_score"]
         diff = score - avg
         sign = "+" if diff >= 0 else ""
-        message += f"Score: {score:.1f}/10 ({sign}{diff:.1f} vs avg {avg:.1f})\n"
+        message += f"🎯 Score: <b>{score:.1f}/10</b> ({sign}{diff:.1f} vs avg {avg:.1f})\n"
     else:
-        message += f"Score: {score:.1f}/10\n"
+        message += f"🎯 Score: <b>{score:.1f}/10</b>\n"
 
     # Pattern with rationale
     if enrichment and "pattern_rationale" in enrichment:
-        message += f"Pattern: {pattern} - {enrichment['pattern_rationale']}\n"
+        rationale = escape(enrichment["pattern_rationale"])
+        message += f"🧩 Pattern: <b>{pattern}</b> — {rationale}\n"
     else:
-        message += f"Pattern: {pattern}\n"
+        message += f"🧩 Pattern: <b>{pattern}</b>\n"
 
     # Optimal posting time
     if enrichment and "optimal_time" in enrichment:
-        message += f"Best publish time: {enrichment['optimal_time']}\n"
+        message += f"⏰ Best publish time: {escape(enrichment['optimal_time'])}\n"
 
     # Recent post metrics
     if enrichment and "recent_metrics" in enrichment:
-        message += "\nRecent posts:\n"
+        message += "\n📈 <b>Recent posts:</b>\n"
         for i, m in enumerate(enrichment["recent_metrics"][:3], 1):
             er = m["engagement_rate"]
             likes = m["likes"]
             replies = m["replies"]
-            preview = m["content_preview"]
+            preview = escape(m["content_preview"])
             message += f'  {i}. {er:.2%} ER | {likes}L {replies}R | "{preview}..."\n'
 
     if alternatives:
-        message += "\n*Alternatives:*\n"
+        message += "\n<b>Alternatives:</b>\n"
         for i, alt in enumerate(alternatives, 1):
+            alt_content = escape(alt.get("content", "")[:150])
+            alt_pattern = escape(alt.get("pattern_used", "?"))
             message += (
-                f"\n{i}. [{alt.get('pattern_used', '?')} | "
+                f"\n{i}. [{alt_pattern} | "
                 f"{alt.get('composite_score', 0):.1f}]\n"
-                f"{alt.get('content', '')[:150]}...\n"
+                f"{alt_content}...\n"
             )
 
     keyboard = [
@@ -416,5 +420,5 @@ async def send_approval_request(
         chat_id=chat_id,
         text=message,
         reply_markup=reply_markup,
-        parse_mode="Markdown",
+        parse_mode="HTML",
     )

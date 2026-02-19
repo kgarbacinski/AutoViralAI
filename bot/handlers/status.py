@@ -1,6 +1,7 @@
 """Status command handler for Telegram bot."""
 
 import logging
+from html import escape
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -15,19 +16,24 @@ async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TY
     orchestrator = get_orchestrator()
     kb = get_knowledge_base()
 
-    lines = ["*AutoViralAI Status*\n"]
+    lines = ["🤖 <b>AutoViralAI Status</b>\n"]
 
     if orchestrator:
-        state = "Paused" if orchestrator.is_paused else "Running"
+        if orchestrator.is_paused:
+            state = "🟡 Paused"
+        else:
+            state = "🟢 Running"
         lines.append(f"State: {state}")
-        lines.append(f"Creation cycles: {orchestrator.creation_cycle}")
-        lines.append(f"Learning cycles: {orchestrator.learning_cycle}")
+        lines.append(
+            f"📋 Cycles: {orchestrator.creation_cycle} creation, "
+            f"{orchestrator.learning_cycle} learning"
+        )
 
         pending = orchestrator.pending_approvals
         if pending:
-            lines.append(f"Pending approvals: {len(pending)}")
+            lines.append(f"⏳ Pending approvals: {len(pending)}")
             for tid in pending:
-                lines.append(f"  - {tid}")
+                lines.append(f"  • {escape(tid)}")
         else:
             lines.append("Pending approvals: 0")
 
@@ -37,7 +43,7 @@ async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TY
             j["next_run_time"] for j in jobs if j.get("next_run_time") and not j.get("paused")
         ]
         if next_runs:
-            lines.append(f"Next run: {next_runs[0]}")
+            lines.append(f"⏰ Next run: {next_runs[0]}")
     else:
         lines.append("State: Orchestrator not available")
 
@@ -45,10 +51,10 @@ async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TY
     if kb:
         try:
             strategy = await kb.get_strategy()
-            lines.append(f"\nStrategy iteration: {strategy.iteration}")
+            lines.append(f"\n🧠 Strategy iteration: {strategy.iteration}")
             if strategy.last_updated:
                 lines.append(f"Last updated: {strategy.last_updated[:16]}")
         except Exception as e:
             logger.error(f"Error fetching strategy for status: {e}")
 
-    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.message.reply_text("\n".join(lines), parse_mode="HTML")

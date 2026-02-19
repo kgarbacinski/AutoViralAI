@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from html import escape
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -18,7 +19,7 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
         await update.message.reply_text("Knowledge base not available.")
         return
 
-    lines = ["*Performance Metrics*\n"]
+    lines = ["📊 <b>Performance Metrics</b>\n"]
 
     # Overall metrics
     try:
@@ -33,7 +34,12 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
             # Trend: last 5 vs all
             last_5_er = [m.engagement_rate for m in metrics_history[:5]]
             avg_last_5 = sum(last_5_er) / len(last_5_er) if last_5_er else 0
-            trend = "up" if avg_last_5 > avg_er else "down" if avg_last_5 < avg_er else "flat"
+            if avg_last_5 > avg_er:
+                trend = "📈 up"
+            elif avg_last_5 < avg_er:
+                trend = "📉 down"
+            else:
+                trend = "➡️ flat"
 
             lines.append(f"Avg ER: {avg_er:.2%} (trend: {trend})")
             lines.append(f"Last 5 avg ER: {avg_last_5:.2%}")
@@ -50,10 +56,10 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
         patterns = await kb.get_all_pattern_performances()
         if patterns:
             sorted_patterns = sorted(patterns, key=lambda p: p.effectiveness_score, reverse=True)
-            lines.append("\n*Top Patterns:*")
+            lines.append("\n🧩 <b>Top Patterns:</b>")
             for i, p in enumerate(sorted_patterns[:3], 1):
                 lines.append(
-                    f"  {i}. {p.pattern_name} - "
+                    f"  {i}. <b>{escape(p.pattern_name)}</b> — "
                     f"{p.effectiveness_score:.1f}/10 "
                     f"({p.times_used} uses, {p.avg_engagement_rate:.2%} ER)"
                 )
@@ -64,13 +70,13 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
     try:
         strategy = await kb.get_strategy()
         if strategy.key_learnings:
-            lines.append("\n*Key Learnings:*")
+            lines.append("\n🧠 <b>Key Learnings:</b>")
             for learning in strategy.key_learnings[:3]:
-                lines.append(f"  - {learning}")
+                lines.append(f"  • {escape(learning)}")
     except Exception as e:
         logger.error(f"Error fetching strategy: {e}")
 
-    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.message.reply_text("\n".join(lines), parse_mode="HTML")
 
 
 async def handle_pause_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -111,14 +117,14 @@ async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_
         await update.message.reply_text("Orchestrator not available.")
         return
 
-    lines = ["*Scheduled Jobs*\n"]
+    lines = ["🗓 <b>Scheduled Jobs</b>\n"]
 
     jobs = orchestrator.get_scheduled_jobs()
     if jobs:
         for job in jobs:
-            status = "paused" if job.get("paused") else "active"
+            status = "⏸ paused" if job.get("paused") else "▶️ active"
             next_run = job.get("next_run_time", "N/A")
-            lines.append(f"  {job['id']}: {status} | next: {next_run}")
+            lines.append(f"  {escape(job['id'])}: {status} | next: {next_run}")
     else:
         lines.append("  No jobs scheduled.")
 
@@ -127,13 +133,13 @@ async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_
         try:
             strategy = await kb.get_strategy()
             if strategy.optimal_posting_times:
-                lines.append("\n*AI-Recommended Times:*")
+                lines.append("\n⏰ <b>AI-Recommended Times:</b>")
                 for t in strategy.optimal_posting_times:
-                    lines.append(f"  {t}")
+                    lines.append(f"  {escape(t)}")
         except Exception as e:
             logger.error(f"Error fetching strategy for schedule: {e}")
 
-    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.message.reply_text("\n".join(lines), parse_mode="HTML")
 
 
 async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -154,7 +160,7 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
         await update.message.reply_text("No posts published yet.")
         return
 
-    lines = ["*Recent Posts*\n"]
+    lines = ["📜 <b>Recent Posts</b>\n"]
 
     # Get metrics for comparison
     try:
@@ -166,19 +172,20 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
         metrics_map = {}
 
     for i, post in enumerate(posts[:10], 1):
-        preview = post.content[:60].replace("\n", " ")
+        preview = escape(post.content[:60].replace("\n", " "))
+        pattern = escape(post.pattern_used)
         m = metrics_map.get(post.threads_id)
         if m:
-            metrics_str = f"{m.engagement_rate:.2%} ER | {m.likes}L {m.replies}R"
+            metrics_str = f"✅ {m.engagement_rate:.2%} ER | {m.likes}L {m.replies}R"
         else:
-            metrics_str = "pending"
+            metrics_str = "⏳ pending"
         lines.append(
-            f"{i}. [{post.pattern_used}] {post.composite_score:.1f}/10\n"
+            f"{i}. [<b>{pattern}</b>] {post.composite_score:.1f}/10\n"
             f'   "{preview}..."\n'
             f"   {post.published_at[:10]} | {metrics_str}"
         )
 
-    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.message.reply_text("\n".join(lines), parse_mode="HTML")
 
 
 async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -194,7 +201,7 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
         )
         return
 
-    await update.message.reply_text("Starting creation pipeline... This may take a few minutes.")
+    await update.message.reply_text("⚡ Starting creation pipeline... This may take a few minutes.")
 
     async def _run_and_notify():
         try:
@@ -218,7 +225,7 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
         return
 
     await update.message.reply_text(
-        "Starting learning cycle... Collecting metrics, analyzing performance, updating strategy."
+        "🧠 Starting learning cycle... Collecting metrics, analyzing performance, updating strategy."
     )
 
     async def _run_and_notify():
@@ -262,7 +269,7 @@ async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_
         await update.message.reply_text("Orchestrator not available.")
         return
 
-    await update.message.reply_text("Running viral research... This may take a minute.")
+    await update.message.reply_text("🔍 Running viral research... This may take a minute.")
 
     async def _run_and_notify():
         try:
@@ -332,15 +339,16 @@ async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TY
         ", ".join(niche.preferred_posting_times) if niche.preferred_posting_times else "default"
     )
 
+    avoid = escape(", ".join(niche.avoid_topics)) if niche.avoid_topics else "none"
     lines = [
-        "*Current Configuration*\n",
-        f"Tone: {niche.voice.tone}",
-        f"Persona: {niche.voice.persona}",
-        f"Language: {niche.voice.language}",
+        "🔧 <b>Current Configuration</b>\n",
+        f"Tone: {escape(niche.voice.tone)}",
+        f"Persona: {escape(niche.voice.persona)}",
+        f"Language: {escape(niche.voice.language)}",
         f"Max hashtags: {niche.max_hashtags_per_post}",
         f"Max posts/day: {niche.max_posts_per_day}",
-        f"Posting times: {posting_times}",
-        f"Avoid topics: {', '.join(niche.avoid_topics) if niche.avoid_topics else 'none'}",
+        f"Posting times: {escape(posting_times)}",
+        f"Avoid topics: {avoid}",
     ]
 
     keyboard = [
@@ -360,6 +368,6 @@ async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TY
 
     await update.message.reply_text(
         "\n".join(lines),
-        parse_mode="Markdown",
+        parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
