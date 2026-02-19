@@ -195,7 +195,19 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
         return
 
     await update.message.reply_text("Starting creation pipeline... This may take a few minutes.")
-    asyncio.create_task(orchestrator.run_creation_pipeline())
+
+    async def _run_and_notify():
+        try:
+            await orchestrator.run_creation_pipeline()
+        except Exception as e:
+            logger.error(f"Force creation pipeline failed: {e}")
+            if orchestrator.bot_app and orchestrator.telegram_chat_id:
+                await orchestrator.bot_app.bot.send_message(
+                    chat_id=orchestrator.telegram_chat_id,
+                    text=f"Pipeline failed: {e}",
+                )
+
+    asyncio.create_task(_run_and_notify())
 
 
 async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

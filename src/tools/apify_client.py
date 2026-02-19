@@ -1,10 +1,15 @@
 """Apify wrapper for scraping Threads viral content."""
 
+import logging
 from abc import ABC, abstractmethod
 
 from apify_client import ApifyClientAsync
 
 from src.models.research import ViralPost
+
+logger = logging.getLogger(__name__)
+
+APIFY_TIMEOUT_SECS = 120
 
 
 class ThreadsScraper(ABC):
@@ -65,7 +70,11 @@ class RealThreadsScraper(ThreadsScraper):
             "resultsLimit": limit,
             "sortBy": "popular",
         }
-        run = await self.client.actor("apify/threads-scraper").call(run_input=run_input)
+        logger.info(f"Starting Apify Threads scraper (timeout={APIFY_TIMEOUT_SECS}s)")
+        run = await self.client.actor("apify/threads-scraper").call(
+            run_input=run_input,
+            timeout_secs=APIFY_TIMEOUT_SECS,
+        )
         items = []
         async for item in self.client.dataset(run["defaultDatasetId"]).iterate_items():
             items.append(
@@ -82,6 +91,7 @@ class RealThreadsScraper(ThreadsScraper):
                     topic_tags=[],
                 )
             )
+        logger.info(f"Apify scraper returned {len(items)} items")
         return items
 
 

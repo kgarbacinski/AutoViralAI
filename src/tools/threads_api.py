@@ -78,13 +78,15 @@ class MockThreadsClient(ThreadsClient):
 class RealThreadsClient(ThreadsClient):
     """Real Threads API client - to be implemented when API access is granted."""
 
+    TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+
     def __init__(self, access_token: str, user_id: str):
         self.access_token = access_token
         self.user_id = user_id
         self.base_url = "https://graph.threads.net/v1.0"
 
     async def get_follower_count(self) -> int:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
             resp = await client.get(
                 f"{self.base_url}/{self.user_id}",
                 params={
@@ -96,7 +98,7 @@ class RealThreadsClient(ThreadsClient):
             return resp.json()["followers_count"]
 
     async def publish_post(self, content: str) -> str:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
             create_resp = await client.post(
                 f"{self.base_url}/{self.user_id}/threads",
                 params={
@@ -119,7 +121,7 @@ class RealThreadsClient(ThreadsClient):
             return publish_resp.json()["id"]
 
     async def get_post_metrics(self, threads_id: str) -> dict:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
             resp = await client.get(
                 f"{self.base_url}/{threads_id}/insights",
                 params={
@@ -137,7 +139,7 @@ class RealThreadsClient(ThreadsClient):
             return metrics
 
     async def get_user_posts(self, limit: int = 25) -> list[dict]:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
             resp = await client.get(
                 f"{self.base_url}/{self.user_id}/threads",
                 params={
