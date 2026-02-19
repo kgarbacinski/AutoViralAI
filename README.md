@@ -145,7 +145,7 @@ Define your voice, audience, content pillars, and topics to avoid in a single YA
 <td width="50%" valign="top">
 
 ### 🔍 Research-Driven
-Before generating anything, the agent scrapes Reddit, Threads, and HackerNews to understand what's trending *right now* in your niche. No hallucinated trends.
+Before generating anything, the agent scrapes Threads and HackerNews to understand what's trending *right now* in your niche. No hallucinated trends.
 
 </td>
 <td width="50%" valign="top">
@@ -403,7 +403,7 @@ AutoViralAI/
 │   ├── graphs/                  # LangGraph pipeline definitions
 │   │   ├── creation_pipeline.py # Research → generate → approve → publish
 │   │   └── learning_pipeline.py # Metrics → analyze → learn → adapt
-│   ├── nodes/                   # Individual pipeline steps (12 nodes)
+│   ├── nodes/                   # Individual pipeline steps (11 nodes)
 │   ├── tools/                   # External service wrappers (mock-first)
 │   ├── prompts/                 # All LLM prompt templates
 │   ├── store/                   # Knowledge base (LangGraph Store)
@@ -480,7 +480,7 @@ Dev: `InMemoryStore` · Prod: `AsyncPostgresStore` with embedding support.
 | State Persistence | LangGraph Checkpointer | Survives interrupts, restarts, crashes |
 | Knowledge Base | LangGraph Store | Cross-pipeline memory with namespaces |
 | Human-in-the-Loop | LangGraph `interrupt()` + [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) | Pause graph, notify via Telegram, resume on response |
-| Research | [PRAW](https://praw.readthedocs.io/) + [Apify](https://apify.com/) | Reddit + Threads viral content discovery |
+| Research | [Apify](https://apify.com/) + HN Firebase API | Threads + HackerNews viral content discovery |
 | Novelty Scoring | Cosine similarity on embeddings | Prevent repetitive content |
 | Scheduling | [APScheduler](https://apscheduler.readthedocs.io/) | Creation 3x/day, learning 1x/day |
 | API | [FastAPI](https://fastapi.tiangolo.com/) | Webhook receiver + status endpoints |
