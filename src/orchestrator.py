@@ -161,11 +161,31 @@ class PipelineOrchestrator:
         """Resume a paused creation pipeline with the human's decision.
 
         Handles recursive interrupts (e.g., reject -> regenerate -> new interrupt).
+        Survives container restarts by reconstructing the graph from the persistent
+        checkpointer if the in-memory pending interrupt is not found.
         """
         pending = self._pending_interrupts.pop(thread_id, None)
         if not pending:
-            logger.warning(f"No pending interrupt for thread_id={thread_id}")
-            return None
+            # Reconstruct from persistent checkpointer (survives container restarts)
+            logger.info(f"No in-memory interrupt for {thread_id}, reconstructing from checkpointer")
+            graph = build_creation_pipeline(self.settings, self.store)
+            compiled = graph.compile(checkpointer=self.checkpointer)
+            config = {"configurable": {"thread_id": thread_id}}
+
+            try:
+                state = await compiled.aget_state(config)
+            except Exception as e:
+                logger.error(f"Failed to get state for thread_id={thread_id}: {e}")
+                return None
+
+            if not (state and state.next and "human_approval" in state.next):
+                logger.warning(
+                    f"Thread {thread_id} not paused at human_approval "
+                    f"(next={state.next if state else None})"
+                )
+                return None
+
+            pending = {"compiled": compiled, "config": config}
 
         compiled = pending["compiled"]
         config = pending["config"]
