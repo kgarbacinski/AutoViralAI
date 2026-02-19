@@ -15,6 +15,16 @@ logger = logging.getLogger(__name__)
 _background_tasks: set[asyncio.Task] = set()
 
 
+async def cancel_background_tasks() -> None:
+    """Cancel all running background tasks. Called during shutdown."""
+    tasks = list(_background_tasks)
+    for task in tasks:
+        task.cancel()
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
+    _background_tasks.clear()
+
+
 def _track_task(task: asyncio.Task) -> None:
     """Add task to background set and register cleanup + error logging callback."""
     _background_tasks.add(task)
@@ -221,12 +231,12 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
     async def _run_and_notify():
         try:
             await orchestrator.run_creation_pipeline()
-        except Exception as e:
-            logger.error(f"Force creation pipeline failed: {e}")
+        except Exception:
+            logger.exception("Force creation pipeline failed")
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
                     chat_id=orchestrator.telegram_chat_id,
-                    text=f"Pipeline failed: {e}",
+                    text="Pipeline failed. Check server logs for details.",
                 )
 
     _track_task(asyncio.create_task(_run_and_notify(), name="force_creation"))
@@ -272,9 +282,9 @@ async def _build_learn_summary(kb) -> str:
                 "No published posts are pending metrics collection.\n"
                 "Publish a post first, then wait 24h for /learn to gather insights."
             )
-    except Exception as e:
-        logger.error(f"Failed to build learn summary: {e}")
-        parts.append(f"Learning cycle completed. (Summary error: {e})")
+    except Exception:
+        logger.exception("Failed to build learn summary")
+        parts.append("Learning cycle completed. (Could not build detailed summary)")
 
     return "\n".join(parts)
 
@@ -300,12 +310,12 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
                     chat_id=orchestrator.telegram_chat_id,
                     text=summary,
                 )
-        except Exception as e:
-            logger.error(f"Learn command failed: {e}")
+        except Exception:
+            logger.exception("Learn command failed")
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
                     chat_id=orchestrator.telegram_chat_id,
-                    text=f"Learning pipeline failed: {e}",
+                    text="Learning pipeline failed. Check server logs for details.",
                 )
 
     _track_task(asyncio.create_task(_run_and_notify(), name="learn_pipeline"))
@@ -353,12 +363,12 @@ async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_
                 chat_id=orchestrator.telegram_chat_id,
                 text=text,
             )
-        except Exception as e:
-            logger.error(f"Research command failed: {e}")
+        except Exception:
+            logger.exception("Research command failed")
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
                     chat_id=orchestrator.telegram_chat_id,
-                    text=f"Research failed: {e}",
+                    text="Research failed. Check server logs for details.",
                 )
 
     _track_task(asyncio.create_task(_run_and_notify(), name="research"))

@@ -23,7 +23,7 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
     """Handle inline button callbacks for Approve/Edit/Reject/Later/Feedback."""
     query = update.callback_query
     authorized = get_authorized_chat_id()
-    if authorized and query.message.chat.id != authorized:
+    if not authorized or query.message.chat.id != authorized:
         await query.answer("Unauthorized.", show_alert=True)
         return
 
@@ -130,12 +130,21 @@ async def handle_approval_callback(update: Update, context: ContextTypes.DEFAULT
 
 async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle text messages — used when user sends edited post content after clicking Edit."""
+    authorized = get_authorized_chat_id()
+    if not authorized or update.message.chat.id != authorized:
+        return
+
     thread_id = context.user_data.get("awaiting_edit")
     if not thread_id:
         return
 
     edited_content = update.message.text.strip()
     del context.user_data["awaiting_edit"]
+
+    if len(edited_content) > 500:
+        await update.message.reply_text("Post too long (max 500 characters for Threads). Try again.")
+        context.user_data["awaiting_edit"] = thread_id
+        return
 
     await update.message.reply_text("Edited post received. Publishing...")
 
@@ -145,11 +154,20 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def handle_reject_feedback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle typed rejection feedback after selecting 'Other'."""
+    authorized = get_authorized_chat_id()
+    if not authorized or update.message.chat.id != authorized:
+        return
+
     thread_id = context.user_data.get("awaiting_reject_feedback")
     if not thread_id:
         return
 
     feedback = update.message.text.strip()
+
+    if len(feedback) > 500:
+        await update.message.reply_text("Feedback too long (max 500 characters). Try again.")
+        return
+
     del context.user_data["awaiting_reject_feedback"]
 
     await update.message.reply_text(f"Rejection feedback received: {feedback}")
@@ -171,6 +189,8 @@ def _resolve_publish_time(code: str) -> datetime:
             hour = int(code[1:])
         except ValueError:
             return now + timedelta(hours=1)
+        if not (0 <= hour <= 23):
+            return now + timedelta(hours=1)
         tomorrow = now + timedelta(days=1)
         return tomorrow.replace(hour=hour, minute=0, second=0, microsecond=0)
 
@@ -187,5 +207,5 @@ async def _resume_graph(thread_id: str, decision: dict) -> None:
     try:
         await orchestrator.resume_creation(thread_id, decision)
         logger.info(f"Graph resumed for thread_id={thread_id} with decision={decision}")
-    except Exception as e:
-        logger.error(f"Failed to resume graph for thread_id={thread_id}: {e}")
+    except Exception:
+        logger.exception(f"Failed to resume graph for thread_id={thread_id}")

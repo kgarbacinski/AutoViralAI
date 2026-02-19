@@ -10,6 +10,8 @@ import math
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
     """Compute cosine similarity between two vectors."""
+    if len(a) != len(b):
+        raise ValueError(f"Vector length mismatch: {len(a)} vs {len(b)}")
     dot = sum(x * y for x, y in zip(a, b))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
@@ -19,10 +21,22 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
 
 
 class EmbeddingClient:
-    """Hash-based text embeddings for novelty scoring."""
+    """Hash-based text embeddings for novelty scoring.
 
-    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+    The interface is async-ready so swapping in a real embedding API
+    (OpenAI, Cohere, etc.) only requires changing the implementation.
+    """
+
+    async def embed_texts(self, texts: list[str]) -> list[list[float]]:
         """Compute deterministic embeddings from text content."""
+        return self._embed_texts_sync(texts)
+
+    async def embed_text(self, text: str) -> list[float]:
+        result = await self.embed_texts([text])
+        return result[0]
+
+    @staticmethod
+    def _embed_texts_sync(texts: list[str]) -> list[list[float]]:
         embeddings = []
         for text in texts:
             h = hashlib.sha256(text.encode()).hexdigest()
@@ -33,9 +47,6 @@ class EmbeddingClient:
                 vec = [x / norm for x in vec]
             embeddings.append(vec)
         return embeddings
-
-    def embed_text(self, text: str) -> list[float]:
-        return self.embed_texts([text])[0]
 
 
 async def compute_novelty_score(
@@ -52,7 +63,7 @@ async def compute_novelty_score(
         client = EmbeddingClient()
 
     all_texts = [candidate] + recent_posts
-    embeddings = client.embed_texts(all_texts)
+    embeddings = await client.embed_texts(all_texts)
     candidate_emb = embeddings[0]
     recent_embs = embeddings[1:]
 

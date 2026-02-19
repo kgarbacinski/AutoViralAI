@@ -210,7 +210,7 @@ def _build_generation_section(variants: list[dict]) -> str:
     for i, var in enumerate(variants[:5], 1):
         pattern = escape(var.get("pattern_used", "?"))
         pillar = escape(var.get("pillar", "?"))
-        est = var.get("estimated_engagement", 0)
+        est = var.get("estimated_engagement", "unknown")
         content = escape(var.get("content", "")[:100])
         lines.append(f"  {i}. [{pattern}] [{pillar}] est: {est}")
         lines.append(f'     "{content}..."')

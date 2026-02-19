@@ -1,5 +1,7 @@
 """Content generation and ranking models."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -10,9 +12,9 @@ class PostVariant(BaseModel):
     pattern_used: str = Field(description="Name of the content pattern used")
     pillar: str = Field(description="Content pillar this post belongs to")
     hook_type: str = Field(description="Type of hook used")
-    estimated_engagement: str = Field(
+    estimated_engagement: Literal["low", "medium", "high"] = Field(
         default="medium",
-        description="Estimated engagement level: low, medium, high",
+        description="Estimated engagement level",
     )
     reasoning: str = Field(
         default="",

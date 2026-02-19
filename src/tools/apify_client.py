@@ -1,11 +1,17 @@
 """Apify wrapper for scraping Threads viral content."""
 
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from apify_client import ApifyClientAsync
 
 from src.models.research import ViralPost
+
+if TYPE_CHECKING:
+    from config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +21,15 @@ APIFY_TIMEOUT_SECS = 120
 class ThreadsScraper(ABC):
     @abstractmethod
     async def scrape_viral_posts(self, hashtags: list[str], limit: int = 20) -> list[ViralPost]: ...
+
+    async def close(self) -> None:
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        await self.close()
 
 
 class MockThreadsScraper(ThreadsScraper):
@@ -71,31 +86,52 @@ class RealThreadsScraper(ThreadsScraper):
             "sortBy": "popular",
         }
         logger.info(f"Starting Apify Threads scraper (timeout={APIFY_TIMEOUT_SECS}s)")
-        run = await self.client.actor("apify/threads-scraper").call(
-            run_input=run_input,
-            timeout_secs=APIFY_TIMEOUT_SECS,
-        )
-        items = []
-        async for item in self.client.dataset(run["defaultDatasetId"]).iterate_items():
-            items.append(
-                ViralPost(
-                    platform="threads",
-                    author=item.get("author", {}).get("username", "unknown"),
-                    content=item.get("text", ""),
-                    url=item.get("url", ""),
-                    likes=item.get("likes", 0),
-                    replies=item.get("replies", 0),
-                    reposts=item.get("reposts", 0),
-                    views=item.get("views", 0),
-                    engagement_rate=0.0,
-                    topic_tags=[],
-                )
+        try:
+            run = await self.client.actor("apify/threads-scraper").call(
+                run_input=run_input,
+                timeout_secs=APIFY_TIMEOUT_SECS,
             )
+        except Exception:
+            logger.exception("Apify actor call failed")
+            return []
+
+        dataset_id = run.get("defaultDatasetId")
+        if not dataset_id:
+            logger.error("Apify run did not return a dataset ID")
+            return []
+
+        items = []
+        try:
+            async for item in self.client.dataset(dataset_id).iterate_items():
+                items.append(
+                    ViralPost(
+                        platform="threads",
+                        author=item.get("author", {}).get("username", "unknown"),
+                        content=item.get("text", ""),
+                        url=item.get("url", ""),
+                        likes=item.get("likes", 0),
+                        replies=item.get("replies", 0),
+                        reposts=item.get("reposts", 0),
+                        views=item.get("views", 0),
+                        engagement_rate=0.0,
+                        topic_tags=[],
+                    )
+                )
+        except Exception:
+            logger.exception(
+                "Failed to iterate Apify dataset items (collected %d items before failure)",
+                len(items),
+            )
+
         logger.info(f"Apify scraper returned {len(items)} items")
         return items
 
+    async def close(self) -> None:
+        if hasattr(self.client, "_http_client"):
+            await self.client._http_client.aclose()
 
-def get_threads_scraper(settings) -> ThreadsScraper:
+
+def get_threads_scraper(settings: Settings) -> ThreadsScraper:
     """Factory: returns real scraper in production, mock in development."""
     if settings.is_production:
         if not settings.apify_api_token:

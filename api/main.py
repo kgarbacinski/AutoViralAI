@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from api.routes.config import router as config_router
 from api.routes.status import router as status_router
 from bot.dependencies import set_authorized_chat_id, set_knowledge_base, set_orchestrator
+from bot.handlers.commands import cancel_background_tasks
 from bot.telegram_bot import create_bot
 from bot.webhook import router as webhook_router, set_bot_app, set_webhook_secret
 from config.settings import get_settings
@@ -35,11 +36,8 @@ async def _init_niche_config(kb: KnowledgeBase) -> None:
 
     settings = get_settings()
     config_path = settings.niche_config_path
-    if config_path.exists():
-        with open(config_path) as f:
-            raw = yaml.safe_load(f)
-    else:
-        raw = {}
+
+    raw = yaml.safe_load(config_path.read_text()) if config_path.exists() else {}
 
     niche = AccountNiche(
         niche=raw.get("niche", "tech"),
@@ -80,6 +78,8 @@ async def lifespan(app: FastAPI):
 
     async with AsyncExitStack() as exit_stack:
         # 1. Persistence setup
+        if settings.is_production and not settings.postgres_uri:
+            raise RuntimeError("POSTGRES_URI is required in production mode")
         if settings.is_production:
             store = await exit_stack.enter_async_context(
                 create_postgres_store(settings.postgres_uri)
@@ -138,7 +138,8 @@ async def lifespan(app: FastAPI):
 
         # Shutdown
         logger.info("Shutting down agent...")
-        orchestrator.stop()
+        await cancel_background_tasks()
+        await orchestrator.stop()
 
         if bot_app:
             await bot_app.shutdown()

@@ -1,11 +1,18 @@
 """Reddit API wrapper using asyncpraw for viral content research."""
 
+from __future__ import annotations
+
+import asyncio
 import logging
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import asyncpraw
 
 from src.models.research import ViralPost
+
+if TYPE_CHECKING:
+    from config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +23,15 @@ class RedditResearcher(ABC):
         self, subreddits: list[str], query: str, limit: int = 20
     ) -> list[ViralPost]: ...
 
+    async def close(self) -> None:
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        await self.close()
+
 
 class MockRedditResearcher(RedditResearcher):
     """Mock for development - returns sample viral posts."""
@@ -23,7 +39,7 @@ class MockRedditResearcher(RedditResearcher):
     async def search_viral_posts(
         self, subreddits: list[str], query: str, limit: int = 20
     ) -> list[ViralPost]:
-        return [
+        mock_posts = [
             ViralPost(
                 platform="reddit",
                 author="u/techdev42",
@@ -85,6 +101,7 @@ class MockRedditResearcher(RedditResearcher):
                 topic_tags=["career", "hot_take"],
             ),
         ]
+        return mock_posts[:limit]
 
 
 class RealRedditResearcher(RedditResearcher):
@@ -100,44 +117,61 @@ class RealRedditResearcher(RedditResearcher):
     async def search_viral_posts(
         self, subreddits: list[str], query: str, limit: int = 20
     ) -> list[ViralPost]:
+        tasks = [self._search_subreddit(sub, query, limit) for sub in subreddits]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
         posts = []
-        for sub_name in subreddits:
-            try:
-                subreddit = await self._reddit.subreddit(sub_name)
-                async for submission in subreddit.search(
-                    query, sort="top", time_filter="week", limit=limit
-                ):
-                    if submission.score < 100:
-                        continue
-                    author_name = f"u/{submission.author.name}" if submission.author else "deleted"
-                    content = submission.selftext[:500] if submission.is_self else submission.title
-                    posts.append(
-                        ViralPost(
-                            platform="reddit",
-                            author=author_name,
-                            content=content,
-                            url=f"https://reddit.com{submission.permalink}",
-                            likes=submission.score,
-                            replies=submission.num_comments,
-                            topic_tags=[],
-                        )
-                    )
-            except Exception as e:
-                logger.error(f"Reddit search failed for r/{sub_name}: {e}")
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.error(f"Reddit search failed for r/{subreddits[i]}: {result}")
                 continue
+            posts.extend(result)
+        return posts
+
+    async def _search_subreddit(
+        self, sub_name: str, query: str, limit: int
+    ) -> list[ViralPost]:
+        """Search a single subreddit for viral posts."""
+        posts = []
+        subreddit = await self._reddit.subreddit(sub_name)
+        async for submission in subreddit.search(
+            query, sort="top", time_filter="week", limit=limit
+        ):
+            if submission.score < 100:
+                continue
+            author_name = f"u/{submission.author.name}" if submission.author else "deleted"
+            content = submission.selftext[:500] if submission.is_self else submission.title
+            posts.append(
+                ViralPost(
+                    platform="reddit",
+                    author=author_name,
+                    content=content,
+                    url=f"https://reddit.com{submission.permalink}",
+                    likes=submission.score,
+                    replies=submission.num_comments,
+                    topic_tags=[],
+                )
+            )
         return posts
 
     async def close(self) -> None:
         await self._reddit.close()
 
 
-def get_reddit_researcher(settings) -> RedditResearcher:
+def get_reddit_researcher(settings: Settings) -> RedditResearcher:
     """Factory: returns real client in production, mock in development."""
     if settings.is_production:
+        missing = []
         if not settings.reddit_client_id:
+            missing.append("REDDIT_CLIENT_ID")
+        if not settings.reddit_client_secret:
+            missing.append("REDDIT_CLIENT_SECRET")
+        if not settings.reddit_user_agent:
+            missing.append("REDDIT_USER_AGENT")
+        if missing:
             raise ValueError(
-                "REDDIT_CLIENT_ID is required in production. "
-                "Get it from https://www.reddit.com/prefs/apps"
+                f"{', '.join(missing)} required in production. "
+                "Get credentials from https://www.reddit.com/prefs/apps"
             )
         return RealRedditResearcher(
             client_id=settings.reddit_client_id,

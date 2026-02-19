@@ -16,17 +16,25 @@ from src.nodes.learning import update_knowledge_base
 from src.nodes.metrics import collect_metrics
 from src.nodes.strategy import adjust_strategy
 from src.store.knowledge_base import KnowledgeBase
-from src.tools.threads_api import get_threads_client
+from src.tools.threads_api import ThreadsClient, get_threads_client
 
 
-def build_learning_pipeline(settings: Settings, store) -> StateGraph:
-    """Build and compile the learning pipeline graph."""
+def build_learning_pipeline(
+    settings: Settings,
+    store,
+    threads_client: ThreadsClient | None = None,
+) -> StateGraph:
+    """Build the learning pipeline graph.
+
+    Accepts pre-created clients to enable reuse across cycles.
+    Falls back to creating new clients from settings if not provided.
+    """
     llm = ChatAnthropic(
         model=settings.llm_model,
         api_key=settings.anthropic_api_key,
         max_tokens=4096,
     )
-    threads_client = get_threads_client(settings)
+    threads_client = threads_client or get_threads_client(settings)
     kb = KnowledgeBase(store=store, account_id=settings.account_id)
 
     graph = StateGraph(LearningPipelineState)

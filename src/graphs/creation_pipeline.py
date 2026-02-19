@@ -26,23 +26,34 @@ from src.nodes.publishing import publish_post, schedule_metrics_check
 from src.nodes.ranking import rank_and_select
 from src.nodes.research import research_viral_content
 from src.store.knowledge_base import KnowledgeBase
-from src.tools.apify_client import get_threads_scraper
+from src.tools.apify_client import ThreadsScraper, get_threads_scraper
 from src.tools.embeddings import EmbeddingClient
-from src.tools.hackernews_client import get_hackernews_client
-from src.tools.threads_api import get_threads_client
+from src.tools.hackernews_client import HackerNewsClient, get_hackernews_client
+from src.tools.threads_api import ThreadsClient, get_threads_client
 
 
-def build_creation_pipeline(settings: Settings, store) -> StateGraph:
-    """Build and compile the creation pipeline graph."""
+def build_creation_pipeline(
+    settings: Settings,
+    store,
+    threads_client: ThreadsClient | None = None,
+    hn: HackerNewsClient | None = None,
+    scraper: ThreadsScraper | None = None,
+    embedding_client: EmbeddingClient | None = None,
+) -> StateGraph:
+    """Build the creation pipeline graph.
+
+    Accepts pre-created clients to enable reuse across cycles.
+    Falls back to creating new clients from settings if not provided.
+    """
     llm = ChatAnthropic(
         model=settings.llm_model,
         api_key=settings.anthropic_api_key,
         max_tokens=4096,
     )
-    threads_client = get_threads_client(settings)
-    hn = get_hackernews_client(settings)
-    scraper = get_threads_scraper(settings)
-    embedding_client = EmbeddingClient()
+    threads_client = threads_client or get_threads_client(settings)
+    hn = hn or get_hackernews_client(settings)
+    scraper = scraper or get_threads_scraper(settings)
+    embedding_client = embedding_client or EmbeddingClient()
     kb = KnowledgeBase(store=store, account_id=settings.account_id)
 
     graph = StateGraph(CreationPipelineState)

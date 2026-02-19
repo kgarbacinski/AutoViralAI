@@ -31,7 +31,15 @@ async def human_approval(state: CreationPipelineState) -> dict:
 
     decision = interrupt(approval_payload)
 
+    if not isinstance(decision, dict):
+        return {
+            "human_decision": "reject",
+            "errors": [f"human_approval: Invalid decision type: {type(decision).__name__}"],
+        }
+
     human_decision = decision.get("decision", "reject")
+    if human_decision not in ("approve", "edit", "reject"):
+        human_decision = "reject"
     human_edited = decision.get("edited_content")
     human_feedback = decision.get("feedback")
 
@@ -39,7 +47,7 @@ async def human_approval(state: CreationPipelineState) -> dict:
         selected = {**selected, "content": human_edited}
 
     return {
-        "selected_post": selected if human_decision != "reject" else state.get("selected_post"),
+        "selected_post": selected if human_decision != "reject" else None,
         "human_decision": human_decision,
         "human_edited_content": human_edited,
         "human_feedback": human_feedback,

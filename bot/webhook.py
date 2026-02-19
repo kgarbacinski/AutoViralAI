@@ -1,8 +1,9 @@
 """Webhook endpoint for Telegram bot integration with FastAPI."""
 
+import hmac
 import logging
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from telegram import Update
 
 logger = logging.getLogger(__name__)
@@ -27,14 +28,14 @@ def set_webhook_secret(secret: str):
 async def telegram_webhook(request: Request):
     """Receive Telegram webhook updates."""
     if _bot_app is None:
-        return {"error": "Bot not initialized"}
+        raise HTTPException(status_code=503, detail="Bot not initialized")
 
-    # Verify webhook secret token
+    # Verify webhook secret token (constant-time comparison)
     if _webhook_secret:
         token = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-        if token != _webhook_secret:
+        if not hmac.compare_digest(token, _webhook_secret):
             logger.warning("Webhook request with invalid secret token")
-            return {"error": "Unauthorized"}
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
     data = await request.json()
     update = Update.de_json(data, _bot_app.bot)

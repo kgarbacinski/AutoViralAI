@@ -1,19 +1,21 @@
 """Configuration endpoints."""
 
 import yaml
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 
+from api.routes import verify_api_key
 from config.settings import get_settings
 
 router = APIRouter()
 
 
 @router.get("/config/niche")
-async def get_niche_config():
+async def get_niche_config(_=Depends(verify_api_key)):
     """Get current niche configuration."""
     settings = get_settings()
     config_path = settings.niche_config_path
-    if config_path.exists():
-        with open(config_path) as f:
-            return yaml.safe_load(f)
-    return {"error": "Niche config not found"}
+
+    if not config_path.exists():
+        raise HTTPException(status_code=404, detail="Niche config not found")
+
+    return yaml.safe_load(config_path.read_text())

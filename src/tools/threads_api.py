@@ -1,12 +1,18 @@
 """Threads API wrapper with mock implementation for development."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import random
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 import httpx
+
+if TYPE_CHECKING:
+    from config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +37,15 @@ class ThreadsClient(ABC):
     async def get_user_posts(self, limit: int = 25) -> list[dict]:
         """Get recent posts from the authenticated user."""
         ...
+
+    async def close(self) -> None:
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        await self.close()
 
 
 class MockThreadsClient(ThreadsClient):
@@ -141,16 +156,21 @@ class RealThreadsClient(ThreadsClient):
                 },
             )
             resp.raise_for_status()
-            status = resp.json().get("status")
+            data = resp.json()
+            status = data.get("status")
             logger.info(f"Container {container_id} status: {status} (attempt {attempt})")
 
             if status == "FINISHED":
                 return
             if status == "ERROR":
-                error_msg = resp.json().get("error_message", "unknown error")
+                error_msg = data.get("error_message", "unknown error")
                 raise RuntimeError(f"Threads container {container_id} failed: {error_msg}")
 
             await asyncio.sleep(interval)
+
+        raise TimeoutError(
+            f"Threads container {container_id} did not finish after {max_attempts} attempts"
+        )
 
     async def get_post_metrics(self, threads_id: str) -> dict:
         resp = await self._client.get(
@@ -162,7 +182,13 @@ class RealThreadsClient(ThreadsClient):
         )
         resp.raise_for_status()
         data = resp.json().get("data", [])
-        metrics = {item["name"]: item["values"][0]["value"] for item in data}
+        metrics = {}
+        for item in data:
+            name = item.get("name")
+            values = item.get("values", [])
+            if name and values:
+                metrics[name] = values[0].get("value", 0)
+
         views = metrics.get("views", 0)
         total = sum(metrics.get(k, 0) for k in ["likes", "replies", "reposts", "quotes"])
         metrics["engagement_rate"] = total / views if views > 0 else 0
@@ -185,7 +211,7 @@ class RealThreadsClient(ThreadsClient):
         await self._client.aclose()
 
 
-def get_threads_client(settings) -> ThreadsClient:
+def get_threads_client(settings: Settings) -> ThreadsClient:
     """Factory: returns real client in production, mock in development."""
     if settings.is_production:
         if not settings.threads_access_token:

@@ -17,17 +17,19 @@ def test_cosine_similarity_orthogonal():
     assert cosine_similarity(a, b) == pytest.approx(0.0)
 
 
-def test_embeddings():
+@pytest.mark.asyncio
+async def test_embeddings():
     client = EmbeddingClient()
-    embeddings = client.embed_texts(["hello", "world"])
+    embeddings = await client.embed_texts(["hello", "world"])
     assert len(embeddings) == 2
     assert len(embeddings[0]) == 32
 
 
-def test_embeddings_deterministic():
+@pytest.mark.asyncio
+async def test_embeddings_deterministic():
     client = EmbeddingClient()
-    emb1 = client.embed_text("test")
-    emb2 = client.embed_text("test")
+    emb1 = await client.embed_text("test")
+    emb2 = await client.embed_text("test")
     assert emb1 == emb2
 
 

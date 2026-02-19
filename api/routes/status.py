@@ -1,12 +1,14 @@
 """Status and health endpoints."""
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
+
+from api.routes import verify_api_key
 
 router = APIRouter()
 
 
 @router.get("/status")
-async def get_status(request: Request):
+async def get_status(request: Request, _=Depends(verify_api_key)):
     """Get agent status overview with live orchestrator data."""
     orchestrator = getattr(request.app.state, "orchestrator", None)
 
@@ -24,12 +26,12 @@ async def get_status(request: Request):
         "status": "running",
         "pipelines": {
             "creation": {
-                "cycles_completed": orchestrator._creation_cycle,
+                "cycles_completed": orchestrator.creation_cycle,
                 "pending_approvals": len(pending),
                 "pending_thread_ids": list(pending.keys()),
             },
             "learning": {
-                "cycles_completed": orchestrator._learning_cycle,
+                "cycles_completed": orchestrator.learning_cycle,
             },
         },
         "scheduled_jobs": jobs,

@@ -52,7 +52,9 @@ class PatternPerformance(BaseModel):
     avg_engagement_rate: float = 0.0
     avg_follower_delta: float = 0.0
     best_post_id: str | None = None
+    best_engagement_rate: float | None = None
     worst_post_id: str | None = None
+    worst_engagement_rate: float | None = None
     last_used_at: str | None = None
 
     @property

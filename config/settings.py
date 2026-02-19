@@ -1,5 +1,6 @@
 """Application settings using pydantic-settings."""
 
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
@@ -26,12 +27,18 @@ class Settings(BaseSettings):
 
     apify_api_token: str = ""
 
+    reddit_client_id: str = ""
+    reddit_client_secret: str = ""
+    reddit_user_agent: str = "autoviralai/1.0"
+
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
     telegram_webhook_url: str = ""
     telegram_webhook_secret: str = ""
 
-    postgres_uri: str = "postgresql://user:password@localhost:5432/agent_db"
+    postgres_uri: str = ""
+
+    api_secret_key: str = ""
 
     langsmith_api_key: str = ""
     langsmith_project: str = "autoviralai"
@@ -47,5 +54,6 @@ class Settings(BaseSettings):
         return self.env == "production"
 
 
+@lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()

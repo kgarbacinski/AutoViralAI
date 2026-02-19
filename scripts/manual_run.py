@@ -34,11 +34,7 @@ async def init_niche_config(kb: KnowledgeBase) -> None:
 
     settings = get_settings()
     config_path = settings.niche_config_path
-    if config_path.exists():
-        with open(config_path) as f:
-            raw = yaml.safe_load(f)
-    else:
-        raw = {}
+    raw = yaml.safe_load(config_path.read_text()) if config_path.exists() else {}
 
     niche = AccountNiche(
         niche=raw.get("niche", "tech"),

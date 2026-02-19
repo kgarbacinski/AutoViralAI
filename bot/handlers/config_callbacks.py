@@ -29,7 +29,7 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
     """Handle cfg:* callback queries for configuration changes."""
     query = update.callback_query
     authorized = get_authorized_chat_id()
-    if authorized and query.message.chat.id != authorized:
+    if not authorized or query.message.chat.id != authorized:
         await query.answer("Unauthorized.", show_alert=True)
         return
 
@@ -179,19 +179,28 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
                 "Jobs have been rescheduled."
             )
 
-    except Exception as e:
-        logger.error(f"Config update failed: {e}")
-        await query.edit_message_text(f"Failed to update config: {e}")
+    except Exception:
+        logger.exception("Config update failed")
+        await query.edit_message_text("Failed to update config. Check server logs for details.")
 
 
 async def handle_config_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle text input for config settings (e.g., avoid topic)."""
+    authorized = get_authorized_chat_id()
+    if not authorized or update.message.chat.id != authorized:
+        return
+
     input_type = context.user_data.get("awaiting_config_input")
     if not input_type:
         return
 
-    del context.user_data["awaiting_config_input"]
     text = update.message.text.strip()
+
+    if len(text) > 200:
+        await update.message.reply_text("Input too long (max 200 characters). Try again.")
+        return
+
+    del context.user_data["awaiting_config_input"]
 
     kb = get_knowledge_base()
     if not kb:
@@ -207,6 +216,6 @@ async def handle_config_text_input(update: Update, context: ContextTypes.DEFAULT
                 await update.message.reply_text(
                     f"Added '{text}' to avoid topics.\nCurrent: {', '.join(niche.avoid_topics)}"
                 )
-        except Exception as e:
-            logger.error(f"Failed to add avoid topic: {e}")
-            await update.message.reply_text(f"Failed: {e}")
+        except Exception:
+            logger.exception("Failed to add avoid topic")
+            await update.message.reply_text("Failed to add topic. Check server logs for details.")

@@ -1,5 +1,7 @@
 """Performance analysis node - LLM analyzes what's working and what's not."""
 
+import logging
+
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
@@ -7,6 +9,8 @@ from pydantic import BaseModel, Field
 from src.models.state import LearningPipelineState
 from src.prompts.analysis_prompts import ANALYZE_PERFORMANCE_SYSTEM, ANALYZE_PERFORMANCE_USER
 from src.store.knowledge_base import KnowledgeBase
+
+logger = logging.getLogger(__name__)
 
 
 class PerformanceAnalysis(BaseModel):
@@ -66,17 +70,24 @@ async def analyze_performance(
 
     structured_llm = llm.with_structured_output(PerformanceAnalysis)
 
-    result = await structured_llm.ainvoke(
-        [
-            SystemMessage(content=ANALYZE_PERFORMANCE_SYSTEM),
-            HumanMessage(
-                content=ANALYZE_PERFORMANCE_USER.format(
-                    posts_with_metrics=metrics_text,
-                    pattern_performance=perf_text,
-                    current_strategy=strategy_text,
-                )
-            ),
-        ]
-    )
+    try:
+        result = await structured_llm.ainvoke(
+            [
+                SystemMessage(content=ANALYZE_PERFORMANCE_SYSTEM),
+                HumanMessage(
+                    content=ANALYZE_PERFORMANCE_USER.format(
+                        posts_with_metrics=metrics_text,
+                        pattern_performance=perf_text,
+                        current_strategy=strategy_text,
+                    )
+                ),
+            ]
+        )
+    except Exception as e:
+        logger.exception("LLM call failed in analyze_performance")
+        return {
+            "performance_analysis": None,
+            "errors": [f"analyze_performance: LLM call failed: {e}"],
+        }
 
     return {"performance_analysis": result.model_dump()}

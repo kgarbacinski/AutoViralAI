@@ -27,6 +27,8 @@ async def collect_metrics(
     for post in pending:
         if post.scheduled_metrics_check:
             check_time = datetime.fromisoformat(post.scheduled_metrics_check)
+            if check_time.tzinfo is None:
+                check_time = check_time.replace(tzinfo=timezone.utc)
             if now < check_time:
                 continue
 
@@ -37,6 +39,8 @@ async def collect_metrics(
             continue
 
         publish_time = datetime.fromisoformat(post.published_at)
+        if publish_time.tzinfo is None:
+            publish_time = publish_time.replace(tzinfo=timezone.utc)
         hours_elapsed = (now - publish_time).total_seconds() / 3600
 
         metrics = PostMetrics(
@@ -68,5 +72,5 @@ async def collect_metrics(
     return {
         "posts_to_check": [p.model_dump() for p in pending],
         "collected_metrics": [m.model_dump() for m in collected],
-        "errors": errors if errors else [],
+        "errors": errors,
     }

@@ -1,5 +1,7 @@
 """Strategy adjustment node - LLM synthesizes updated strategy from learnings."""
 
+import logging
+
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -7,6 +9,8 @@ from src.models.state import LearningPipelineState
 from src.models.strategy import ContentStrategy
 from src.prompts.strategy_prompts import ADJUST_STRATEGY_SYSTEM, ADJUST_STRATEGY_USER
 from src.store.knowledge_base import KnowledgeBase
+
+logger = logging.getLogger(__name__)
 
 
 async def adjust_strategy(
@@ -48,22 +52,31 @@ async def adjust_strategy(
 
     structured_llm = llm.with_structured_output(ContentStrategy)
 
-    new_strategy = await structured_llm.ainvoke(
-        [
-            SystemMessage(content=ADJUST_STRATEGY_SYSTEM),
-            HumanMessage(
-                content=ADJUST_STRATEGY_USER.format(
-                    analysis=analysis_text,
-                    current_strategy=strategy_text,
-                    all_pattern_performance=perf_text,
-                    niche_config=niche_text,
-                )
-            ),
-        ]
-    )
+    try:
+        new_strategy = await structured_llm.ainvoke(
+            [
+                SystemMessage(content=ADJUST_STRATEGY_SYSTEM),
+                HumanMessage(
+                    content=ADJUST_STRATEGY_USER.format(
+                        analysis=analysis_text,
+                        current_strategy=strategy_text,
+                        all_pattern_performance=perf_text,
+                        niche_config=niche_text,
+                    )
+                ),
+            ]
+        )
+    except Exception as e:
+        logger.exception("LLM call failed in adjust_strategy")
+        return {
+            "new_strategy": None,
+            "errors": [f"adjust_strategy: LLM call failed: {e}"],
+        }
 
-    new_strategy.iteration = current_strategy.iteration + 1
+    strategy_data = new_strategy.model_dump()
+    strategy_data["iteration"] = current_strategy.iteration + 1
+    final_strategy = ContentStrategy.model_validate(strategy_data)
 
-    await kb.save_strategy(new_strategy)
+    await kb.save_strategy(final_strategy)
 
-    return {"new_strategy": new_strategy.model_dump()}
+    return {"new_strategy": final_strategy.model_dump()}

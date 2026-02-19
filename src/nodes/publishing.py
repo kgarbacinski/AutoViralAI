@@ -1,11 +1,14 @@
 """Publishing node - publishes approved posts to Threads."""
 
+import logging
 from datetime import datetime, timedelta, timezone
 
 from src.models.publishing import PublishedPost
 from src.models.state import CreationPipelineState
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.threads_api import ThreadsClient
+
+logger = logging.getLogger(__name__)
 
 
 async def publish_post(
@@ -37,11 +40,11 @@ async def publish_post(
             "errors": [f"publish_post: Failed to publish: {e}"],
         }
 
-    follower_count = 0
+    follower_count = state.get("current_follower_count", 0)
     try:
         follower_count = await threads_client.get_follower_count()
     except Exception:
-        pass
+        logger.warning("Failed to fetch follower count at publish time, using state value")
 
     now = datetime.now(timezone.utc)
     published = PublishedPost(

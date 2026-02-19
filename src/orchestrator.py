@@ -1,5 +1,6 @@
 """Orchestrator - schedules creation and learning pipeline runs."""
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -13,7 +14,9 @@ from src.graphs.learning_pipeline import build_learning_pipeline
 from src.persistence import create_checkpointer, create_store
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.apify_client import get_threads_scraper
+from src.tools.embeddings import EmbeddingClient
 from src.tools.hackernews_client import get_hackernews_client
+from src.tools.threads_api import get_threads_client
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +40,17 @@ class PipelineOrchestrator:
         self._scheduler = AsyncIOScheduler()
         self._creation_cycle = 0
         self._learning_cycle = 0
+        self._cycle_lock = asyncio.Lock()
         # thread_id -> {"compiled": graph, "config": config, "state_snapshot": state}
         self._pending_interrupts: dict[str, dict] = {}
         self._paused = False
         self.kb = KnowledgeBase(store=self.store, account_id=self.settings.account_id)
+
+        # Long-lived clients — created once, reused across cycles, closed in stop()
+        self._threads_client = get_threads_client(self.settings)
+        self._hn_client = get_hackernews_client(self.settings)
+        self._scraper = get_threads_scraper(self.settings)
+        self._embedding_client = EmbeddingClient()
 
     def setup_schedules(self) -> None:
         """Configure APScheduler jobs for both pipelines."""
@@ -67,13 +77,23 @@ class PipelineOrchestrator:
 
     async def run_creation_pipeline(self) -> dict | None:
         """Execute a single creation pipeline cycle."""
-        self._creation_cycle += 1
-        logger.info(f"Starting creation pipeline cycle #{self._creation_cycle}")
+        async with self._cycle_lock:
+            self._creation_cycle += 1
+            cycle = self._creation_cycle
 
-        graph = build_creation_pipeline(self.settings, self.store)
+        logger.info(f"Starting creation pipeline cycle #{cycle}")
+
+        graph = build_creation_pipeline(
+            self.settings,
+            self.store,
+            threads_client=self._threads_client,
+            hn=self._hn_client,
+            scraper=self._scraper,
+            embedding_client=self._embedding_client,
+        )
         compiled = graph.compile(checkpointer=self.checkpointer)
 
-        thread_id = f"creation_{self._creation_cycle}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        thread_id = f"creation_{cycle}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
         config = {"configurable": {"thread_id": thread_id}}
 
         initial_state = {
@@ -89,7 +109,7 @@ class PipelineOrchestrator:
             "human_edited_content": None,
             "human_feedback": None,
             "published_post": None,
-            "cycle_number": self._creation_cycle,
+            "cycle_number": cycle,
             "errors": [],
         }
 
@@ -103,7 +123,7 @@ class PipelineOrchestrator:
             state = await compiled.aget_state(config)
             if state.next and "human_approval" in state.next:
                 logger.info(
-                    f"Creation cycle #{self._creation_cycle} paused at human_approval (thread={thread_id})"
+                    f"Creation cycle #{cycle} paused at human_approval (thread={thread_id})"
                 )
                 self._pending_interrupts[thread_id] = {
                     "compiled": compiled,
@@ -112,10 +132,10 @@ class PipelineOrchestrator:
                 await self._send_approval_telegram(thread_id, state)
                 return result
 
-            logger.info(f"Creation pipeline cycle #{self._creation_cycle} completed")
+            logger.info(f"Creation pipeline cycle #{cycle} completed")
             return result
         except Exception as e:
-            logger.error(f"Creation pipeline cycle #{self._creation_cycle} failed: {e}")
+            logger.error(f"Creation pipeline cycle #{cycle} failed: {e}")
             raise
 
     async def _send_approval_telegram(self, thread_id: str, state) -> None:
@@ -168,7 +188,14 @@ class PipelineOrchestrator:
         if not pending:
             # Reconstruct from persistent checkpointer (survives container restarts)
             logger.info(f"No in-memory interrupt for {thread_id}, reconstructing from checkpointer")
-            graph = build_creation_pipeline(self.settings, self.store)
+            graph = build_creation_pipeline(
+                self.settings,
+                self.store,
+                threads_client=self._threads_client,
+                hn=self._hn_client,
+                scraper=self._scraper,
+                embedding_client=self._embedding_client,
+            )
             compiled = graph.compile(checkpointer=self.checkpointer)
             config = {"configurable": {"thread_id": thread_id}}
 
@@ -261,15 +288,22 @@ class PipelineOrchestrator:
 
     async def run_learning_pipeline(self) -> dict | None:
         """Execute a single learning pipeline cycle."""
-        self._learning_cycle += 1
-        logger.info(f"Starting learning pipeline cycle #{self._learning_cycle}")
+        async with self._cycle_lock:
+            self._learning_cycle += 1
+            cycle = self._learning_cycle
 
-        graph = build_learning_pipeline(self.settings, self.store)
+        logger.info(f"Starting learning pipeline cycle #{cycle}")
+
+        graph = build_learning_pipeline(
+            self.settings,
+            self.store,
+            threads_client=self._threads_client,
+        )
         compiled = graph.compile(checkpointer=self.checkpointer)
 
         config = {
             "configurable": {
-                "thread_id": f"learning_{self._learning_cycle}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+                "thread_id": f"learning_{cycle}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             }
         }
 
@@ -279,7 +313,7 @@ class PipelineOrchestrator:
             "performance_analysis": None,
             "pattern_updates": [],
             "new_strategy": None,
-            "cycle_number": self._learning_cycle,
+            "cycle_number": cycle,
             "errors": [],
         }
 
@@ -289,25 +323,24 @@ class PipelineOrchestrator:
                 result = event
                 logger.info(f"Learning pipeline event: {list(event.keys())}")
 
-            logger.info(f"Learning pipeline cycle #{self._learning_cycle} completed")
+            logger.info(f"Learning pipeline cycle #{cycle} completed")
             return result
         except Exception as e:
-            logger.error(f"Learning pipeline cycle #{self._learning_cycle} failed: {e}")
+            logger.error(f"Learning pipeline cycle #{cycle} failed: {e}")
             raise
 
     async def run_research_only(self) -> list[dict]:
         """Run only the research step standalone (without full pipeline)."""
         from src.nodes.research import research_viral_content
 
-        hn = get_hackernews_client(self.settings)
-        scraper = get_threads_scraper(self.settings)
-
         minimal_state = {
             "viral_posts": [],
             "errors": [],
         }
 
-        result = await research_viral_content(minimal_state, hn=hn, scraper=scraper, kb=self.kb)
+        result = await research_viral_content(
+            minimal_state, hn=self._hn_client, scraper=self._scraper, kb=self.kb
+        )
         return result.get("viral_posts", [])
 
     @property
@@ -374,6 +407,9 @@ class PipelineOrchestrator:
             except (ValueError, IndexError):
                 logger.warning(f"Skipping invalid posting time: {time_str}")
                 continue
+            if not (0 <= hour <= 23 and 0 <= minute <= 59):
+                logger.warning(f"Skipping out-of-range posting time: {time_str}")
+                continue
             self._scheduler.add_job(
                 self.run_creation_pipeline,
                 "cron",
@@ -392,7 +428,12 @@ class PipelineOrchestrator:
         self._scheduler.start()
         logger.info("Orchestrator started with scheduled jobs")
 
-    def stop(self) -> None:
-        """Stop the scheduler."""
+    async def stop(self) -> None:
+        """Stop the scheduler and close all HTTP clients."""
         self._scheduler.shutdown()
+        for client in (self._threads_client, self._hn_client, self._scraper):
+            try:
+                await client.close()
+            except Exception:
+                logger.exception(f"Error closing {type(client).__name__}")
         logger.info("Orchestrator stopped")
