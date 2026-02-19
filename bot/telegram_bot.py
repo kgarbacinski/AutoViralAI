@@ -18,6 +18,7 @@ from bot.handlers.approval import (
 )
 from bot.handlers.status import handle_status_command
 from bot.messages import (
+    APPROVAL_ALTERNATIVE_MSG,
     APPROVAL_ALTERNATIVES_HEADER,
     APPROVAL_BEST_TIME,
     APPROVAL_PATTERN,
@@ -340,11 +341,8 @@ async def send_approval_request(
     if alternatives:
         message += APPROVAL_ALTERNATIVES_HEADER
         for i, alt in enumerate(alternatives, 1):
-            alt_content = escape(alt.get("content", "")[:150])
             alt_pattern = escape(alt.get("pattern_used", "?"))
-            message += (
-                f"\n{i}. [{alt_pattern} | {alt.get('composite_score', 0):.1f}]\n{alt_content}...\n"
-            )
+            message += f"  {i}. [{alt_pattern} | {alt.get('composite_score', 0):.1f}]\n"
 
     keyboard = [
         [
@@ -357,16 +355,6 @@ async def send_approval_request(
         ],
     ]
 
-    for i, _alt in enumerate(alternatives):
-        keyboard.append(
-            [
-                InlineKeyboardButton(
-                    f"Use Alt {i + 1}",
-                    callback_data=f"alt:{thread_id}:{i}",
-                )
-            ]
-        )
-
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await app.bot.send_message(
@@ -375,3 +363,34 @@ async def send_approval_request(
         reply_markup=reply_markup,
         parse_mode="HTML",
     )
+
+    for i, alt in enumerate(alternatives):
+        alt_content = escape(alt.get("content", ""))
+        alt_pattern = escape(alt.get("pattern_used", "?"))
+        alt_score = alt.get("composite_score", 0)
+        alt_message = APPROVAL_ALTERNATIVE_MSG.format(
+            index=i + 1,
+            cycle=cycle_number,
+            pattern=alt_pattern,
+            score=alt_score,
+            content=alt_content,
+        )
+        alt_keyboard = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        f"Use Alt {i + 1}",
+                        callback_data=f"alt:{thread_id}:{i}",
+                    )
+                ]
+            ]
+        )
+        try:
+            await app.bot.send_message(
+                chat_id=chat_id,
+                text=alt_message,
+                reply_markup=alt_keyboard,
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error("Failed to send alternative %d: %s", i + 1, e)

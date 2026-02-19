@@ -171,5 +171,12 @@ APPROVAL_PATTERN_WITH_RATIONALE = "🧩 Pattern: <b>{pattern}</b> — {rationale
 APPROVAL_BEST_TIME = "⏰ Best publish time: {time}\n"
 APPROVAL_RECENT_POSTS_HEADER = "\n📈 <b>Recent posts:</b>\n"
 APPROVAL_ALTERNATIVES_HEADER = "\n<b>Alternatives:</b>\n"
+APPROVAL_ALTERNATIVE_MSG = (
+    "💡 <b>Alternative {index}</b> (Cycle #{cycle})\n"
+    "🧩 {pattern} | 🎯 {score:.1f}/10\n\n"
+    "━━━━━━━━━━━━━━━━━━━━\n"
+    "{content}\n"
+    "━━━━━━━━━━━━━━━━━━━━"
+)
 ENRICHMENT_NEW_PATTERN = "New pattern (no history yet)"
 ENRICHMENT_PATTERN_RATIONALE = "{avg_er:.2%} avg ER over {times_used} uses"
