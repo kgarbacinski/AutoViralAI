@@ -22,6 +22,14 @@ publishes it, measures engagement — and <strong>rewrites its own strategy base
 
 ---
 
+<!-- Pipeline in action: research → patterns → generation → ranking → approval -->
+<div align="center">
+<img src="docs/screenshots/pipeline-report.png" alt="Pipeline report: research results, extracted patterns, generated variants and ranking" width="48%">
+<img src="docs/screenshots/approval-message.png" alt="Approval message with score, alternatives, and approve/reject buttons" width="48%">
+</div>
+
+<br/>
+
 **The problem:** You know you should be posting consistently. You know what kind of content performs. But researching trends, writing posts, tracking what works, adjusting strategy — it's a full-time job.
 
 **The solution:** AutoViralAI does the entire loop autonomously. It doesn't just post — it *learns*. Every day it gets a little better at understanding what your audience actually engages with.
@@ -218,31 +226,13 @@ New patterns get a **5.0 exploration bonus** — the system balances exploitatio
 
 ### Human-in-the-Loop
 
-The agent never posts without your approval. Before the approval message, you get a **full pipeline report** showing what each agent did — research results, extracted patterns, generated variants, and ranking breakdown. Then:
+The agent never posts without your approval. Before the approval message, you get a **full pipeline report** showing what each agent did — research results, extracted patterns, generated variants, and ranking breakdown.
 
-```
-┌──────────────────────────────────────────┐
-│  Telegram Bot                            │
-│                                          │
-│  New Post for Approval (Cycle #7)        │
-│  Followers: 43                           │
-│  ─────────────────────────────           │
-│  Hot take: 90% of "clean code"           │
-│  advice makes your code slower.          │
-│  ─────────────────────────────           │
-│  Score: 7.8/10 (+1.2 vs avg 6.6)        │
-│  Pattern: contrarian_hot_take — 4.2% ER  │
-│  Best publish time: 08:00, 12:30         │
-│                                          │
-│  Recent posts:                           │
-│   1. 3.50% ER | 42L 5R | "Most devs..." │
-│   2. 2.10% ER | 28L 3R | "Docker is..." │
-│                                          │
-│  [Approve]  [Reject]                     │
-│  [Edit]     [Publish Later]              │
-│  [Use Alt 1]  [Use Alt 2]               │
-└──────────────────────────────────────────┘
-```
+<!-- /force — pipeline report (research, patterns, generation, ranking) + approval message -->
+<div align="center">
+<img src="docs/screenshots/pipeline-report.png" alt="Pipeline report showing research results, extracted patterns, generated variants and ranking breakdown" width="48%">
+<img src="docs/screenshots/approval-message.png" alt="Approval message with score, pattern, buttons: Approve, Reject, Edit, Publish Later" width="48%">
+</div>
 
 Built on LangGraph's `interrupt()` — the graph pauses, saves state, and resumes when you respond. Survives server restarts.
 
