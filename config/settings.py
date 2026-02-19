@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -68,7 +69,9 @@ class Settings(BaseSettings):
             if not self.postgres_uri:
                 missing.append("POSTGRES_URI")
             if not self.api_secret_key:
-                missing.append("API_SECRET_KEY")
+                logging.getLogger(__name__).warning(
+                    "API_SECRET_KEY not set — protected API routes will return 503"
+                )
             if not self.telegram_bot_token:
                 missing.append("TELEGRAM_BOT_TOKEN")
             if missing:
