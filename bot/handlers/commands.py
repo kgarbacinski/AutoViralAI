@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from datetime import datetime, timezone
 from html import escape
 
 from telegram import Update
@@ -231,6 +232,53 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
     _track_task(asyncio.create_task(_run_and_notify(), name="force_creation"))
 
 
+async def _build_learn_summary(kb) -> str:
+    """Build a detailed summary message after the learning pipeline finishes."""
+    if not kb:
+        return "Learning cycle completed. (Knowledge base not available)"
+
+    parts = []
+
+    try:
+        # Check pending posts — anything still waiting?
+        pending = await kb.get_pending_metrics_posts()
+        strategy = await kb.get_strategy()
+
+        if strategy.key_learnings:
+            parts.append("Learning cycle completed.\n")
+            parts.append("Key learnings:")
+            for learning in strategy.key_learnings[:5]:
+                parts.append(f"  - {learning}")
+            parts.append(f"\nStrategy iteration: {strategy.iteration}")
+        elif pending:
+            # Pipeline ran but metrics weren't ready yet
+            now = datetime.now(timezone.utc)
+            next_checks = []
+            for post in pending[:3]:
+                if post.scheduled_metrics_check:
+                    check_time = datetime.fromisoformat(post.scheduled_metrics_check)
+                    hours_left = max(0, (check_time - now).total_seconds() / 3600)
+                    preview = post.content[:50] + "..." if len(post.content) > 50 else post.content
+                    next_checks.append(f'  - "{preview}" ({hours_left:.0f}h left)')
+
+            parts.append("Learning cycle completed — no metrics ready yet.\n")
+            parts.append(f"Posts waiting for metrics check ({len(pending)}):")
+            parts.extend(next_checks)
+            parts.append("\nMetrics are collected 24h after publishing.")
+            parts.append("Run /learn again after the check time passes.")
+        else:
+            parts.append(
+                "Learning cycle completed — nothing to analyze.\n"
+                "No published posts are pending metrics collection.\n"
+                "Publish a post first, then wait 24h for /learn to gather insights."
+            )
+    except Exception as e:
+        logger.error(f"Failed to build learn summary: {e}")
+        parts.append(f"Learning cycle completed. (Summary error: {e})")
+
+    return "\n".join(parts)
+
+
 async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /learn — manually trigger the learning pipeline."""
     orchestrator = get_orchestrator()
@@ -246,21 +294,8 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
         try:
             await orchestrator.run_learning_pipeline()
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
-                # Send summary after completion
                 kb = get_knowledge_base()
-                summary = "Learning cycle completed."
-                if kb:
-                    try:
-                        strategy = await kb.get_strategy()
-                        parts = [summary]
-                        if strategy.key_learnings:
-                            parts.append("\nKey learnings:")
-                            for learning in strategy.key_learnings[:3]:
-                                parts.append(f"  - {learning}")
-                        parts.append(f"\nStrategy iteration: {strategy.iteration}")
-                        summary = "\n".join(parts)
-                    except Exception:
-                        pass
+                summary = await _build_learn_summary(kb)
                 await orchestrator.bot_app.bot.send_message(
                     chat_id=orchestrator.telegram_chat_id,
                     text=summary,
