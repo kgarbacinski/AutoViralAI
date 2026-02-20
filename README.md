@@ -4,6 +4,16 @@
 
 <div align="center">
 
+<a href="https://efektywniejsi.pl/">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/efektywniejsi-logo.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/efektywniejsi-logo-dark.png">
+    <img src="docs/screenshots/efektywniejsi-logo-dark.png" alt="Efektywniejsi.pl" height="60">
+  </picture>
+</a>
+
+<br/><br/>
+
 <img src="docs/screenshots/banner.png" alt="AutoViralAI Banner" width="100%">
 
 <br/>
