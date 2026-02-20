@@ -22,7 +22,7 @@ def build_learning_pipeline(
         model=settings.llm_model,
         api_key=settings.anthropic_api_key,
         max_tokens=4096,
-        max_retries=3,
+        max_retries=8,
     )
     threads_client = threads_client or get_threads_client(settings)
     kb = KnowledgeBase(store=store, account_id=settings.account_id)

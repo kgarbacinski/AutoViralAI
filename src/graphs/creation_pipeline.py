@@ -31,7 +31,7 @@ def build_creation_pipeline(
         model=settings.llm_model,
         api_key=settings.anthropic_api_key,
         max_tokens=4096,
-        max_retries=3,
+        max_retries=8,
     )
     threads_client = threads_client or get_threads_client(settings)
     hn = hn or get_hackernews_client(settings)
