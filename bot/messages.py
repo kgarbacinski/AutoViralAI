@@ -180,3 +180,11 @@ APPROVAL_ALTERNATIVE_MSG = (
 )
 ENRICHMENT_NEW_PATTERN = "New pattern (no history yet)"
 ENRICHMENT_PATTERN_RATIONALE = "{avg_er:.2%} avg ER over {times_used} uses"
+
+# --- Creation pipeline failure ---
+CREATION_PIPELINE_FAILED_NOTIFY = (
+    "❌ <b>Creation Pipeline Failed</b> (Cycle #{cycle})\n\n"
+    "Pipeline completed but could not generate a post.\n\n"
+    "<b>Errors:</b>\n{errors}\n\n"
+    "Next scheduled run: {next_run}"
+)

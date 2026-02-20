@@ -90,14 +90,15 @@ class RealThreadsScraper(ThreadsScraper):
         self.client = ApifyClientAsync(api_token)
 
     async def scrape_viral_posts(self, hashtags: list[str], limit: int = 20) -> list[ViralPost]:
+        query = " ".join(hashtags) if hashtags else "programming tech coding"
         run_input = {
-            "hashtags": hashtags,
-            "resultsLimit": limit,
-            "sortBy": "popular",
+            "query": query,
+            "sort": "Top",
+            "maxResults": limit,
         }
         logger.info("Starting Apify Threads scraper (timeout=%ds)", APIFY_TIMEOUT_SECS)
         try:
-            run = await self.client.actor("apify/threads-scraper").call(
+            run = await self.client.actor("burbn/threads-search-scraper").call(
                 run_input=run_input,
                 timeout_secs=APIFY_TIMEOUT_SECS,
             )
@@ -117,15 +118,25 @@ class RealThreadsScraper(ThreadsScraper):
         items = []
         try:
             async for item in self.client.dataset(dataset_id).iterate_items():
+                author_field = item.get("author")
+                if author_field is None:
+                    author_field = {}
+                username = (
+                    author_field.get("username", "unknown")
+                    if isinstance(author_field, dict)
+                    else str(author_field)
+                )
+                reposts_val = item.get("reposts")
+                reposts = reposts_val if reposts_val is not None else item.get("quotes", 0)
                 items.append(
                     ViralPost(
                         platform="threads",
-                        author=item.get("author", {}).get("username", "unknown"),
+                        author=username,
                         content=item.get("text", ""),
                         url=item.get("url", ""),
                         likes=item.get("likes", 0),
                         replies=item.get("replies", 0),
-                        reposts=item.get("reposts", 0),
+                        reposts=reposts,
                         views=item.get("views", 0),
                         engagement_rate=0.0,
                         topic_tags=[],

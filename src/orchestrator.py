@@ -5,7 +5,12 @@ from datetime import UTC, datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from langgraph.types import Command
 
-from bot.telegram_bot import build_enrichment_data, send_approval_request, send_pipeline_report
+from bot.telegram_bot import (
+    build_enrichment_data,
+    send_approval_request,
+    send_creation_failure,
+    send_pipeline_report,
+)
 from config.settings import Settings, get_settings
 from src.graphs.creation_pipeline import build_creation_pipeline
 from src.graphs.learning_pipeline import build_learning_pipeline
@@ -125,6 +130,11 @@ class PipelineOrchestrator:
                 await self._send_approval_telegram(thread_id, state)
                 return result
 
+            values = (state.values if state else None) or (result or {})
+            if not values.get("selected_post"):
+                errors = values.get("errors", [])
+                await self._send_creation_failure_telegram(cycle, errors)
+
             logger.info("Creation pipeline cycle #%d completed", cycle)
             return result
         except Exception as e:
@@ -166,6 +176,34 @@ class PipelineOrchestrator:
             logger.info("Approval request sent to Telegram for thread=%s", thread_id)
         except Exception as e:
             logger.error("Failed to send Telegram approval: %s", e)
+
+    async def _send_creation_failure_telegram(self, cycle: int, errors: list) -> None:
+        if not self.bot_app or not self.telegram_chat_id:
+            logger.warning("Cannot send failure notification: bot_app or chat_id not configured")
+            return
+
+        next_run_time = ""
+        try:
+            jobs = self._scheduler.get_jobs()
+            creation_jobs = [j for j in jobs if j.id.startswith("creation_") and j.next_run_time]
+            if creation_jobs:
+                soonest = min(creation_jobs, key=lambda j: j.next_run_time)
+                next_run_time = str(soonest.next_run_time)
+        except Exception:
+            logger.debug("Could not determine next run time", exc_info=True)
+
+        error_strings = [str(e) for e in errors]
+        try:
+            await send_creation_failure(
+                app=self.bot_app,
+                chat_id=self.telegram_chat_id,
+                cycle_number=cycle,
+                errors=error_strings,
+                next_run_time=next_run_time,
+            )
+            logger.info("Creation failure notification sent for cycle #%d", cycle)
+        except Exception as e:
+            logger.error("Failed to send creation failure notification: %s", e)
 
     async def resume_creation(self, thread_id: str, decision: dict) -> dict | None:
         pending = self._pending_interrupts.pop(thread_id, None)

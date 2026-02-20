@@ -27,6 +27,7 @@ from bot.messages import (
     APPROVAL_REQUEST_HEADER,
     APPROVAL_SCORE,
     APPROVAL_SCORE_WITH_AVG,
+    CREATION_PIPELINE_FAILED_NOTIFY,
     ENRICHMENT_NEW_PATTERN,
     ENRICHMENT_PATTERN_RATIONALE,
     HELP_TEXT,
@@ -394,3 +395,30 @@ async def send_approval_request(
             )
         except Exception as e:
             logger.error("Failed to send alternative %d: %s", i + 1, e)
+
+
+async def send_creation_failure(
+    app: Application,
+    chat_id: str,
+    cycle_number: int,
+    errors: list[str],
+    next_run_time: str = "",
+) -> None:
+    limited_errors = errors[:5]
+    if limited_errors:
+        error_text = "\n".join(f"• {escape(str(e))}" for e in limited_errors)
+    else:
+        error_text = "• No error details captured"
+    if len(errors) > 5:
+        error_text += f"\n... and {len(errors) - 5} more"
+
+    message = CREATION_PIPELINE_FAILED_NOTIFY.format(
+        cycle=cycle_number,
+        errors=error_text,
+        next_run=escape(next_run_time) if next_run_time else "check /schedule",
+    )
+
+    try:
+        await app.bot.send_message(chat_id=chat_id, text=message, parse_mode="HTML")
+    except Exception as e:
+        logger.error("Failed to send creation failure notification: %s", e)
