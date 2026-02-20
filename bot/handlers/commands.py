@@ -3,7 +3,8 @@ import logging
 from datetime import UTC, datetime
 from html import escape
 
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import TelegramError
 from telegram.ext import ContextTypes
 
 from bot.dependencies import get_knowledge_base, get_orchestrator
@@ -59,6 +60,7 @@ from bot.messages import (
     SCHEDULE_HEADER,
     SCHEDULE_NO_JOBS,
 )
+from src.exceptions import KnowledgeBaseError, PipelineError
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +123,7 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
             lines.append(METRICS_POSTS_TRACKED.format(count=len(metrics_history)))
         else:
             lines.append(METRICS_NONE)
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.error("Error fetching metrics: %s", e)
         lines.append(METRICS_ERROR)
 
@@ -136,7 +138,7 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
                     f"{p.effectiveness_score:.1f}/10 "
                     f"({p.times_used} uses, {p.avg_engagement_rate:.2%} ER)"
                 )
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.error("Error fetching patterns: %s", e)
 
     try:
@@ -145,7 +147,7 @@ async def handle_metrics_command(update: Update, context: ContextTypes.DEFAULT_T
             lines.append(METRICS_KEY_LEARNINGS_HEADER)
             for learning in strategy.key_learnings[:3]:
                 lines.append(f"  • {escape(learning)}")
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.error("Error fetching strategy: %s", e)
 
     await update.message.reply_text("\n".join(lines), parse_mode="HTML")
@@ -204,7 +206,7 @@ async def handle_schedule_command(update: Update, context: ContextTypes.DEFAULT_
                 lines.append(SCHEDULE_AI_TIMES_HEADER)
                 for t in strategy.optimal_posting_times:
                     lines.append(f"  {escape(t)}")
-        except Exception as e:
+        except KnowledgeBaseError as e:
             logger.error("Error fetching strategy for schedule: %s", e)
 
     await update.message.reply_text("\n".join(lines), parse_mode="HTML")
@@ -218,7 +220,7 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
 
     try:
         posts = await kb.get_recent_posts(limit=10)
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.error("Error fetching recent posts: %s", e)
         await update.message.reply_text(HISTORY_FETCH_ERROR)
         return
@@ -234,7 +236,7 @@ async def handle_history_command(update: Update, context: ContextTypes.DEFAULT_T
         metrics_history = await kb.get_metrics_history(limit=50)
         for m in metrics_history:
             metrics_map[m.threads_id] = m
-    except Exception:
+    except KnowledgeBaseError:
         metrics_map = {}
 
     for i, post in enumerate(posts[:10], 1):
@@ -281,7 +283,7 @@ async def handle_force_command(update: Update, context: ContextTypes.DEFAULT_TYP
     async def _run_and_notify():
         try:
             await orchestrator.run_creation_pipeline()
-        except Exception:
+        except PipelineError:
             logger.exception("Force creation pipeline failed")
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
@@ -325,7 +327,7 @@ async def _build_learn_summary(kb) -> str:
             parts.append(LEARN_RUN_AGAIN)
         else:
             parts.append(LEARN_NOTHING_TO_ANALYZE)
-    except Exception:
+    except KnowledgeBaseError:
         logger.exception("Failed to build learn summary")
         parts.append(LEARN_COMPLETED_SUMMARY_ERROR)
 
@@ -350,7 +352,7 @@ async def handle_learn_command(update: Update, context: ContextTypes.DEFAULT_TYP
                     chat_id=orchestrator.telegram_chat_id,
                     text=summary,
                 )
-        except Exception:
+        except (PipelineError, TelegramError):
             logger.exception("Learn command failed")
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
@@ -405,7 +407,7 @@ async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_
                     chat_id=orchestrator.telegram_chat_id,
                     text=text,
                 )
-        except Exception:
+        except (KnowledgeBaseError, TelegramError):
             logger.exception("Research command failed")
             if orchestrator.bot_app and orchestrator.telegram_chat_id:
                 await orchestrator.bot_app.bot.send_message(
@@ -417,8 +419,6 @@ async def handle_research_command(update: Update, context: ContextTypes.DEFAULT_
 
 
 async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
     kb = get_knowledge_base()
     if not kb:
         await update.message.reply_text(KB_NOT_AVAILABLE)
@@ -426,7 +426,7 @@ async def handle_config_command(update: Update, context: ContextTypes.DEFAULT_TY
 
     try:
         niche = await kb.get_niche_config()
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.error("Error fetching niche config: %s", e)
         await update.message.reply_text(CONFIG_FETCH_ERROR)
         return

@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 
 from src.models.publishing import PublishedPost
@@ -78,7 +79,9 @@ async def test_collect_metrics_api_failure(kb):
     await kb.add_pending_metrics(post)
 
     failing_client = AsyncMock()
-    failing_client.get_post_metrics = AsyncMock(side_effect=RuntimeError("API down"))
+    failing_client.get_post_metrics = AsyncMock(
+        side_effect=httpx.RequestError("API down", request=None)
+    )
 
     state: dict = {}
     result = await collect_metrics(state, threads_client=failing_client, kb=kb)

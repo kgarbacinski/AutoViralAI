@@ -1,6 +1,8 @@
 import logging
 from datetime import UTC, datetime
 
+import httpx
+
 from src.models.publishing import PostMetrics
 from src.models.state import LearningPipelineState
 from src.store.knowledge_base import KnowledgeBase
@@ -24,8 +26,8 @@ async def collect_metrics(
     current_followers = None
     try:
         current_followers = await threads_client.get_follower_count()
-    except Exception:
-        logger.warning("Failed to fetch follower count for metrics cycle", exc_info=True)
+    except (httpx.HTTPStatusError, httpx.RequestError) as e:
+        logger.warning("Failed to fetch follower count for metrics cycle: %s", e)
 
     for post in pending:
         try:
@@ -41,7 +43,7 @@ async def collect_metrics(
 
         try:
             raw_metrics = await threads_client.get_post_metrics(post.threads_id)
-        except Exception as e:
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
             logger.warning("Failed to collect metrics for %s", post.threads_id, exc_info=True)
             errors.append(f"collect_metrics: Failed for {post.threads_id}: {e}")
             continue

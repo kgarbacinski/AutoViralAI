@@ -1,9 +1,11 @@
 import asyncio
 import logging
 
+import anthropic
 from langchain_anthropic import ChatAnthropic
+from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from src.models.content import RankedPost
 from src.models.state import CreationPipelineState
@@ -74,7 +76,7 @@ async def rank_and_select(
                 ),
             ]
         )
-    except Exception as e:
+    except (anthropic.APIError, OutputParserException, ValidationError) as e:
         logger.exception("LLM call failed in rank_and_select")
         return {
             "ranked_posts": [],

@@ -1,6 +1,8 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
+import httpx
+
 from src.messages import (
     PUBLISH_CONTENT_TOO_LONG,
     PUBLISH_EMPTY_CONTENT,
@@ -49,7 +51,7 @@ async def publish_post(
 
     try:
         threads_id = await threads_client.publish_post(content)
-    except Exception as e:
+    except (httpx.HTTPStatusError, httpx.RequestError, TimeoutError, RuntimeError) as e:
         return {
             "published_post": None,
             "errors": [PUBLISH_FAILED.format(error=e)],
@@ -58,10 +60,10 @@ async def publish_post(
     follower_count = state.get("current_follower_count", 0)
     try:
         follower_count = await threads_client.get_follower_count()
-    except Exception:
+    except (httpx.HTTPStatusError, httpx.RequestError) as e:
         logger.warning(
-            "Failed to fetch follower count at publish time, using state value",
-            exc_info=True,
+            "Failed to fetch follower count at publish time, using state value: %s",
+            e,
         )
 
     now = datetime.now(UTC)

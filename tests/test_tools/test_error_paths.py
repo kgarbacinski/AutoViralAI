@@ -2,6 +2,7 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from src.nodes.publishing import publish_post
@@ -74,7 +75,7 @@ async def test_publish_follower_fallback(kb):
     """get_follower_count fails → uses state value."""
     mock_client = AsyncMock()
     mock_client.publish_post.return_value = "t_published_001"
-    mock_client.get_follower_count.side_effect = RuntimeError("network error")
+    mock_client.get_follower_count.side_effect = httpx.RequestError("network error", request=None)
 
     state = {
         "selected_post": {

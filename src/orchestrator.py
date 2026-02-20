@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from langgraph.types import Command
+from telegram.error import TelegramError
 
 from bot.telegram_bot import (
     build_enrichment_data,
@@ -12,8 +13,10 @@ from bot.telegram_bot import (
     send_pipeline_report,
 )
 from config.settings import Settings, get_settings
+from src.exceptions import PipelineError
 from src.graphs.creation_pipeline import build_creation_pipeline
 from src.graphs.learning_pipeline import build_learning_pipeline
+from src.nodes.research import research_viral_content
 from src.persistence import create_checkpointer, create_store
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.apify_client import get_threads_scraper
@@ -138,8 +141,7 @@ class PipelineOrchestrator:
             logger.info("Creation pipeline cycle #%d completed", cycle)
             return result
         except Exception as e:
-            logger.error("Creation pipeline cycle #%d failed: %s", cycle, e)
-            raise
+            raise PipelineError(f"Creation pipeline cycle #{cycle} failed: {e}") from e
 
     async def _send_approval_telegram(self, thread_id: str, state) -> None:
         if not self.bot_app or not self.telegram_chat_id:
@@ -153,13 +155,13 @@ class PipelineOrchestrator:
 
         try:
             await send_pipeline_report(self.bot_app, self.telegram_chat_id, values)
-        except Exception as e:
+        except TelegramError as e:
             logger.error("Failed to send pipeline report: %s", e)
 
         enrichment = None
         try:
             enrichment = await build_enrichment_data(self.kb, selected_post or {})
-        except Exception as e:
+        except Exception as e:  # enrichment is best-effort, KB or other errors
             logger.error("Failed to build enrichment data: %s", e)
 
         try:
@@ -174,7 +176,7 @@ class PipelineOrchestrator:
                 enrichment=enrichment,
             )
             logger.info("Approval request sent to Telegram for thread=%s", thread_id)
-        except Exception as e:
+        except TelegramError as e:
             logger.error("Failed to send Telegram approval: %s", e)
 
     async def _send_creation_failure_telegram(self, cycle: int, errors: list) -> None:
@@ -189,7 +191,7 @@ class PipelineOrchestrator:
             if creation_jobs:
                 soonest = min(creation_jobs, key=lambda j: j.next_run_time)
                 next_run_time = str(soonest.next_run_time)
-        except Exception:
+        except (AttributeError, ValueError, TypeError):
             logger.debug("Could not determine next run time", exc_info=True)
 
         error_strings = [str(e) for e in errors]
@@ -202,7 +204,7 @@ class PipelineOrchestrator:
                 next_run_time=next_run_time,
             )
             logger.info("Creation failure notification sent for cycle #%d", cycle)
-        except Exception as e:
+        except TelegramError as e:
             logger.error("Failed to send creation failure notification: %s", e)
 
     async def resume_creation(self, thread_id: str, decision: dict) -> dict | None:
@@ -224,7 +226,7 @@ class PipelineOrchestrator:
 
             try:
                 state = await compiled.aget_state(config)
-            except Exception as e:
+            except Exception as e:  # LangGraph has no typed exception hierarchy
                 logger.error("Failed to get state for thread_id=%s: %s", thread_id, e)
                 return None
 
@@ -268,8 +270,9 @@ class PipelineOrchestrator:
             logger.info("Creation pipeline thread=%s completed after resume", thread_id)
             return result
         except Exception as e:
-            logger.error("Failed to resume creation pipeline thread=%s: %s", thread_id, e)
-            raise
+            raise PipelineError(
+                f"Failed to resume creation pipeline thread={thread_id}: {e}"
+            ) from e
 
     def _schedule_delayed_publish(self, thread_id: str, decision: dict, publish_at: str) -> None:
         try:
@@ -293,7 +296,7 @@ class PipelineOrchestrator:
         async def _delayed_resume():
             try:
                 await self.resume_creation(thread_id, resume_decision)
-            except Exception:
+            except PipelineError:
                 logger.exception("Delayed publish failed for thread=%s", thread_id)
 
         self._scheduler.add_job(
@@ -346,12 +349,9 @@ class PipelineOrchestrator:
             logger.info("Learning pipeline cycle #%d completed", cycle)
             return result
         except Exception as e:
-            logger.error("Learning pipeline cycle #%d failed: %s", cycle, e)
-            raise
+            raise PipelineError(f"Learning pipeline cycle #{cycle} failed: {e}") from e
 
     async def run_research_only(self) -> list[dict]:
-        from src.nodes.research import research_viral_content
-
         minimal_state = {
             "viral_posts": [],
             "errors": [],
@@ -440,6 +440,6 @@ class PipelineOrchestrator:
         for client in (self._threads_client, self._hn_client, self._scraper):
             try:
                 await client.close()
-            except Exception:
+            except Exception:  # best-effort resource cleanup
                 logger.exception("Error closing %s", type(client).__name__)
         logger.info("Orchestrator stopped")

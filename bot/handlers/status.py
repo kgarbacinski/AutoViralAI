@@ -11,6 +11,7 @@ from bot.messages import (
     STATUS_PAUSED,
     STATUS_RUNNING,
 )
+from src.exceptions import KnowledgeBaseError
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ async def handle_status_command(update: Update, context: ContextTypes.DEFAULT_TY
             lines.append(f"\n🧠 Strategy iteration: {strategy.iteration}")
             if strategy.last_updated:
                 lines.append(f"Last updated: {strategy.last_updated[:16]}")
-        except Exception as e:
+        except KnowledgeBaseError as e:
             logger.error("Error fetching strategy for status: %s", e)
 
     await update.message.reply_text("\n".join(lines), parse_mode="HTML")

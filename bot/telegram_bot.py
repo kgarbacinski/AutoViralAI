@@ -2,6 +2,7 @@ import logging
 from html import escape
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import TelegramError
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -16,6 +17,18 @@ from bot.handlers.approval import (
     handle_edit_message,
     handle_reject_feedback_text,
 )
+from bot.handlers.commands import (
+    handle_config_command,
+    handle_force_command,
+    handle_history_command,
+    handle_learn_command,
+    handle_metrics_command,
+    handle_pause_command,
+    handle_research_command,
+    handle_resume_command,
+    handle_schedule_command,
+)
+from bot.handlers.config_callbacks import handle_config_callback, handle_config_text_input
 from bot.handlers.status import handle_status_command
 from bot.messages import (
     APPROVAL_ALTERNATIVE_MSG,
@@ -39,6 +52,7 @@ from bot.messages import (
     REPORT_TOP_BY_ENGAGEMENT,
     START_MESSAGE,
 )
+from src.exceptions import KnowledgeBaseError
 
 logger = logging.getLogger(__name__)
 
@@ -54,19 +68,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 def create_bot(token: str, authorized_chat_id: str = "") -> Application:
-    from bot.handlers.commands import (
-        handle_config_command,
-        handle_force_command,
-        handle_history_command,
-        handle_learn_command,
-        handle_metrics_command,
-        handle_pause_command,
-        handle_research_command,
-        handle_resume_command,
-        handle_schedule_command,
-    )
-    from bot.handlers.config_callbacks import handle_config_callback
-
     app = Application.builder().token(token).build()
 
     if not authorized_chat_id:
@@ -108,8 +109,6 @@ async def _handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYP
     elif context.user_data.get("awaiting_edit"):
         await handle_edit_message(update, context)
     elif context.user_data.get("awaiting_config_input"):
-        from bot.handlers.config_callbacks import handle_config_text_input
-
         await handle_config_text_input(update, context)
 
 
@@ -140,7 +139,7 @@ async def send_pipeline_report(app: Application, chat_id: str, state_values: dic
     for msg in messages:
         try:
             await app.bot.send_message(chat_id=chat_id, text=msg, parse_mode="HTML")
-        except Exception as e:
+        except TelegramError as e:
             logger.error("Failed to send pipeline report section: %s", e)
 
 
@@ -260,7 +259,7 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
 
             ers = [m.engagement_rate for m in metrics_history]
             enrichment["avg_engagement_rate"] = sum(ers) / len(ers) if ers else 0
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.warning("Failed to fetch recent metrics for enrichment: %s", e)
 
     try:
@@ -274,14 +273,14 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
                 if perf.times_used > 0
                 else ENRICHMENT_NEW_PATTERN
             )
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.warning("Failed to fetch pattern performance for enrichment: %s", e)
 
     try:
         strategy = await kb.get_strategy()
         if strategy.optimal_posting_times:
             enrichment["optimal_time"] = ", ".join(strategy.optimal_posting_times[:3])
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.warning("Failed to fetch strategy for enrichment: %s", e)
 
     try:
@@ -289,7 +288,7 @@ async def build_enrichment_data(kb, selected_post: dict) -> dict:
         if recent_posts:
             avg_score = sum(p.composite_score for p in recent_posts) / len(recent_posts)
             enrichment["avg_score"] = avg_score
-    except Exception as e:
+    except KnowledgeBaseError as e:
         logger.warning("Failed to fetch recent posts for benchmark: %s", e)
 
     return enrichment
@@ -393,7 +392,7 @@ async def send_approval_request(
                 reply_markup=alt_keyboard,
                 parse_mode="HTML",
             )
-        except Exception as e:
+        except TelegramError as e:
             logger.error("Failed to send alternative %d: %s", i + 1, e)
 
 
@@ -420,5 +419,5 @@ async def send_creation_failure(
 
     try:
         await app.bot.send_message(chat_id=chat_id, text=message, parse_mode="HTML")
-    except Exception as e:
+    except TelegramError as e:
         logger.error("Failed to send creation failure notification: %s", e)

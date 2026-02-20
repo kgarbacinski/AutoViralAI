@@ -4,6 +4,8 @@ import asyncio
 import sys
 from pathlib import Path
 
+import httpx
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import get_settings
@@ -43,7 +45,7 @@ async def main():
     try:
         followers = await threads.get_follower_count()
         print(f"Follower count: {followers}")
-    except Exception as e:
+    except (httpx.HTTPStatusError, httpx.RequestError) as e:
         print(f"Follower count: ERROR - {e}")
 
     print("\nHealth check complete.")

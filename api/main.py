@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import AsyncExitStack, asynccontextmanager
 
@@ -15,6 +16,7 @@ from bot.telegram_bot import create_bot
 from bot.webhook import router as webhook_router
 from bot.webhook import set_bot_app, set_webhook_secret
 from config.settings import get_settings
+from src.exceptions import AutoViralError, KnowledgeBaseError, PipelineError
 from src.models.strategy import AccountNiche, AudienceConfig, ContentPillar, VoiceConfig
 from src.orchestrator import PipelineOrchestrator
 from src.persistence import (
@@ -37,8 +39,6 @@ async def _init_niche_config(kb: KnowledgeBase) -> None:
 
     settings = get_settings()
     config_path = settings.niche_config_path
-
-    import asyncio
 
     if config_path.exists():
         raw = yaml.safe_load(await asyncio.to_thread(config_path.read_text))
@@ -166,6 +166,24 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["X-API-Key"],
 )
+
+
+@app.exception_handler(PipelineError)
+async def pipeline_error_handler(request: Request, exc: PipelineError):
+    logger.error("Pipeline error on %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse(status_code=502, content={"detail": "Pipeline execution failed"})
+
+
+@app.exception_handler(KnowledgeBaseError)
+async def kb_error_handler(request: Request, exc: KnowledgeBaseError):
+    logger.error("KB error on %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse(status_code=503, content={"detail": "Knowledge base unavailable"})
+
+
+@app.exception_handler(AutoViralError)
+async def autoviral_error_handler(request: Request, exc: AutoViralError):
+    logger.error("App error on %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse(status_code=500, content={"detail": "Application error"})
 
 
 @app.exception_handler(Exception)

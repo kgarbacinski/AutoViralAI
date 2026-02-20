@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from apify_client import ApifyClientAsync
+from apify_client._errors import ApifyApiError, ApifyClientError, InvalidResponseBodyError
 
 from src.messages import APIFY_TOKEN_REQUIRED
 from src.models.research import ViralPost
@@ -102,7 +103,7 @@ class RealThreadsScraper(ThreadsScraper):
                 run_input=run_input,
                 timeout_secs=APIFY_TIMEOUT_SECS,
             )
-        except Exception:
+        except (ApifyApiError, ApifyClientError, InvalidResponseBodyError):
             logger.exception("Apify actor call failed")
             return []
 
@@ -148,7 +149,7 @@ class RealThreadsScraper(ThreadsScraper):
                         MAX_DATASET_ITEMS,
                     )
                     break
-        except Exception:
+        except (ApifyApiError, ApifyClientError, InvalidResponseBodyError):
             logger.exception(
                 "Failed to iterate Apify dataset items (collected %d items before failure)",
                 len(items),

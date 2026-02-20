@@ -30,6 +30,7 @@ from bot.messages import (
     ORCHESTRATOR_NOT_AVAILABLE,
     UNAUTHORIZED,
 )
+from src.exceptions import KnowledgeBaseError
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +197,7 @@ async def handle_config_callback(update: Update, context: ContextTypes.DEFAULT_T
                 CONFIG_SCHEDULE_UPDATED.format(times=", ".join(niche.preferred_posting_times))
             )
 
-    except Exception:
+    except KnowledgeBaseError:
         logger.exception("Config update failed")
         await query.edit_message_text(CONFIG_UPDATE_FAILED)
 
@@ -234,6 +235,6 @@ async def handle_config_text_input(update: Update, context: ContextTypes.DEFAULT
                         topic=text, current=", ".join(niche.avoid_topics)
                     )
                 )
-        except Exception:
+        except KnowledgeBaseError:
             logger.exception("Failed to add avoid topic")
             await update.message.reply_text(CONFIG_ADD_TOPIC_FAILED)

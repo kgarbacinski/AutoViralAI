@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import get_settings
+from scripts.manual_run import init_niche_config
 from src.persistence import create_store
 from src.store.knowledge_base import KnowledgeBase
 
@@ -19,8 +20,6 @@ async def main():
     settings = get_settings()
     store = create_store(settings)
     kb = KnowledgeBase(store=store, account_id=settings.account_id)
-
-    from scripts.manual_run import init_niche_config
 
     await init_niche_config(kb)
 

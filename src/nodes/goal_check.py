@@ -1,3 +1,5 @@
+import httpx
+
 from src.models.state import CreationPipelineState
 from src.tools.threads_api import ThreadsClient
 
@@ -9,7 +11,7 @@ async def goal_check(
 ) -> dict:
     try:
         current = await threads_client.get_follower_count()
-    except Exception as e:
+    except (httpx.HTTPStatusError, httpx.RequestError) as e:
         return {
             "current_follower_count": state.get("current_follower_count", 0),
             "goal_reached": False,

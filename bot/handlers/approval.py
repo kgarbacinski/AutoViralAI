@@ -22,6 +22,7 @@ from bot.messages import (
     UNAUTHORIZED,
     UNKNOWN_ACTION,
 )
+from src.exceptions import PipelineError
 
 logger = logging.getLogger(__name__)
 
@@ -212,5 +213,5 @@ async def _resume_graph(thread_id: str, decision: dict) -> None:
     try:
         await orchestrator.resume_creation(thread_id, decision)
         logger.info("Graph resumed for thread_id=%s with decision=%s", thread_id, decision)
-    except Exception:
+    except PipelineError:
         logger.exception("Failed to resume graph for thread_id=%s", thread_id)

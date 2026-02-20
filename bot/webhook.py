@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request
 from telegram import Update
+from telegram.error import TelegramError
 
 from api.messages import (
     WEBHOOK_BOT_NOT_INITIALIZED,
@@ -58,7 +59,9 @@ async def telegram_webhook(request: Request):
         await _bot_app.process_update(update)
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail=WEBHOOK_INVALID_JSON) from exc
-    except Exception:
+    except TelegramError:
         logger.exception("Error processing Telegram update")
+    except Exception:
+        logger.exception("Unexpected error processing Telegram update")
 
     return {"ok": True}

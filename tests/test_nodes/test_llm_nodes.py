@@ -2,6 +2,7 @@
 
 from unittest.mock import AsyncMock, MagicMock
 
+import anthropic
 import pytest
 
 from src.models.content import PostVariant
@@ -35,7 +36,9 @@ def _mock_llm_failing(error: Exception | None = None):
     mock = MagicMock()
     mock_structured = MagicMock()
     mock.with_structured_output.return_value = mock_structured
-    mock_structured.ainvoke = AsyncMock(side_effect=error or RuntimeError("LLM unavailable"))
+    mock_structured.ainvoke = AsyncMock(
+        side_effect=error or anthropic.APIConnectionError(request=None)
+    )
     return mock
 
 
