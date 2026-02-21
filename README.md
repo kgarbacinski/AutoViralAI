@@ -625,6 +625,6 @@ If you find this project useful, consider giving it a star!
 
 <br/>
 
-<sub>Created by <a href="https://github.com/kgarbacinski">@kgarbacinski</a> · Co-Founder at <a href="https://efektywniejsi.pl/">Efektywniejsi</a> — we build custom AI solutions for businesses</sub>
+<sub>Created by <a href="https://github.com/kgarbacinski">@kgarbacinski</a> · Co-Founder at <a href="https://efektywniejsi.pl/">Efektywniejsi</a> - we build custom AI solutions for businesses</sub>
 
 </div>
