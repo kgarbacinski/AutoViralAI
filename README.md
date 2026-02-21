@@ -59,11 +59,15 @@ publishes it, measures engagement — and <strong>rewrites its own strategy base
 
 <br/><br/>
 
-<img src="docs/screenshots/pipeline-report.png" alt="Pipeline report: research results, extracted patterns, generated variants and ranking" width="48%">
-&nbsp;
-<img src="docs/screenshots/approval-message.png" alt="Approval message with score, alternatives, and approve/reject buttons" width="48%">
+<img src="docs/screenshots/showcase_1.png" alt="Pipeline report: research results, extracted patterns, generated variants and ranking" width="90%">
 
-<sub><b>Left:</b> Full pipeline report — research, patterns, generation, ranking &nbsp;|&nbsp; <b>Right:</b> Telegram approval with score breakdown</sub>
+<br/>
+
+<img src="docs/screenshots/showcase_2.png" alt="Approval message with score, alternatives, and approve/reject buttons" width="90%">
+
+<br/>
+
+<img src="docs/screenshots/showcase_3.png" alt="Published post and engagement metrics" width="90%">
 
 </div>
 
@@ -343,9 +347,15 @@ New patterns get a **5.0 exploration bonus** — the system balances exploitatio
 The agent never posts without your approval. Before the approval message, you get a **full pipeline report** showing what each agent did — research results, extracted patterns, generated variants, and ranking breakdown.
 
 <div align="center">
-<img src="docs/screenshots/pipeline-report.png" alt="Pipeline report showing research results, extracted patterns, generated variants and ranking breakdown" width="48%">
-&nbsp;
-<img src="docs/screenshots/approval-message.png" alt="Approval message with score, pattern, buttons: Approve, Reject, Edit, Publish Later" width="48%">
+<img src="docs/screenshots/showcase_1.png" alt="Pipeline report showing research results, extracted patterns, generated variants and ranking breakdown" width="90%">
+
+<br/>
+
+<img src="docs/screenshots/showcase_2.png" alt="Approval message with score, pattern, buttons: Approve, Reject, Edit, Publish Later" width="90%">
+
+<br/>
+
+<img src="docs/screenshots/showcase_3.png" alt="Published post and engagement metrics" width="90%">
 </div>
 
 <br/>
