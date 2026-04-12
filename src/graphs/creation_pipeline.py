@@ -91,5 +91,3 @@ def _should_continue(state: CreationPipelineState) -> str:
     if state.get("goal_reached"):
         return "end"
     return "continue"
-
-
