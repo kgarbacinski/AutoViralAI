@@ -27,7 +27,7 @@ STEPS = [("research", BLUE), ("extract", LBLUE), ("generate", LBLUE), ("rank", A
 LAPS_DATA = [
     ("generic tips", "01", '"here\'s a generic coding tip"', 12),
     ("hot takes", "07", '"most devs don\'t need Docker"', 340),
-    ("contrarian x3", "30", "contrarian hooks, 3x weight", 500),
+    ("contrarian x3", "30", "every post that week", 500),
     ("old vs new tech", "45", '"jQuery vs React"', 800),
 ]
 
@@ -100,7 +100,7 @@ def main():
                    + f'<rect x="{lx}" y="{y + 10}" width="0" height="8" rx="4" fill="{GREEN if last else BLUE}" opacity="{1 if last else .7}">{grow}</rect>'
                    + "</g>")
     out.append(f'<g opacity="0"><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.8;.82;1" dur="{CYCLE}s" repeatCount="indefinite"/>'
-               + t(lx, ly + 40 + LAPS * 62 - 8, "↑ the agent wrote that one. you didn't touch it.", AMBER, 12) + "</g>")
+               + t(lx, ly + 40 + LAPS * 62 - 8, "↑ written and ranked by the agent. approved by a human.", AMBER, 12) + "</g>")
 
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="Animated self-learning loop: research, extract, generate, rank, publish, measure, learn, adapt. Each lap is a new strategy version; engagement grows from 12 to 800 likes.">
 <style>text{{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"DejaVu Sans Mono",monospace;white-space:pre}}</style>

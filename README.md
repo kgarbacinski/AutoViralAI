@@ -45,7 +45,7 @@ publishes it, measures engagement — and <strong>rewrites its own strategy base
 
 <a href="https://github.com/kgarbacinski"><img src="https://img.shields.io/github/followers/kgarbacinski?label=follow%20%40kgarbacinski&style=social" alt="Follow @kgarbacinski on GitHub"></a>
 
-<sub>built by <a href="https://github.com/kgarbacinski">@kgarbacinski</a>. follow to catch the next agent before it goes viral on its own.</sub>
+<sub>built by <a href="https://github.com/kgarbacinski">@kgarbacinski</a>. follow for the next agent.</sub>
 
 </div>
 
