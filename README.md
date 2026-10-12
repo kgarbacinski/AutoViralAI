@@ -41,6 +41,12 @@ publishes it, measures engagement — and <strong>rewrites its own strategy base
 
 [Real Results](#-real-results) · [Demo](#-demo) · [Quick Start](#-quick-start) · [How It Works](#-how-it-works) · [Configuration](#-configuring-your-niche) · [Roadmap](#-roadmap) · [Contributing](CONTRIBUTING.md)
 
+<br/>
+
+<a href="https://github.com/kgarbacinski"><img src="https://img.shields.io/github/followers/kgarbacinski?label=follow%20%40kgarbacinski&style=social" alt="Follow @kgarbacinski on GitHub"></a>
+
+<sub>built by <a href="https://github.com/kgarbacinski">@kgarbacinski</a>. follow for the next agent.</sub>
+
 </div>
 
 <br/>
@@ -116,6 +122,10 @@ You know you should be posting consistently. You know what kind of content perfo
 ## 💡 The Solution
 
 AutoViralAI does the entire loop autonomously. It doesn't just post — it ***learns***. Every day it gets a little better at understanding what your audience actually engages with.
+
+<div align="center">
+<img src="docs/loop.svg" width="100%" alt="Animated self-learning loop: research, extract, generate, rank, publish, measure, learn, adapt. Each lap rewrites the strategy; engagement grows from 12 to 800 likes.">
+</div>
 
 ```
 Day 1:   "Here's a generic coding tip"            → 12 likes
@@ -656,6 +666,16 @@ If you find this project useful, consider giving it a star!
 
 <br/>
 
-<sub>Created by <a href="https://github.com/kgarbacinski">@kgarbacinski</a> · Co-Founder at <a href="https://efektywniejsi.pl/">Efektywniejsi</a> - we build custom AI solutions for businesses and people!</sub>
+### 🧠 One last thing the agent taught us
+
+Its own config says <code>End with a question or call-to-action to drive engagement</code>.<br/>
+Ignoring the agent in its own README would be rude, so:
+
+**[→ follow @kgarbacinski](https://github.com/kgarbacinski)** for the next agent.<br/>
+And the question: what should an agent automate for you next? **[Tell me in an issue](https://github.com/kgarbacinski/AutoViralAI/issues/new?title=Next%20agent%20idea%3A%20)**.
+
+<br/>
+
+<sub>Created by <a href="https://github.com/kgarbacinski">@kgarbacinski</a>, co-founder at <a href="https://efektywniejsi.pl/">Efektywniejsi</a>. We build custom AI solutions for businesses and people.</sub>
 
 </div>
