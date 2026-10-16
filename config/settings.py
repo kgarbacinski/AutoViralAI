@@ -74,6 +74,14 @@ class Settings(BaseSettings):
                 )
             if not self.telegram_bot_token:
                 missing.append("TELEGRAM_BOT_TOKEN")
+            if not self.telegram_chat_id:
+                missing.append("TELEGRAM_CHAT_ID")
+            if not self.telegram_webhook_url:
+                missing.append("TELEGRAM_WEBHOOK_URL")
+            if not self.telegram_webhook_secret:
+                missing.append("TELEGRAM_WEBHOOK_SECRET")
+            if not self.apify_api_token:
+                missing.append("APIFY_API_TOKEN")
             if missing:
                 raise ValueError(f"Missing required production secrets: {', '.join(missing)}")
 

@@ -102,24 +102,23 @@ jobs:
 
       - name: Deploy on server
         run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST bash -s << 'EOF'
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "REMOTE_DIR=$REMOTE_DIR bash -s" << 'EOF'
           set -e
-          # Migrate agent.env from old location if needed
-          if [ ! -f /root/autoviralai/agent.env ] && [ -f /root/threads-agent/agent.env ]; then
-            echo "Migrating agent.env from old location..."
-            cp /root/threads-agent/agent.env /root/autoviralai/agent.env
-          fi
-          # Stop old containers if still running
+          COMPOSE_FILE=$REMOTE_DIR/docker-compose.yml
+          # Legacy: stop containers from the pre-rename location if present
           if [ -f /root/threads-agent/docker-compose.yml ]; then
+            if [ ! -f $REMOTE_DIR/agent.env ] && [ -f /root/threads-agent/agent.env ]; then
+              cp /root/threads-agent/agent.env $REMOTE_DIR/agent.env
+              ln -sf $REMOTE_DIR/agent.env $REMOTE_DIR/.env
+            fi
             docker compose -f /root/threads-agent/docker-compose.yml down || true
           fi
-          COMPOSE_FILE=/root/autoviralai/docker-compose.yml
           echo "Loading Docker image..."
           zcat /tmp/autoviralai.tar.gz | docker load
           rm -f /tmp/autoviralai.tar.gz
-          # docker compose reads .env automatically (symlinked to agent.env)
-          docker compose -f $COMPOSE_FILE --env-file /root/autoviralai/.env down || true
-          docker compose -f $COMPOSE_FILE --env-file /root/autoviralai/.env up -d
+          # .env is a symlink to agent.env (created by deploy.sh)
+          docker compose -f $COMPOSE_FILE --env-file $REMOTE_DIR/.env down || true
+          docker compose -f $COMPOSE_FILE --env-file $REMOTE_DIR/.env up -d
           docker image prune -f
           echo "--- Container status ---"
           docker compose -f $COMPOSE_FILE ps

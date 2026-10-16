@@ -39,7 +39,7 @@ publishes it, measures engagement — and <strong>rewrites its own strategy base
 
 <br/>
 
-[Real Results](#-real-results) · [Demo](#-demo) · [Quick Start](#-quick-start) · [How It Works](#-how-it-works) · [Configuration](#-configuring-your-niche) · [Roadmap](#-roadmap) · [Contributing](CONTRIBUTING.md)
+[Real Results](#-real-results) · [Demo](#-demo) · [Quick Start](#-quick-start) · [Self-Hosting](docs/SELF_HOSTING.md) · [How It Works](#-how-it-works) · [Configuration](#-configuring-your-niche) · [Roadmap](#-roadmap) · [Contributing](CONTRIBUTING.md)
 
 <br/>
 
@@ -252,6 +252,8 @@ uv run python scripts/manual_run.py --pipeline learning
 ```
 
 > **Note:** The first run uses **mock APIs** — no social media account needed. You'll see the full pipeline execute with realistic simulated data.
+>
+> To post to a real account, follow the **[Self-Hosting guide](docs/SELF_HOSTING.md)**.
 
 <br/>
 
@@ -579,14 +581,7 @@ uv run ruff check .
 
 ## 🐳 Production Deployment
 
-Push to `main` → GitHub Actions runs lint, test, and deploys automatically via SSH + Docker (upstream repo only; on a fork, set your own `SSH_*` secrets and adjust the `deploy` job's `if:`).
-
-```bash
-# Full stack (agent + Postgres) with Docker
-docker compose up -d
-```
-
-> **Note:** `docker-compose.yml` runs with `ENV=production`, so besides `ANTHROPIC_API_KEY` it needs `THREADS_ACCESS_TOKEN`, `THREADS_USER_ID` and `TELEGRAM_BOT_TOKEN` in `.env`. For a keyless trial, use `scripts/manual_run.py` from the Quick Start.
+Ready to run it on your own Threads account? **[docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)** walks through every key (Anthropic, Telegram, Threads, Apify), the server + HTTPS setup, optional GitHub Actions auto-deploy, and a checklist to confirm it works.
 
 <br/>
 
