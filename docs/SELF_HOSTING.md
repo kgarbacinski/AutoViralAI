@@ -133,7 +133,7 @@ Every push to `main` runs lint + tests, then builds the image and deploys it ove
 |---|---|
 | Container exits with `Missing required production secrets: ...` | Fill in the listed variables in `.env` |
 | Bot doesn't respond at all | Webhook not reachable: check HTTPS, the proxy, and `TELEGRAM_WEBHOOK_URL`. `curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"` shows the last delivery error |
-| Bot only answers `/start` and `/help` | `TELEGRAM_CHAT_ID` is missing or isn't your chat |
+| Bot only answers `/start` and `/help` | `TELEGRAM_CHAT_ID` isn't your chat (re-check with `getUpdates`) |
 | Publishing fails with 190 / OAuthException | Threads token expired: generate a new long-lived token, update `.env`, restart |
 | Research finds nothing from Threads | Check `APIFY_API_TOKEN` and your Apify credit |
 | `/api/*` returns 503 | `API_SECRET_KEY` isn't set |
