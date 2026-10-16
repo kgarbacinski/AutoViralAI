@@ -537,7 +537,7 @@ Dev: `InMemoryStore` · Prod: `AsyncPostgresStore` with embedding support.
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | Agent Framework | [LangGraph](https://github.com/langchain-ai/langgraph) 0.3+ | Two-graph architecture with shared state |
-| LLM | Claude Sonnet 4 via [langchain-anthropic](https://github.com/langchain-ai/langchain) | Pattern extraction, generation, ranking, analysis |
+| LLM | Claude Sonnet 4.6 via [langchain-anthropic](https://github.com/langchain-ai/langchain) | Pattern extraction, generation, ranking, analysis |
 | State Persistence | LangGraph Checkpointer | Survives interrupts, restarts, crashes |
 | Knowledge Base | LangGraph Store | Cross-pipeline memory with namespaces |
 | Human-in-the-Loop | LangGraph `interrupt()` + [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) | Pause graph, notify via Telegram, resume on response |
@@ -579,12 +579,14 @@ uv run ruff check .
 
 ## 🐳 Production Deployment
 
-Push to `main` → GitHub Actions runs lint, test, and deploys automatically via SSH + Docker.
+Push to `main` → GitHub Actions runs lint, test, and deploys automatically via SSH + Docker (upstream repo only; on a fork, set your own `SSH_*` secrets and adjust the `deploy` job's `if:`).
 
 ```bash
-# Local development with Docker
+# Full stack (agent + Postgres) with Docker
 docker compose up -d
 ```
+
+> **Note:** `docker-compose.yml` runs with `ENV=production`, so besides `ANTHROPIC_API_KEY` it needs `THREADS_ACCESS_TOKEN`, `THREADS_USER_ID` and `TELEGRAM_BOT_TOKEN` in `.env`. For a keyless trial, use `scripts/manual_run.py` from the Quick Start.
 
 <br/>
 

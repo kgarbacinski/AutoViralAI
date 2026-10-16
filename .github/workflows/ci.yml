@@ -65,7 +65,8 @@ jobs:
 
   deploy:
     needs: [lint, test]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Only the upstream repo deploys; forks have no SSH secrets
+    if: github.repository == 'kgarbacinski/AutoViralAI' && github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
       SSH_HOST: ${{ secrets.SSH_HOST }}
