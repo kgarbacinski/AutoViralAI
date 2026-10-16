@@ -39,7 +39,7 @@ publishes it, measures engagement — and <strong>rewrites its own strategy base
 
 <br/>
 
-[Real Results](#-real-results) · [Demo](#-demo) · [Quick Start](#-quick-start) · [How It Works](#-how-it-works) · [Configuration](#-configuring-your-niche) · [Roadmap](#-roadmap) · [Contributing](CONTRIBUTING.md)
+[Real Results](#-real-results) · [Demo](#-demo) · [Quick Start](#-quick-start) · [Self-Hosting](docs/SELF_HOSTING.md) · [How It Works](#-how-it-works) · [Configuration](#-configuring-your-niche) · [Roadmap](#-roadmap) · [Contributing](CONTRIBUTING.md)
 
 <br/>
 
@@ -252,6 +252,8 @@ uv run python scripts/manual_run.py --pipeline learning
 ```
 
 > **Note:** The first run uses **mock APIs** — no social media account needed. You'll see the full pipeline execute with realistic simulated data.
+>
+> To post to a real account, follow the **[Self-Hosting guide](docs/SELF_HOSTING.md)**.
 
 <br/>
 
@@ -537,7 +539,7 @@ Dev: `InMemoryStore` · Prod: `AsyncPostgresStore` with embedding support.
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | Agent Framework | [LangGraph](https://github.com/langchain-ai/langgraph) 0.3+ | Two-graph architecture with shared state |
-| LLM | Claude Sonnet 4 via [langchain-anthropic](https://github.com/langchain-ai/langchain) | Pattern extraction, generation, ranking, analysis |
+| LLM | Claude Sonnet 4.6 via [langchain-anthropic](https://github.com/langchain-ai/langchain) | Pattern extraction, generation, ranking, analysis |
 | State Persistence | LangGraph Checkpointer | Survives interrupts, restarts, crashes |
 | Knowledge Base | LangGraph Store | Cross-pipeline memory with namespaces |
 | Human-in-the-Loop | LangGraph `interrupt()` + [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) | Pause graph, notify via Telegram, resume on response |
@@ -579,12 +581,7 @@ uv run ruff check .
 
 ## 🐳 Production Deployment
 
-Push to `main` → GitHub Actions runs lint, test, and deploys automatically via SSH + Docker.
-
-```bash
-# Local development with Docker
-docker compose up -d
-```
+Ready to run it on your own Threads account? **[docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)** walks through every key (Anthropic, Telegram, Threads, Apify), the server + HTTPS setup, optional GitHub Actions auto-deploy, and a checklist to confirm it works.
 
 <br/>
 
