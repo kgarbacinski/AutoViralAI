@@ -17,6 +17,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    platform: Literal["linkedin", "threads"] = "linkedin"
     anthropic_api_key: str = ""
     llm_model: str = "claude-sonnet-4-6"
 
@@ -24,6 +25,10 @@ class Settings(BaseSettings):
     threads_app_secret: str = ""
     threads_access_token: str = ""
     threads_user_id: str = ""
+
+    linkedin_access_token: str = ""
+    linkedin_author_urn: str = ""
+    linkedin_version: str = "202411"
 
     apify_api_token: str = ""
 
@@ -62,26 +67,24 @@ class Settings(BaseSettings):
 
         if self.is_production:
             missing = []
-            if not self.threads_access_token:
-                missing.append("THREADS_ACCESS_TOKEN")
-            if not self.threads_user_id:
-                missing.append("THREADS_USER_ID")
+            if self.platform == "linkedin":
+                if not self.linkedin_access_token:
+                    missing.append("LINKEDIN_ACCESS_TOKEN")
+                if not self.linkedin_author_urn:
+                    missing.append("LINKEDIN_AUTHOR_URN")
+            else:
+                if not self.threads_access_token:
+                    missing.append("THREADS_ACCESS_TOKEN")
+                if not self.threads_user_id:
+                    missing.append("THREADS_USER_ID")
             if not self.postgres_uri:
                 missing.append("POSTGRES_URI")
             if not self.api_secret_key:
                 logging.getLogger(__name__).warning(
                     "API_SECRET_KEY not set — protected API routes will return 503"
                 )
-            if not self.telegram_bot_token:
-                missing.append("TELEGRAM_BOT_TOKEN")
-            if not self.telegram_chat_id:
-                missing.append("TELEGRAM_CHAT_ID")
-            if not self.telegram_webhook_url:
-                missing.append("TELEGRAM_WEBHOOK_URL")
-            if not self.telegram_webhook_secret:
-                missing.append("TELEGRAM_WEBHOOK_SECRET")
-            if not self.apify_api_token:
-                missing.append("APIFY_API_TOKEN")
+            # Telegram approval is optional (CLI approval in manual_run.py).
+            # No TELEGRAM_* required in production.
             if missing:
                 raise ValueError(f"Missing required production secrets: {', '.join(missing)}")
 

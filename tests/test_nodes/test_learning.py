@@ -12,7 +12,7 @@ async def test_update_kb_single_metric(kb):
     state = {
         "collected_metrics": [
             make_metric(
-                threads_id="t_001",
+                linkedin_id="t_001",
                 pattern_used="hot_take",
                 views=1000,
                 likes=50,
@@ -49,7 +49,7 @@ async def test_update_kb_multiple_metrics(kb):
     state = {
         "collected_metrics": [
             make_metric(
-                threads_id="t_001",
+                linkedin_id="t_001",
                 pattern_used="list_post",
                 views=500,
                 likes=25,
@@ -59,7 +59,7 @@ async def test_update_kb_multiple_metrics(kb):
                 follower_delta=2,
             ),
             make_metric(
-                threads_id="t_002",
+                linkedin_id="t_002",
                 pattern_used="list_post",
                 views=1000,
                 likes=60,
@@ -89,7 +89,7 @@ async def test_update_kb_best_worst_tracking(kb):
     state = {
         "collected_metrics": [
             make_metric(
-                threads_id="t_high",
+                linkedin_id="t_high",
                 pattern_used="question",
                 views=100,
                 likes=10,
@@ -99,7 +99,7 @@ async def test_update_kb_best_worst_tracking(kb):
                 follower_delta=1,
             ),
             make_metric(
-                threads_id="t_low",
+                linkedin_id="t_low",
                 pattern_used="question",
                 views=200,
                 likes=2,
@@ -136,7 +136,7 @@ async def test_update_kb_skips_empty_pattern(kb):
     state = {
         "collected_metrics": [
             make_metric(
-                threads_id="t_001",
+                linkedin_id="t_001",
                 pattern_used="",
                 views=100,
                 likes=5,

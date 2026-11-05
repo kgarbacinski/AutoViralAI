@@ -10,13 +10,13 @@ from src.nodes.learning import update_knowledge_base
 from src.nodes.metrics import collect_metrics
 from src.nodes.strategy import adjust_strategy
 from src.store.knowledge_base import KnowledgeBase
-from src.tools.threads_api import ThreadsClient, get_threads_client
+from src.tools.linkedin_api import LinkedInClient, get_linkedin_client
 
 
 def build_learning_pipeline(
     settings: Settings,
     store,
-    threads_client: ThreadsClient | None = None,
+    linkedin_client: LinkedInClient | None = None,
 ) -> StateGraph:
     llm = ChatAnthropic(
         model=settings.llm_model,
@@ -24,14 +24,14 @@ def build_learning_pipeline(
         max_tokens=4096,
         max_retries=8,
     )
-    threads_client = threads_client or get_threads_client(settings)
+    linkedin_client = linkedin_client or get_linkedin_client(settings)
     kb = KnowledgeBase(store=store, account_id=settings.account_id)
 
     graph = StateGraph(LearningPipelineState)
 
     graph.add_node(
         "collect_metrics",
-        partial(collect_metrics, threads_client=threads_client, kb=kb),
+        partial(collect_metrics, linkedin_client=linkedin_client, kb=kb),
     )
     graph.add_node(
         "analyze_performance",

@@ -2,7 +2,14 @@ from pydantic import BaseModel, Field
 
 
 class PublishedPost(BaseModel):
-    threads_id: str = Field(description="Threads media container ID")
+    threads_id: str = Field(
+        default="",
+        description="Post ID (legacy name, keep for Threads compat)",
+    )
+    linkedin_id: str = Field(
+        default="",
+        description="LinkedIn UGC post ID",
+    )
     content: str
     pattern_used: str
     pillar: str
@@ -17,7 +24,8 @@ class PublishedPost(BaseModel):
 
 
 class PostMetrics(BaseModel):
-    threads_id: str
+    threads_id: str = ""
+    linkedin_id: str = ""
     content: str = ""
     pattern_used: str = ""
     pillar: str = ""

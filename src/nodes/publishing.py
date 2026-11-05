@@ -13,17 +13,15 @@ from src.messages import (
 from src.models.publishing import PublishedPost
 from src.models.state import CreationPipelineState
 from src.store.knowledge_base import KnowledgeBase
-from src.tools.threads_api import ThreadsClient
+from src.tools.linkedin_api import LINKEDIN_MAX_LENGTH, LinkedInClient
 
 logger = logging.getLogger(__name__)
-
-THREADS_MAX_LENGTH = 500
 
 
 async def publish_post(
     state: CreationPipelineState,
     *,
-    threads_client: ThreadsClient,
+    linkedin_client: LinkedInClient,
     kb: KnowledgeBase,
 ) -> dict:
     selected = state.get("selected_post")
@@ -39,18 +37,18 @@ async def publish_post(
             "published_post": None,
             "errors": [PUBLISH_EMPTY_CONTENT],
         }
-    if len(content) > THREADS_MAX_LENGTH:
+    if len(content) > LINKEDIN_MAX_LENGTH:
         return {
             "published_post": None,
             "errors": [
                 PUBLISH_CONTENT_TOO_LONG.format(
-                    max_length=THREADS_MAX_LENGTH, actual_length=len(content)
+                    max_length=LINKEDIN_MAX_LENGTH, actual_length=len(content)
                 )
             ],
         }
 
     try:
-        threads_id = await threads_client.publish_post(content)
+        post_id = await linkedin_client.publish_post(content)
     except (httpx.HTTPStatusError, httpx.RequestError, TimeoutError, RuntimeError) as e:
         return {
             "published_post": None,
@@ -59,7 +57,7 @@ async def publish_post(
 
     follower_count = state.get("current_follower_count", 0)
     try:
-        follower_count = await threads_client.get_follower_count()
+        follower_count = await linkedin_client.get_follower_count()
     except (httpx.HTTPStatusError, httpx.RequestError) as e:
         logger.warning(
             "Failed to fetch follower count at publish time, using state value: %s",
@@ -68,12 +66,13 @@ async def publish_post(
 
     now = datetime.now(UTC)
     published = PublishedPost(
-        threads_id=threads_id,
+        threads_id=post_id,
+        linkedin_id=post_id,
         content=content,
         pattern_used=selected.get("pattern_used", ""),
         pillar=selected.get("pillar", ""),
         published_at=now.isoformat(),
-        scheduled_metrics_check=(now + timedelta(hours=24)).isoformat(),
+        scheduled_metrics_check=(now + timedelta(hours=48)).isoformat(),
         follower_count_at_publish=follower_count,
         ai_score=selected.get("ai_score", 0.0),
         composite_score=selected.get("composite_score", 0.0),

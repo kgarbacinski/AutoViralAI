@@ -100,7 +100,7 @@ class KnowledgeBase:
         try:
             await self.store.aput(
                 ns_published_posts(self.account_id),
-                post.threads_id,
+                post.threads_id or post.linkedin_id,
                 post.model_dump(),
             )
         except Exception as e:
@@ -117,7 +117,7 @@ class KnowledgeBase:
         try:
             await self.store.aput(
                 ns_pending_metrics(self.account_id),
-                post.threads_id,
+                post.threads_id or post.linkedin_id,
                 post.model_dump(),
             )
         except Exception as e:
@@ -130,7 +130,7 @@ class KnowledgeBase:
             raise KnowledgeBaseError(f"Failed to remove pending metrics: {e}") from e
 
     async def save_post_metrics(self, metrics: PostMetrics) -> None:
-        key = f"{metrics.threads_id}_{metrics.collected_at}"
+        key = f"{(metrics.linkedin_id or metrics.threads_id)}_{metrics.collected_at}"
         try:
             await self.store.aput(
                 ns_metrics_history(self.account_id),

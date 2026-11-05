@@ -11,13 +11,13 @@ from src.nodes.metrics import collect_metrics
 
 
 def _make_pending_post(
-    threads_id: str = "t_001",
+    linkedin_id: str = "t_001",
     check_offset_hours: float = -1,
 ) -> PublishedPost:
     """Create a pending post with a scheduled check time relative to now."""
     now = datetime.now(UTC)
     return PublishedPost(
-        threads_id=threads_id,
+        linkedin_id=linkedin_id,
         content="Test post",
         pattern_used="test_pattern",
         pillar="hot_takes",
@@ -34,10 +34,10 @@ async def test_collect_metrics_ready(kb, mock_threads):
     await kb.add_pending_metrics(post)
 
     state: dict = {}
-    result = await collect_metrics(state, threads_client=mock_threads, kb=kb)
+    result = await collect_metrics(state, linkedin_client=mock_threads, kb=kb)
 
     assert len(result["collected_metrics"]) == 1
-    assert result["collected_metrics"][0]["threads_id"] == "t_001"
+    assert result["collected_metrics"][0]["linkedin_id"] == "t_001"
     assert result["errors"] == []
 
     # Pending should be removed
@@ -52,7 +52,7 @@ async def test_collect_metrics_not_ready(kb, mock_threads):
     await kb.add_pending_metrics(post)
 
     state: dict = {}
-    result = await collect_metrics(state, threads_client=mock_threads, kb=kb)
+    result = await collect_metrics(state, linkedin_client=mock_threads, kb=kb)
 
     assert len(result["collected_metrics"]) == 0
 
@@ -65,7 +65,7 @@ async def test_collect_metrics_not_ready(kb, mock_threads):
 async def test_collect_metrics_empty_pending(kb, mock_threads):
     """No pending posts → empty result."""
     state: dict = {}
-    result = await collect_metrics(state, threads_client=mock_threads, kb=kb)
+    result = await collect_metrics(state, linkedin_client=mock_threads, kb=kb)
 
     assert result["collected_metrics"] == []
     assert result["posts_to_check"] == []
@@ -84,7 +84,7 @@ async def test_collect_metrics_api_failure(kb):
     )
 
     state: dict = {}
-    result = await collect_metrics(state, threads_client=failing_client, kb=kb)
+    result = await collect_metrics(state, linkedin_client=failing_client, kb=kb)
 
     assert len(result["collected_metrics"]) == 0
     assert len(result["errors"]) == 1
