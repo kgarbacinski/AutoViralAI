@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_base_url: str = ""
     llm_provider: str = "openai_free"
-    llm_model: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    llm_model: str = "stealth/crouton-alpha"
 
     threads_app_id: str = ""
     threads_app_secret: str = ""

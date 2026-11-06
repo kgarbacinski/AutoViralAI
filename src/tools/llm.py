@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 # Default for AutoViralAI: bansos free tier.
 
 DEFAULT_FREE_BASE_URL = "http://127.0.0.1:17070/v1"
-DEFAULT_FREE_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+DEFAULT_FREE_MODEL = "stealth/crouton-alpha"
 
 
 def get_llm(settings: Settings):
