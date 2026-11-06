@@ -1,6 +1,5 @@
 from functools import partial
 
-from langchain_anthropic import ChatAnthropic
 from langgraph.graph import END, START, StateGraph
 
 from config.settings import Settings
@@ -17,6 +16,7 @@ from src.tools.apify_client import ThreadsScraper, get_threads_scraper
 from src.tools.embeddings import EmbeddingClient
 from src.tools.hackernews_client import HackerNewsClient, get_hackernews_client
 from src.tools.linkedin_api import LinkedInClient, get_linkedin_client
+from src.tools.llm import get_llm
 
 
 def build_creation_pipeline(
@@ -27,12 +27,7 @@ def build_creation_pipeline(
     scraper: ThreadsScraper | None = None,
     embedding_client: EmbeddingClient | None = None,
 ) -> StateGraph:
-    llm = ChatAnthropic(
-        model=settings.llm_model,
-        api_key=settings.anthropic_api_key,
-        max_tokens=4096,
-        max_retries=8,
-    )
+    llm = get_llm(settings)
     linkedin_client = linkedin_client or get_linkedin_client(settings)
     hn = hn or get_hackernews_client(settings)
     scraper = scraper or get_threads_scraper(settings)

@@ -1,11 +1,10 @@
 import asyncio
 import logging
 
-import anthropic
-from langchain_anthropic import ChatAnthropic
-from langchain_core.exceptions import OutputParserException
+import anthropic  # noqa: F401
+
+# ChatAnthropic replaced by get_llm()
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import ValidationError
 
 from src.models.state import LearningPipelineState
 from src.models.strategy import ContentStrategy
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 async def adjust_strategy(
     state: LearningPipelineState,
     *,
-    llm: ChatAnthropic,
+    llm,
     kb: KnowledgeBase,
 ) -> dict:
     analysis = state.get("performance_analysis")
@@ -69,7 +68,7 @@ async def adjust_strategy(
                 ),
             ]
         )
-    except (anthropic.APIError, OutputParserException, ValidationError) as e:
+    except Exception as e:
         logger.exception("LLM call failed in adjust_strategy")
         return {
             "new_strategy": None,

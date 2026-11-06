@@ -1,11 +1,11 @@
 import asyncio
 import logging
 
-import anthropic
-from langchain_anthropic import ChatAnthropic
-from langchain_core.exceptions import OutputParserException
+import anthropic  # noqa: F401
+
+# ChatAnthropic replaced by get_llm()
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from src.models.research import ContentPattern
 from src.models.state import CreationPipelineState
@@ -23,7 +23,7 @@ class PatternExtractionResult(BaseModel):
 async def extract_patterns(
     state: CreationPipelineState,
     *,
-    llm: ChatAnthropic,
+    llm,
     kb: KnowledgeBase,
 ) -> dict:
     viral_posts = state.get("viral_posts", [])
@@ -71,7 +71,7 @@ async def extract_patterns(
                 ),
             ]
         )
-    except (anthropic.APIError, OutputParserException, ValidationError) as e:
+    except Exception as e:
         logger.exception("LLM call failed in extract_patterns")
         return {
             "extracted_patterns": [],

@@ -1,6 +1,6 @@
 from functools import partial
 
-from langchain_anthropic import ChatAnthropic
+from langchain_anthropic import ChatAnthropic  # noqa: F401
 from langgraph.graph import END, START, StateGraph
 
 from config.settings import Settings
@@ -18,12 +18,8 @@ def build_learning_pipeline(
     store,
     linkedin_client: LinkedInClient | None = None,
 ) -> StateGraph:
-    llm = ChatAnthropic(
-        model=settings.llm_model,
-        api_key=settings.anthropic_api_key,
-        max_tokens=4096,
-        max_retries=8,
-    )
+    from src.tools.llm import get_llm
+    llm = get_llm(settings)
     linkedin_client = linkedin_client or get_linkedin_client(settings)
     kb = KnowledgeBase(store=store, account_id=settings.account_id)
 

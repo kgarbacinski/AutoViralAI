@@ -1,11 +1,11 @@
 import asyncio
 import logging
 
-import anthropic
-from langchain_anthropic import ChatAnthropic
-from langchain_core.exceptions import OutputParserException
+import anthropic  # noqa: F401
+
+# ChatAnthropic replaced by get_llm()
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from src.models.content import RankedPost
 from src.models.state import CreationPipelineState
@@ -37,7 +37,7 @@ MAX_SATURATION_PENALTY = 4.0
 async def rank_and_select(
     state: CreationPipelineState,
     *,
-    llm: ChatAnthropic,
+    llm,
     kb: KnowledgeBase,
     embedding_client: EmbeddingClient | None = None,
 ) -> dict:
@@ -82,7 +82,7 @@ async def rank_and_select(
                 ),
             ]
         )
-    except (anthropic.APIError, OutputParserException, ValidationError) as e:
+    except Exception as e:
         logger.exception("LLM call failed in rank_and_select")
         return {
             "ranked_posts": [],

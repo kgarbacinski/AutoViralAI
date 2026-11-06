@@ -19,7 +19,10 @@ class Settings(BaseSettings):
 
     platform: Literal["linkedin", "threads"] = "linkedin"
     anthropic_api_key: str = ""
-    llm_model: str = "claude-sonnet-4-6"
+    openai_api_key: str = ""
+    openai_base_url: str = ""
+    llm_provider: str = "openai_free"
+    llm_model: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
 
     threads_app_id: str = ""
     threads_app_secret: str = ""
@@ -60,9 +63,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_required_secrets(self) -> "Settings":
-        if not self.anthropic_api_key:
+        if not self.anthropic_api_key and not self.openai_api_key:
             raise ValueError(
-                "ANTHROPIC_API_KEY is required. Set it in .env or as an environment variable."
+                "Either ANTHROPIC_API_KEY or OPENAI_API_KEY is required."
             )
 
         if self.is_production:
