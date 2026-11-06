@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from langchain_anthropic import ChatAnthropic
+try:
+    from langchain_anthropic import ChatAnthropic
+except ImportError:
+    ChatAnthropic = None
 from langchain_openai import ChatOpenAI
 
 if TYPE_CHECKING:
@@ -14,7 +17,7 @@ if TYPE_CHECKING:
 # Default for AutoViralAI: bansos free tier.
 
 DEFAULT_FREE_BASE_URL = "http://127.0.0.1:17070/v1"
-DEFAULT_FREE_MODEL = "stealth/crouton-alpha"
+DEFAULT_FREE_MODEL = "minimax-m2.7"
 
 
 def get_llm(settings: Settings):
@@ -36,6 +39,6 @@ def get_llm(settings: Settings):
         model=model,
         api_key=api_key,
         base_url=base_url,
-        max_tokens=8192,
+        max_tokens=32768,
         max_retries=3,
     )

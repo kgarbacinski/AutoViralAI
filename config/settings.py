@@ -19,10 +19,10 @@ class Settings(BaseSettings):
 
     platform: Literal["linkedin", "threads"] = "linkedin"
     anthropic_api_key: str = ""
-    openai_api_key: str = ""
-    openai_base_url: str = ""
+    openai_api_key: str = "free-key"
+    openai_base_url: str = "http://127.0.0.1:17070/v1"
     llm_provider: str = "openai_free"
-    llm_model: str = "stealth/crouton-alpha"
+    llm_model: str = "minimax-m2.7"
 
     threads_app_id: str = ""
     threads_app_secret: str = ""
@@ -63,10 +63,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_required_secrets(self) -> "Settings":
-        if not self.anthropic_api_key and not self.openai_api_key:
-            raise ValueError(
-                "Either ANTHROPIC_API_KEY or OPENAI_API_KEY is required."
-            )
+        # Free local models need no key; only require when provider is paid
+        if self.llm_provider == "anthropic" and not self.anthropic_api_key:
+            raise ValueError("ANTHROPIC_API_KEY is required for anthropic provider.")
 
         if self.is_production:
             missing = []
