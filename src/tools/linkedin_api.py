@@ -98,7 +98,7 @@ class MockLinkedInClient(LinkedInClient):
 class RealLinkedInClient(LinkedInClient):
     TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 
-    def __init__(self, access_token: str, author_urn: str, linkedin_version: str = "202411"):
+    def __init__(self, access_token: str, author_urn: str, linkedin_version: str = "202511"):
         self.access_token = access_token
         self.author_urn = author_urn
         self.linkedin_version = linkedin_version
@@ -180,7 +180,7 @@ class RealLinkedInClient(LinkedInClient):
         return post_id
 
     async def get_post_metrics(self, post_id: str) -> dict:
-        ugc_urn = post_id if post_id.startswith("urn:li:ugcPost:") else f"urn:li:ugcPost:{post_id}"
+        ugc_urn = post_id if post_id.startswith("urn:li:") else f"urn:li:ugcPost:{post_id}"
         encoded = quote(ugc_urn, safe="")
         try:
             resp = await self._request_with_retry(

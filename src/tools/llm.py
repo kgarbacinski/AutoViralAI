@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 try:
@@ -13,11 +15,11 @@ if TYPE_CHECKING:
 
 # Free OpenAI-compatible endpoints (bansos router):
 #   http://127.0.0.1:17070/v1 — bansos free models
-#   http://127.0.0.1:20127/v1 — 9router
-# Default for AutoViralAI: bansos free tier.
+#   https://openrouter.ai/api/v1 — OpenRouter free router
+# Default for AutoViralAI: OpenRouter's unified free tier.
 
-DEFAULT_FREE_BASE_URL = "http://127.0.0.1:17070/v1"
-DEFAULT_FREE_MODEL = "minimax-m2.7"
+DEFAULT_FREE_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_FREE_MODEL = "openrouter/free"
 
 
 def get_llm(settings: Settings):
@@ -32,9 +34,21 @@ def get_llm(settings: Settings):
             max_retries=8,
         )
 
-    # openai_free — OpenAI-compatible free models via bansos/9router
     base_url = settings.openai_base_url or DEFAULT_FREE_BASE_URL
-    api_key = settings.openai_api_key or "free-key"  # local routers often ignore key
+    api_key = settings.openai_api_key or os.getenv("OPENROUTER_API_KEY", "")
+
+    if not api_key and settings.openrouter_api_key_file:
+        key_file = Path(settings.openrouter_api_key_file)
+        if key_file.is_file():
+            for line in key_file.read_text(encoding="utf-8").splitlines():
+                if line.startswith("OPENROUTER_API_KEY="):
+                    api_key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    break
+
+    if not api_key:
+        # Bansos and similar local routers often accept any key.
+        api_key = "free-key"
+
     return ChatOpenAI(
         model=model,
         api_key=api_key,

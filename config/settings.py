@@ -8,6 +8,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 CONFIG_DIR = Path(__file__).parent
 PROJECT_ROOT = CONFIG_DIR.parent
+DEFAULT_FREE_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_FREE_MODEL = "openrouter/free"
 
 
 class Settings(BaseSettings):
@@ -19,10 +21,11 @@ class Settings(BaseSettings):
 
     platform: Literal["linkedin", "threads"] = "linkedin"
     anthropic_api_key: str = ""
-    openai_api_key: str = "free-key"
-    openai_base_url: str = "http://127.0.0.1:17070/v1"
+    openai_api_key: str = ""
+    openai_base_url: str = DEFAULT_FREE_BASE_URL
+    openrouter_api_key_file: str = ""
     llm_provider: str = "openai_free"
-    llm_model: str = "minimax-m2.7"
+    llm_model: str = DEFAULT_FREE_MODEL
 
     threads_app_id: str = ""
     threads_app_secret: str = ""
@@ -31,7 +34,7 @@ class Settings(BaseSettings):
 
     linkedin_access_token: str = ""
     linkedin_author_urn: str = ""
-    linkedin_version: str = "202411"
+    linkedin_version: str = "202511"
 
     apify_api_token: str = ""
 
