@@ -2,44 +2,76 @@
 
 ## Output
 
-- `2026-11/` — first four published posts (3 image posts published 2026-11-14, 1 text post).
-- `30-days/` — the 30-day personal-brand plan. `posts.json` is the machine-readable
-  schedule, `posts.md` the human-readable version. Images in `30-days/images/`.
+- `2026-11/` — the four posts published manually on 2026-11-14
+  (3 image posts + 1 text post; record of IDs in `2026-11/posted.json`).
+- `30-days/` — the full 30-day personal-brand plan, **all posts are native
+  document carousels**. `posts.json` is the machine-readable schedule,
+  `posts.md` the human-readable one. Images in `30-days/images/` stay as
+  cover fallbacks; carousels in `30-days/carousels/dayN/`.
 
-## Days 1–3 are carousels
+## All 30 posts are carousels (10 slides each)
 
-`30-days/carousels/day{1,2,3}/`
-
-- `NN.png` — one 1080×1350 slide each (dark board, 10 slides).
-- `dayN.pdf` — the multi-page file to attach. Slides are numbered, so the deck
-  works without captions.
-
-**Publishing requires manual attachment.** The LinkedIn app (`Mukller`, Share on
-LinkedIn product, scopes `openid profile w_member_social`) cannot register the
-document recipe: `registerUpload` with `feedshare-document` (and `feedshare-pdf` /
-`feedshare-native-document`) returns `403 ACCESS_DENIED`. Image recipes (`feedshare-image`)
-work fine. Until the app is upgraded (Community Management API + company page + vetting —
-not available to a personal profile), the PDF must be attached by hand in the
-LinkedIn post editor when publishing those three days. `scripts/publish_scheduled.py`
-skips carousel entries and writes a `manual_attachment_required` marker into
-`posted.json` instead of attempting an API upload.
-
-The caption goes in the post text; the PDF carries the slides.
-
-Alt text for accessibility is in `posts.json` (`alt_text`).
-
-## Regenerating the carousels
+`30-days/carousels/dayN/` — `NN.png` per slide (1080×1350, Arial/Consolas),
+`dayN.pdf` the file to post. Slide copy lives in `carousels_specs.py`
+(data), the renderer in `generate_carousels.py`. Regenerate:
 
 ```powershell
 python linkedin_assets/30-days/generate_carousels.py
 ```
 
-Uses PIL from the system Python (the uv venv has no Pillow). Arial/Consolas from
-`C:/Windows/Fonts/`. The generator is data-driven: slide copy lives in the `DECKS`
-dict; layout primitives (`cover`, `head_body`, `two_box`, `steps`, `terminal`,
-`stats`, `checklist`, `quote`, `cta`) live in `render_slide`. If a new deck is
-added, re-check layout overflow after editing — several layouts autosize panels
-to the copy length.
+## Publishing — why not the API
 
-Nothing here is published automatically. Publishing on the scheduled dates is
-explicitly gated by `scripts/publish_scheduled.py` and Anton's approval per post.
+The Share on LinkedIn app (`Mukller`, product "Share on LinkedIn",
+scopes `openid profile w_member_social`) **cannot register the document
+recipe**. Verified 2026-11-14: `registerUpload` with
+`feedshare-document` / `feedshare-pdf` / `feedshare-native-document` →
+`403 ACCESS_DENIED` (with `supportedUploadMechanism: SYNCHRONOUS_UPLOAD`
+on `rest/assets` the error is `Not enough permissions: partnerApiAssets`).
+Image recipe works fine (200) — that is why 2026-11-14 posts are image posts.
+Content analytics API is likewise blocked (`partnerApiSocialActions` /
+`r_member_social`); the Community Management API requires a legal
+organization + vetting and is unavailable to a personal profile.
+
+So carousels go to the feed through the **web composer**, driven by
+`scripts/publish_carousel_browser.py` (Playwright + installed Edge,
+persistent profile at `D:\Projects\opencode-chrome\.edge-profile`,
+overridable with `--profile`).
+
+```powershell
+# dry-run: fill the composer, attach the PDF, stop BEFORE the Post button
+uv run --with playwright python scripts/publish_carousel_browser.py --day 1
+
+# actually publish (clicks the real "Post" button)
+uv run --with playwright python scripts/publish_carousel_browser.py --day 1 --publish
+```
+
+One-time setup: open the Edge profile (or any profile you control) and sign
+into LinkedIn **manually once**; the script reuses the session afterwards.
+If the session is dead it screenshots the auth-wall and exits with code 2.
+
+Dry-run screenshots land next to the PDF (`dayN_ready.png`,
+`dayN_published.png`); a failed composer selector likewise screenshots
+(`dayN_*_missing.png`) and exits non-zero.
+
+`scripts/publish_scheduled.py` — the daily scheduler. Without `--browser`,
+due carousels are skipped as `manual_attachment_required` (nothing gets
+posted). With `--browser`, due carousels are filled in the composer;
+add `--publish` to actually click Post. Never assume it posted: check the
+printed result and `posted.json`.
+
+Manual fallback: open the composer in LinkedIn, paste the caption, attach
+the PDF, click Post yourself. It takes about a minute.
+
+## Cadence
+
+2–3 posts per week (Tue / Thu / Sat, 11:00), one post per day maximum.
+Posts are fenced by `scripts/publish_scheduled.py` + `posted.json`
+(idempotent). Do not batch-publish: 2026-11-14 had 3 posts at once and
+that was rolled back to the current cadence. Nothing publishes without
+explicit approval; the scheduler only announces/publishes what is due.
+
+## Metrics
+
+Log impressions / saves / comments manually (the API cannot read them).
+First 30–60 minutes after publishing decide the distribution window —
+be online to reply to comments quickly.

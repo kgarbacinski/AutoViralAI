@@ -1,9 +1,15 @@
-# LinkedIn 30-day plan — cadence and comments tuned
+# LinkedIn 30-day plan — all posts are 10-slide carousels
 
-Days 1–3 are native document carousels (10 slides each). The Share on LinkedIn
-API app has no access to the document recipe (registerUpload -> 403 ACCESS_DENIED),
-so the PDF must be attached manually in the LinkedIn post editor. Everything else
-publishes through scripts/publish_scheduled.py.
+All 30 posts ship as native document carousels (10 slides each, 1080x1350).
+The Share on LinkedIn API app cannot register the document recipe
+(registerUpload -> 403 ACCESS_DENIED), so publishing is done in the browser:
+
+  python scripts/publish_carousel_browser.py --day 1            # dry-run, stops before Post
+  python scripts/publish_carousel_browser.py --day 1 --publish  # actually publishes
+
+One-time setup: an Edge profile with a logged-in LinkedIn session and
+`uv run --with playwright python scripts/publish_carousel_browser.py`.
+Manual fallback: attach the PDF in the post composer yourself.
 
 ## Day 01 · Tue 17.11 · proof-first agents
 
@@ -21,7 +27,7 @@ Which proof condition would make you trust an agent with an irreversible change?
 
 #PythonBackend #AIEngineering #Automation
 
-Carousel: `carousels/day1/day1.pdf`  (10 slides, attach manually)
+Carousel: `carousels/day1/day1.pdf`  (10 slides)
 Slides: `carousels/day1/`
 First comment: none
 Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: proof-first agents. Cover: A click is not the finish line.
@@ -42,7 +48,7 @@ When did your ‘healthy’ dashboard last hide the actual failure?
 
 #Klipper #PythonBackend #Reliability
 
-Carousel: `carousels/day2/day2.pdf`  (10 slides, attach manually)
+Carousel: `carousels/day2/day2.pdf`  (10 slides)
 Slides: `carousels/day2/`
 First comment: none
 Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: klipper false green. Cover: HTTP 200 lied to me.
@@ -67,7 +73,7 @@ Which kind of content do you reject before it reaches a user?
 
 #Education #PythonBackend #ContentOps
 
-Carousel: `carousels/day3/day3.pdf`  (10 slides, attach manually)
+Carousel: `carousels/day3/day3.pdf`  (10 slides)
 Slides: `carousels/day3/`
 First comment: none
 Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: botka reject before scale. Cover: More generation did not make Botka better.
@@ -92,9 +98,10 @@ What would help you decide an automation finished correctly?
 
 #AIEngineering #Reliability #PythonBackend
 
-Visual: `images/04.png`
+Carousel: `carousels/day4/day4.pdf`  (10 slides)
+Slides: `carousels/day4/`
 First comment: none
-Alt text: Anton Petnitsky post 4: automation is not a click
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: automation is not a click. Cover: A bot that cannot verify is an expensive clicker.
 
 ## Day 05 · Thu 26.11 · Python ownership hiring
 
@@ -115,9 +122,10 @@ If that is your team, send me a note about the role.
 
 #Python #PythonBackend #LLMOps
 
-Visual: `images/05.png`
+Carousel: `carousels/day5/day5.pdf`  (10 slides)
+Slides: `carousels/day5/`
 First comment: none
-Alt text: Anton Petnitsky post 5: Python ownership hiring
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: Python ownership hiring. Cover: I’m not interested in another Python headline that could describe any graduate with Flask tutorials.
 
 ## Day 06 · Sat 28.11 · repo memory and agents
 
@@ -139,9 +147,10 @@ Where does your agent lose context most often?
 
 #AIEngineering #Engineering #LLM
 
-Visual: `images/06.png`
+Carousel: `carousels/day6/day6.pdf`  (10 slides)
+Slides: `carousels/day6/`
 First comment: none
-Alt text: Anton Petnitsky post 6: repo memory and agents
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: repo memory and agents. Cover: Context should survive the chat window.
 
 ## Day 07 · Tue 01.12 · verify browser automation
 
@@ -159,9 +168,10 @@ Save this for the next time you review agent-written browser code.
 
 #AIEngineering #BrowserAutomation #MCP
 
-Visual: `images/07.png`
+Carousel: `carousels/day7/day7.pdf`  (10 slides)
+Slides: `carousels/day7/`
 First comment: none
-Alt text: Anton Petnitsky post 7: verify browser automation
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: verify browser automation. Cover: Screenshots are not evidence.
 
 ## Day 08 · Thu 03.12 · voice-notes are not transcription
 
@@ -183,9 +193,10 @@ Which part of audio handling breaks first for you?
 
 #VoiceNotes #AIEngineering #PythonBackend
 
-Visual: `images/08.png`
+Carousel: `carousels/day8/day8.pdf`  (10 slides)
+Slides: `carousels/day8/`
 First comment: none
-Alt text: Anton Petnitsky post 8: voice-notes are not transcription
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: voice-notes are not transcription. Cover: Whisper is a boundary, not a destination.
 
 ## Day 09 · Sat 05.12 · safalife operations
 
@@ -207,9 +218,10 @@ Where does your ‘complete’ spec miss reality?
 
 #Operations #Product #PythonBackend
 
-Visual: `images/09.png`
+Carousel: `carousels/day9/day9.pdf`  (10 slides)
+Slides: `carousels/day9/`
 First comment: none
-Alt text: Anton Petnitsky post 9: safalife operations
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: safalife operations. Cover: My Safalife automation could not fix the existing process by pretending it was a spec.
 
 ## Day 10 · Tue 08.12 · voice-note quality gate
 
@@ -231,9 +243,10 @@ Save this for the next transcript you have to trust.
 
 #AIEngineering #GarbageIn #PythonBackend
 
-Visual: `images/10.png`
+Carousel: `carousels/day10/day10.pdf`  (10 slides)
+Slides: `carousels/day10/`
 First comment: none
-Alt text: Anton Petnitsky post 10: voice-note quality gate
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: voice-note quality gate. Cover: No model was the only bottleneck in voice notes.
 
 ## Day 11 · Thu 10.12 · green CI is not correct input
 
@@ -254,9 +267,10 @@ Save this for the next CI run that still ships bad input.
 
 #Testing #Python #Production
 
-Visual: `images/11.png`
+Carousel: `carousels/day11/day11.pdf`  (10 slides)
+Slides: `carousels/day11/`
 First comment: none
-Alt text: Anton Petnitsky post 11: green CI is not correct input
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: green CI is not correct input. Cover: Green CI did not protect the system from garbage input.
 
 ## Day 12 · Sat 12.12 · service start order
 
@@ -279,9 +293,10 @@ Which dependency still starts on hope?
 
 #Backend #EmbeddedSystems #Reliability
 
-Visual: `images/12.png`
+Carousel: `carousels/day12/day12.pdf`  (10 slides)
+Slides: `carousels/day12/`
 First comment: none
-Alt text: Anton Petnitsky post 12: service start order
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: service start order. Cover: Start order can decide a working system’s fate.
 
 ## Day 13 · Tue 15.12 · delete weak content
 
@@ -306,9 +321,10 @@ What content reaches production before you review it?
 
 #Education #ContentOps #PythonBackend
 
-Visual: `images/13.png`
+Carousel: `carousels/day13/day13.pdf`  (10 slides)
+Slides: `carousels/day13/`
 First comment: none
-Alt text: Anton Petnitsky post 13: delete weak content
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: delete weak content. Cover: Deleting weak content was the highest-leverage content work I did.
 
 ## Day 14 · Thu 17.12 · six services are one system
 
@@ -324,9 +340,10 @@ Which system have you merged into one boundary too early?
 
 #Backend #Reliability #Systems
 
-Visual: `images/14.png`
+Carousel: `carousels/day14/day14.pdf`  (10 slides)
+Slides: `carousels/day14/`
 First comment: none
-Alt text: Anton Petnitsky post 14: six services are one system
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: six services are one system. Cover: One Minecraft server can become six services easily.
 
 ## Day 15 · Sat 19.12 · ugly 80 percent hiring
 
@@ -347,9 +364,10 @@ Which workflow is currently being held together manually?
 
 #Python #PythonBackend #Hiring
 
-Visual: `images/15.png`
+Carousel: `carousels/day15/day15.pdf`  (10 slides)
+Slides: `carousels/day15/`
 First comment: none
-Alt text: Anton Petnitsky post 15: ugly 80 percent hiring
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: ugly 80 percent hiring. Cover: I’m not looking for Python work that ends with nice screenshots.
 
 ## Day 16 · Tue 22.12 · transcript fidelity
 
@@ -370,9 +388,10 @@ What would you inspect before keeping a transcript?
 
 #KnowledgeManagement #AIEngineering #PythonBackend
 
-Visual: `images/16.png`
+Carousel: `carousels/day16/day16.pdf`  (10 slides)
+Slides: `carousels/day16/`
 First comment: none
-Alt text: Anton Petnitsky post 16: transcript fidelity
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: transcript fidelity. Cover: A transcript can sound polished and preserve nothing useful.
 
 ## Day 17 · Thu 24.12 · logs over screenshots
 
@@ -393,9 +412,10 @@ Save this before the next incident review.
 
 #Debugging #Reliability #Backend
 
-Visual: `images/17.png`
+Carousel: `carousels/day17/day17.pdf`  (10 slides)
+Slides: `carousels/day17/`
 First comment: none
-Alt text: Anton Petnitsky post 17: logs over screenshots
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: logs over screenshots. Cover: Screenshots don’t tell me why failure happened.
 
 ## Day 18 · Sat 26.12 · diff is risk report
 
@@ -416,9 +436,10 @@ Save this before your next agent-authored diff lands.
 
 #CodeReview #Engineering #Git
 
-Visual: `images/18.png`
+Carousel: `carousels/day18/day18.pdf`  (10 slides)
+Slides: `carousels/day18/`
 First comment: none
-Alt text: Anton Petnitsky post 18: diff is risk report
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: diff is risk report. Cover: A diff is a risk report.
 
 ## Day 19 · Tue 29.12 · repo as proof hiring
 
@@ -439,9 +460,10 @@ Which repository are you most proud of right now?
 
 #GitHub #PythonBackend #Hiring
 
-Visual: `images/19.png`
+Carousel: `carousels/day19/day19.pdf`  (10 slides)
+Slides: `carousels/day19/`
 First comment: none
-Alt text: Anton Petnitsky post 19: repo as proof hiring
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: repo as proof hiring. Cover: A repository isn’t decoration.
 
 ## Day 20 · Thu 31.12 · restart isn't repair
 
@@ -462,9 +484,10 @@ What did your last restart actually resolve?
 
 #Operations #Backend #Reliability
 
-Visual: `images/20.png`
+Carousel: `carousels/day20/day20.pdf`  (10 slides)
+Slides: `carousels/day20/`
 First comment: none
-Alt text: Anton Petnitsky post 20: restart isn't repair
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: restart isn't repair. Cover: A restart is not a repair.
 
 ## Day 21 · Sat 02.01 · failure as interface
 
@@ -487,9 +510,10 @@ Save this for the next API contract you review.
 
 #SRE #Backend #Testing
 
-Visual: `images/21.png`
+Carousel: `carousels/day21/day21.pdf`  (10 slides)
+Slides: `carousels/day21/`
 First comment: none
-Alt text: Anton Petnitsky post 21: failure as interface
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: failure as interface. Cover: Failure is part of the interface.
 
 ## Day 22 · Tue 05.01 · prompting isn't integration
 
@@ -512,9 +536,10 @@ Save this for the next LLM prompt that needs to survive production.
 
 #LLMOps #Production #AIEngineering
 
-Visual: `images/22.png`
+Carousel: `carousels/day22/day22.pdf`  (10 slides)
+Slides: `carousels/day22/`
 First comment: none
-Alt text: Anton Petnitsky post 22: prompting isn't integration
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: prompting isn't integration. Cover: Prompting is not integration.
 
 ## Day 23 · Thu 07.01 · diagnostic before automation
 
@@ -535,9 +560,10 @@ What do you inspect before touching production?
 
 #Klipper #Diagnostics #Backend
 
-Visual: `images/23.png`
+Carousel: `carousels/day23/day23.pdf`  (10 slides)
+Slides: `carousels/day23/`
 First comment: none
-Alt text: Anton Petnitsky post 23: diagnostic before automation
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: diagnostic before automation. Cover: Automation cannot rush diagnosis.
 
 ## Day 24 · Sat 09.01 · content is database contract
 
@@ -557,9 +583,10 @@ Save this for the next content contract review.
 
 #Botka #DataModeling #PythonBackend
 
-Visual: `images/24.png`
+Carousel: `carousels/day24/day24.pdf`  (10 slides)
+Slides: `carousels/day24/`
 First comment: none
-Alt text: Anton Petnitsky post 24: content is database contract
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: content is database contract. Cover: Botka taught me that good learning content is a database contract.
 
 ## Day 25 · Tue 12.01 · control is not correctness
 
@@ -580,9 +607,10 @@ What can your agent verify after an irreversible action?
 
 #AIEngineering #BrowserAutomation #PythonBackend
 
-Visual: `images/25.png`
+Carousel: `carousels/day25/day25.pdf`  (10 slides)
+Slides: `carousels/day25/`
 First comment: none
-Alt text: Anton Petnitsky post 25: control is not correctness
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: control is not correctness. Cover: opencode-chrome made me confront control versus correctness.
 
 ## Day 26 · Thu 14.01 · ask for Python reliability hiring
 
@@ -600,9 +628,10 @@ If your team needs that kind of Python work, send me a note about the role.
 
 #Python #Hiring #LLMOps
 
-Visual: `images/26.png`
+Carousel: `carousels/day26/day26.pdf`  (10 slides)
+Slides: `carousels/day26/`
 First comment: none
-Alt text: Anton Petnitsky post 26: ask for Python reliability hiring
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: ask for Python reliability hiring. Cover: I’m not looking for ‘AI automation’ with no owner.
 
 ## Day 27 · Sat 16.01 · one success is luck
 
@@ -621,9 +650,10 @@ What does your code do on attempt five, not attempt one?
 
 #Automation #Backend #Reliability
 
-Visual: `images/27.png`
+Carousel: `carousels/day27/day27.pdf`  (10 slides)
+Slides: `carousels/day27/`
 First comment: none
-Alt text: Anton Petnitsky post 27: one success is luck
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: one success is luck. Cover: One successful run can be luck.
 
 ## Day 28 · Tue 19.01 · ops is source code
 
@@ -644,9 +674,10 @@ Where does your spec miss operational truth?
 
 #Operations #Product #PythonBackend
 
-Visual: `images/28.png`
+Carousel: `carousels/day28/day28.pdf`  (10 slides)
+Slides: `carousels/day28/`
 First comment: none
-Alt text: Anton Petnitsky post 28: ops is source code
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: ops is source code. Cover: Operations is the source code in an automated business.
 
 ## Day 29 · Thu 21.01 · ownership over breadth hiring
 
@@ -668,9 +699,10 @@ Which process can you own today, not next sprint?
 
 #Python #Ownership #PythonBackend
 
-Visual: `images/29.png`
+Carousel: `carousels/day29/day29.pdf`  (10 slides)
+Slides: `carousels/day29/`
 First comment: none
-Alt text: Anton Petnitsky post 29: ownership over breadth hiring
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: ownership over breadth hiring. Cover: One end-to-end process teaches you more than ten disconnected features.
 
 ## Day 30 · Sat 23.01 · 12 weeks to deliver
 
@@ -691,6 +723,7 @@ If you need a Python/backend engineer who owns the uncomfortable parts, send me 
 
 #Python #Hiring #Backend
 
-Visual: `images/30.png`
+Carousel: `carousels/day30/day30.pdf`  (10 slides)
+Slides: `carousels/day30/`
 First comment: none
-Alt text: Anton Petnitsky post 30: 12 weeks to deliver
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: 12 weeks to deliver. Cover: Hire for failure handling, not framework enthusiasm.

@@ -1,8 +1,10 @@
 # Usage: uv run python scripts/publish_scheduled.py assets/2026-11/posts.json
+#        uv run python scripts/publish_scheduled.py assets/2026-11/posts.json --browser [--publish]
 
 import argparse
 import asyncio
 import json
+import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -12,11 +14,31 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from config.settings import Settings
 from src.tools.linkedin_api import RealLinkedInClient
 
+BROWSER_SCRIPT = Path(__file__).resolve().parent / "publish_carousel_browser.py"
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Publish due scheduled LinkedIn posts")
     parser.add_argument("schedule", type=Path)
+    parser.add_argument(
+        "--browser",
+        action="store_true",
+        help="Route carousel posts through the Edge composer script instead of skipping them.",
+    )
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="With --browser: actually click Post (default: stops before it, screenshot only).",
+    )
     return parser.parse_args()
+
+
+def run_browser_day(day: int, publish: bool) -> tuple[int, str]:
+    cmd = [sys.executable, str(BROWSER_SCRIPT), "--day", str(day)]
+    if publish:
+        cmd.append("--publish")
+    proc = subprocess.run(cmd, cwd=str(Path(__file__).resolve().parent.parent))
+    return proc.returncode, " ".join(cmd)
 
 
 async def main() -> int:
@@ -30,7 +52,7 @@ async def main() -> int:
     for post in schedule:
         if post["id"] in state:
             continue
-        due_at = datetime.fromisoformat(post["due"])
+        due_at = datetime.fromisoformat(post["date"])
         if due_at.tzinfo is None:
             due_at = due_at.replace(tzinfo=UTC)
         if due_at <= now:
@@ -49,26 +71,40 @@ async def main() -> int:
     try:
         for post, due_at in due:
             if post.get("format") == "carousel":
-                pdf = Path(post.get("pdf", ""))
-                if not pdf.is_absolute():
-                    pdf = args.schedule.parent / pdf
-                if not pdf.is_file():
-                    print(f"ERROR {post['id']}: carousel PDF missing: {pdf}")
+                day = post["day"]
+                if not args.browser:
+                    pdf = Path(post.get("pdf", ""))
+                    if not pdf.is_absolute():
+                        pdf = args.schedule.parent / pdf
+                    state[post["id"]] = {
+                        "status": "manual_attachment_required",
+                        "pdf": str(pdf),
+                        "noted_at": datetime.now(UTC).isoformat(),
+                        "note": "Attach this PDF in the LinkedIn composer (or run with --browser).",
+                    }
+                    state_path.write_text(
+                        json.dumps(state, indent=2, ensure_ascii=False) + "\n",
+                        encoding="utf-8",
+                    )
+                    print(f"MANUAL {post['id']} due {due_at.isoformat()} -> attach {pdf}")
                     continue
-                state[post["id"]] = {
-                    "status": "manual_attachment_required",
-                    "pdf": str(pdf),
-                    "noted_at": datetime.now(UTC).isoformat(),
-                    "note": (
-                        "Attach this PDF in the LinkedIn post editor as a document/carousel, "
-                        "then mark published via posted.json if desired."
-                    ),
-                }
-                state_path.write_text(
-                    json.dumps(state, indent=2, ensure_ascii=False) + "\n",
-                    encoding="utf-8",
-                )
-                print(f"MANUAL {post['id']} due {due_at.isoformat()} -> attach {pdf}")
+                rc, cmd = run_browser_day(day, args.publish)
+                if rc != 0:
+                    print(f"ERROR {post['id']}: browser publish failed (rc={rc}) via: {cmd}")
+                    continue
+                if args.publish:
+                    state[post["id"]] = {
+                        "status": "published_via_browser",
+                        "day": day,
+                        "published_at": datetime.now(UTC).isoformat(),
+                    }
+                    state_path.write_text(
+                        json.dumps(state, indent=2, ensure_ascii=False) + "\n",
+                        encoding="utf-8",
+                    )
+                    print(f"PUBLISHED {post['id']} via browser at {due_at.isoformat()}")
+                else:
+                    print(f"DRY-RUN {post['id']}: composer filled, screenshot saved. Not posted.")
                 continue
             image = Path(post["image"])
             if not image.is_absolute():
