@@ -1,0 +1,23 @@
+[
+  {
+    "id": "2026-11-agent-browser-proof",
+    "due": "2026-11-17T11:00:00+03:00",
+    "image": "post_1_agent_browser.png",
+    "image_title": "Proof before automation",
+    "caption": "A browser button click is not automation.\n\nIt is only one observable action. The useful part is everything around it:\n\n1. what the page looked like before the decision\n2. why that action was selected\n3. what changed afterward\n4. what the agent can verify without me watching\n\nI built opencode-chrome around that loop: observe → act → inspect the resulting state.\n\nThe boring lesson: reliability comes from verification, not from a bigger model.\n\nRepo: opencode-chrome\n\nWhat would make you trust a browser agent in production?\n\n#AIAgents #OpenSource #Automation"
+  },
+  {
+    "id": "2026-11-voice-notes-pipeline",
+    "due": "2026-11-18T11:00:00+03:00",
+    "image": "post_2_voice_notes.png",
+    "image_title": "Transcription is input. Notes are output.",
+    "caption": "“I will just use Whisper for voice notes” is not a pipeline.\n\nWhisper produces text. Notes need context:\n\n- who spoke,\n- what was a thought vs. a task,\n- which words were hallucinated,\n- where the result should live.\n\nMy voice-notes path became useful only after transcription was followed by cleanup, speaker separation, links and Obsidian integration.\n\nThe actual leverage is retrieval later — not recording more audio now.\n\nWhere do your voice notes end up after recording?\n\n#LocalAI #VoiceNotes #Obsidian"
+  },
+  {
+    "id": "2026-11-klipper-http-200",
+    "due": "2026-11-19T11:00:00+03:00",
+    "image": "post_3_klipper_200_ok.png",
+    "image_title": "200 OK is not a working printer",
+    "caption": "HTTP 200 is a misleading definition of “working”.\n\nA dashboard can load perfectly while the actual control plane is broken. I saw this with Klipper: the UI was fine, but klippy_state was error.\n\nThe check is not:\n\n- did the page open?\n- does the button render?\n- does the endpoint return 200?\n\nThe check is:\n\n- can the system reach its controller?\n- what is its real state?\n- what do the logs say?\n\nMonitoring gives a signal. The system state gives the answer.\n\nWhat health signal do you trust least?\n\n#Klipper #EmbeddedSystems #Engineering"
+  }
+]

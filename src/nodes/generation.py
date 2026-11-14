@@ -3,11 +3,11 @@ import logging
 import re
 from collections import Counter
 
-import anthropic
-from langchain_anthropic import ChatAnthropic
-from langchain_core.exceptions import OutputParserException
+import anthropic  # noqa: F401
+
+# ChatAnthropic replaced by get_llm()
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from src.models.content import PostVariant
 from src.models.state import CreationPipelineState
@@ -25,7 +25,7 @@ class GenerationResult(BaseModel):
 async def generate_post_variants(
     state: CreationPipelineState,
     *,
-    llm: ChatAnthropic,
+    llm,
     kb: KnowledgeBase,
 ) -> dict:
     patterns = state.get("extracted_patterns", [])
@@ -122,7 +122,7 @@ async def generate_post_variants(
                 ),
             ]
         )
-    except (anthropic.APIError, OutputParserException, ValidationError) as e:
+    except Exception as e:
         logger.exception("LLM call failed in generate_post_variants")
         return {
             "generated_variants": [],

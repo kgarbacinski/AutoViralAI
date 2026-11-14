@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class PostVariant(BaseModel):
-    content: str = Field(description="The actual post text (max 500 chars for Threads)")
+    content: str = Field(description="The actual post text (max 3000 chars for LinkedIn)")
     pattern_used: str = Field(description="Name of the content pattern used")
     pillar: str = Field(description="Content pillar this post belongs to")
     hook_type: str = Field(description="Type of hook used")

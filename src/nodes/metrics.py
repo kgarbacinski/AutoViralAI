@@ -6,7 +6,7 @@ import httpx
 from src.models.publishing import PostMetrics
 from src.models.state import LearningPipelineState
 from src.store.knowledge_base import KnowledgeBase
-from src.tools.threads_api import ThreadsClient
+from src.tools.linkedin_api import LinkedInClient
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 async def collect_metrics(
     state: LearningPipelineState,
     *,
-    threads_client: ThreadsClient,
+    linkedin_client: LinkedInClient,
     kb: KnowledgeBase,
 ) -> dict:
     pending = await kb.get_pending_metrics_posts()
@@ -25,11 +25,12 @@ async def collect_metrics(
 
     current_followers = None
     try:
-        current_followers = await threads_client.get_follower_count()
+        current_followers = await linkedin_client.get_follower_count()
     except (httpx.HTTPStatusError, httpx.RequestError) as e:
         logger.warning("Failed to fetch follower count for metrics cycle: %s", e)
 
     for post in pending:
+        post_id = post.linkedin_id or post.threads_id
         try:
             if post.scheduled_metrics_check:
                 check_time = datetime.fromisoformat(post.scheduled_metrics_check)
@@ -38,14 +39,14 @@ async def collect_metrics(
                 if now < check_time:
                     continue
         except (ValueError, TypeError) as e:
-            errors.append(f"collect_metrics: Bad schedule timestamp for {post.threads_id}: {e}")
+            errors.append(f"collect_metrics: Bad schedule timestamp for {post_id}: {e}")
             continue
 
         try:
-            raw_metrics = await threads_client.get_post_metrics(post.threads_id)
+            raw_metrics = await linkedin_client.get_post_metrics(post_id)
         except (httpx.HTTPStatusError, httpx.RequestError) as e:
-            logger.warning("Failed to collect metrics for %s", post.threads_id, exc_info=True)
-            errors.append(f"collect_metrics: Failed for {post.threads_id}: {e}")
+            logger.warning("Failed to collect metrics for %s", post_id, exc_info=True)
+            errors.append(f"collect_metrics: Failed for {post_id}: {e}")
             continue
 
         try:
@@ -53,12 +54,13 @@ async def collect_metrics(
             if publish_time.tzinfo is None:
                 publish_time = publish_time.replace(tzinfo=UTC)
         except (ValueError, TypeError) as e:
-            errors.append(f"collect_metrics: Bad publish timestamp for {post.threads_id}: {e}")
+            errors.append(f"collect_metrics: Bad publish timestamp for {post_id}: {e}")
             continue
         hours_elapsed = (now - publish_time).total_seconds() / 3600
 
         metrics = PostMetrics(
             threads_id=post.threads_id,
+            linkedin_id=post_id,
             content=post.content,
             pattern_used=post.pattern_used,
             pillar=post.pillar,
@@ -78,7 +80,8 @@ async def collect_metrics(
         collected.append(metrics)
 
         await kb.save_post_metrics(metrics)
-        await kb.remove_pending_metrics(post.threads_id)
+        key_id = post_id
+        await kb.remove_pending_metrics(key_id)
 
     return {
         "posts_to_check": [p.model_dump() for p in pending],

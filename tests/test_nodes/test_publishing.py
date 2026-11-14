@@ -3,12 +3,12 @@
 import pytest
 
 from src.nodes.publishing import publish_post, schedule_metrics_check
-from src.tools.threads_api import MockThreadsClient
+from src.tools.linkedin_api import MockLinkedInClient
 
 
 @pytest.mark.asyncio
 async def test_publish_post(kb):
-    client = MockThreadsClient()
+    client = MockLinkedInClient()
     state = {
         "selected_post": {
             "content": "Test post content",
@@ -19,19 +19,19 @@ async def test_publish_post(kb):
         },
     }
 
-    result = await publish_post(state, threads_client=client, kb=kb)
+    result = await publish_post(state, linkedin_client=client, kb=kb)
 
     assert result["published_post"] is not None
     assert result["published_post"]["content"] == "Test post content"
-    assert result["published_post"]["threads_id"].startswith("mock_")
+    assert result["published_post"]["linkedin_id"].startswith("mock_")
 
 
 @pytest.mark.asyncio
 async def test_publish_post_no_selection(kb):
-    client = MockThreadsClient()
+    client = MockLinkedInClient()
     state = {"selected_post": None}
 
-    result = await publish_post(state, threads_client=client, kb=kb)
+    result = await publish_post(state, linkedin_client=client, kb=kb)
 
     assert result["published_post"] is None
     assert len(result["errors"]) > 0
@@ -41,7 +41,7 @@ async def test_publish_post_no_selection(kb):
 async def test_schedule_metrics_check(kb):
     state = {
         "published_post": {
-            "threads_id": "mock_123",
+            "linkedin_id": "mock_123",
             "content": "Test",
             "pattern_used": "test",
             "pillar": "hot_takes",
@@ -56,4 +56,4 @@ async def test_schedule_metrics_check(kb):
 
     pending = await kb.get_pending_metrics_posts()
     assert len(pending) == 1
-    assert pending[0].threads_id == "mock_123"
+    assert pending[0].linkedin_id == "mock_123"

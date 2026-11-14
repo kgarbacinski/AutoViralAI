@@ -18,9 +18,9 @@
 
 <br/>
 
-# AutoViralAI
+# AutoViralAI for LinkedIn
 
-### Your social media grows while you sleep.
+### Your LinkedIn grows while you sleep.
 
 <p>
 An autonomous AI agent that researches what's going viral, generates content,<br/>

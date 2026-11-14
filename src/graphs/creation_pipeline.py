@@ -1,10 +1,10 @@
 from functools import partial
 
-from langchain_anthropic import ChatAnthropic
 from langgraph.graph import END, START, StateGraph
 
 from config.settings import Settings
 from src.models.state import CreationPipelineState
+from src.nodes.approval import human_approval
 from src.nodes.generation import generate_post_variants
 from src.nodes.goal_check import goal_check
 from src.nodes.patterns import extract_patterns
@@ -15,24 +15,20 @@ from src.store.knowledge_base import KnowledgeBase
 from src.tools.apify_client import ThreadsScraper, get_threads_scraper
 from src.tools.embeddings import EmbeddingClient
 from src.tools.hackernews_client import HackerNewsClient, get_hackernews_client
-from src.tools.threads_api import ThreadsClient, get_threads_client
+from src.tools.linkedin_api import LinkedInClient, get_linkedin_client
+from src.tools.llm import get_llm
 
 
 def build_creation_pipeline(
     settings: Settings,
     store,
-    threads_client: ThreadsClient | None = None,
+    linkedin_client: LinkedInClient | None = None,
     hn: HackerNewsClient | None = None,
     scraper: ThreadsScraper | None = None,
     embedding_client: EmbeddingClient | None = None,
 ) -> StateGraph:
-    llm = ChatAnthropic(
-        model=settings.llm_model,
-        api_key=settings.anthropic_api_key,
-        max_tokens=4096,
-        max_retries=8,
-    )
-    threads_client = threads_client or get_threads_client(settings)
+    llm = get_llm(settings)
+    linkedin_client = linkedin_client or get_linkedin_client(settings)
     hn = hn or get_hackernews_client(settings)
     scraper = scraper or get_threads_scraper(settings)
     embedding_client = embedding_client or EmbeddingClient()
@@ -42,7 +38,7 @@ def build_creation_pipeline(
 
     graph.add_node(
         "goal_check",
-        partial(goal_check, threads_client=threads_client),
+        partial(goal_check, linkedin_client=linkedin_client),
     )
     graph.add_node(
         "research_viral_content",
@@ -61,8 +57,12 @@ def build_creation_pipeline(
         partial(rank_and_select, llm=llm, kb=kb, embedding_client=embedding_client),
     )
     graph.add_node(
+        "human_approval",
+        human_approval,
+    )
+    graph.add_node(
         "publish_post",
-        partial(publish_post, threads_client=threads_client, kb=kb),
+        partial(publish_post, linkedin_client=linkedin_client, kb=kb),
     )
     graph.add_node(
         "schedule_metrics_check",
@@ -80,7 +80,12 @@ def build_creation_pipeline(
     graph.add_edge("research_viral_content", "extract_patterns")
     graph.add_edge("extract_patterns", "generate_post_variants")
     graph.add_edge("generate_post_variants", "rank_and_select")
-    graph.add_edge("rank_and_select", "publish_post")
+    graph.add_edge("rank_and_select", "human_approval")
+    graph.add_conditional_edges(
+        "human_approval",
+        _should_publish,
+        {"publish": "publish_post", "end": END},
+    )
     graph.add_edge("publish_post", "schedule_metrics_check")
     graph.add_edge("schedule_metrics_check", END)
 
@@ -91,3 +96,11 @@ def _should_continue(state: CreationPipelineState) -> str:
     if state.get("goal_reached"):
         return "end"
     return "continue"
+
+
+def _should_publish(state: CreationPipelineState) -> str:
+    decision = state.get("human_decision")
+    selected = state.get("selected_post")
+    if decision == "reject" or not selected:
+        return "end"
+    return "publish"

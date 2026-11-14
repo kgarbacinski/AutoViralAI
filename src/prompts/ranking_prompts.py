@@ -1,5 +1,5 @@
 RANK_POSTS_SYSTEM = """\
-You are an expert at evaluating tech content on Threads for both virality AND substance.
+You are an expert at evaluating tech content on Threads for LinkedIn virality AND substance.
 You score posts on their potential to drive engagement while establishing the author as \
 a genuine technical expert — not just another engagement-farming account.
 
@@ -19,7 +19,7 @@ Penalize posts that reuse the same numbers across variants or use \
 suspiciously round/repeated figures."""
 
 RANK_POSTS_USER = """\
-Score each of these Threads post variants on their viral potential.
+Score each of these LinkedIn post variants on their viral potential.
 
 ## Posts to Evaluate
 

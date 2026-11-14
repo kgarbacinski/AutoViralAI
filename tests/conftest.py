@@ -13,7 +13,7 @@ from src.models.strategy import (
 )
 from src.store.knowledge_base import KnowledgeBase
 from src.tools.embeddings import EmbeddingClient
-from src.tools.threads_api import MockThreadsClient
+from src.tools.linkedin_api import MockLinkedInClient
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def kb(store):
 
 @pytest.fixture
 def mock_threads():
-    return MockThreadsClient(initial_followers=12)
+    return MockLinkedInClient(initial_followers=12)
 
 
 @pytest.fixture
@@ -74,7 +74,7 @@ def sample_niche():
 
 
 def make_metric(
-    threads_id: str = "t_001",
+    linkedin_id: str = "t_001",
     pattern_used: str = "hot_take",
     views: int = 1000,
     likes: int = 50,
@@ -85,7 +85,7 @@ def make_metric(
 ) -> dict:
     """Factory for metric dicts used across tests."""
     return {
-        "threads_id": threads_id,
+        "linkedin_id": linkedin_id,
         "pattern_used": pattern_used,
         "views": views,
         "likes": likes,

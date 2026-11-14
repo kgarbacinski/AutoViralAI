@@ -88,7 +88,7 @@ async def test_publish_follower_fallback(kb):
         "current_follower_count": 42,
     }
 
-    result = await publish_post(state, threads_client=mock_client, kb=kb)
+    result = await publish_post(state, linkedin_client=mock_client, kb=kb)
 
     assert result["published_post"] is not None
     assert result["published_post"]["follower_count_at_publish"] == 42

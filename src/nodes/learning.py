@@ -40,7 +40,7 @@ async def update_knowledge_base(
         ) / perf.times_used
 
         engagement_rate = metrics.get("engagement_rate", 0.0)
-        threads_id = metrics.get("threads_id", "")
+        threads_id = metrics.get("linkedin_id") or metrics.get("threads_id", "")
         if perf.best_engagement_rate is None or engagement_rate > perf.best_engagement_rate:
             perf.best_post_id = threads_id
             perf.best_engagement_rate = engagement_rate

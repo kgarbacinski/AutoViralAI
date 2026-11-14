@@ -1,11 +1,11 @@
 import asyncio
 import logging
 
-import anthropic
-from langchain_anthropic import ChatAnthropic
-from langchain_core.exceptions import OutputParserException
+import anthropic  # noqa: F401
+
+# ChatAnthropic replaced by get_llm()
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from src.models.state import LearningPipelineState
 from src.prompts.analysis_prompts import ANALYZE_PERFORMANCE_SYSTEM, ANALYZE_PERFORMANCE_USER
@@ -27,7 +27,7 @@ class PerformanceAnalysis(BaseModel):
 async def analyze_performance(
     state: LearningPipelineState,
     *,
-    llm: ChatAnthropic,
+    llm,
     kb: KnowledgeBase,
 ) -> dict:
     collected = state.get("collected_metrics", [])
@@ -82,7 +82,7 @@ async def analyze_performance(
                 ),
             ]
         )
-    except (anthropic.APIError, OutputParserException, ValidationError) as e:
+    except Exception as e:
         logger.exception("LLM call failed in analyze_performance")
         return {
             "performance_analysis": None,

@@ -40,3 +40,13 @@ SCHEDULE_NO_PUBLISHED_POST = "schedule_metrics_check: No published post to sched
 # --- Approval node ---
 APPROVAL_NO_POST = "human_approval: No post selected for approval"
 APPROVAL_INVALID_DECISION = "human_approval: Invalid decision type: {type_name}"
+
+# --- LinkedIn API ---
+LINKEDIN_ACCESS_TOKEN_REQUIRED = (
+    "LINKEDIN_ACCESS_TOKEN is required in production. "
+    "Get it via OAuth 2.0 at https://developer.linkedin.com (w_member_social scope)."
+)
+LINKEDIN_AUTHOR_URN_REQUIRED = (
+    "LINKEDIN_AUTHOR_URN is required in production "
+    "(e.g. urn:li:person:123456789)."
+)
