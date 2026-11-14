@@ -33,8 +33,10 @@ Content analytics API is likewise blocked (`partnerApiSocialActions` /
 organization + vetting and is unavailable to a personal profile.
 
 So carousels go to the feed through the **web composer**, driven by
-`scripts/publish_carousel_browser.py` (Playwright + installed Edge,
-persistent profile at `D:\Projects\opencode-chrome\.edge-profile`,
+`scripts/publish_carousel_browser.py` (Playwright + installed Google Chrome;
+`--browser chrome|chromium` to use Playwright's bundled Chromium instead;
+persistent profile at `D:\Projects\opencode-chrome\.linkedin-profile` by
+default — the Edge profile died with Edge, which Anton removed on 2026-11-14;
 overridable with `--profile`).
 
 ```powershell
@@ -45,8 +47,9 @@ uv run --with playwright python scripts/publish_carousel_browser.py --day 1
 uv run --with playwright python scripts/publish_carousel_browser.py --day 1 --publish
 ```
 
-One-time setup: open the Edge profile (or any profile you control) and sign
-into LinkedIn **manually once**; the script reuses the session afterwards.
+One-time setup: run the script, sign into LinkedIn **manually once** in the
+window that opens (use the default profile or `--profile`); the script reuses
+the session afterwards.
 If the session is dead it screenshots the auth-wall and exits with code 2.
 
 Dry-run screenshots land next to the PDF (`dayN_ready.png`,

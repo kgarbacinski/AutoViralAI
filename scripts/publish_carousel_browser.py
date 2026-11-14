@@ -1,11 +1,19 @@
-"""Publish a carousel post to LinkedIn through Anton's logged-in Edge profile.
+"""Publish a carousel post to LinkedIn through a logged-in local browser.
 
 The Share on LinkedIn API app cannot register the document recipe
 (verified: registerUpload feedshare-document -> 403 ACCESS_DENIED),
 so carousels must go through the web composer. This script drives that
-composer via Playwright + the installed Microsoft Edge (channel="msedge"),
-reusing a persistent profile so no login is needed after the first manual
-sign-in.
+composer via Playwright + a persistent local browser profile.
+
+Browser choice (Edge was removed by the user 2026-11-14):
+  --browser chrome    system Google Chrome (channel="chrome", default)
+  --browser chromium  Playwright's bundled Chromium
+  --browser firefox   Playwright's bundled Firefox (needs `playwright install firefox`)
+
+Default profile: D:/Projects/opencode-chrome/.linkedin-profile
+(fresh, persistent; Edge profile is NOT reused). One-time setup: run the
+script once with the profile path shown, sign in to LinkedIn manually in
+the window that opens, close it, then re-run.
 
 Default mode is a DRY RUN: it opens the composer, pastes the caption,
 attaches the PDF, and stops before the "Post" button, saving a screenshot
@@ -14,10 +22,7 @@ next to the PDF. Pass --publish to click the real "Post" button.
 Usage:
   uv run --with playwright python scripts/publish_carousel_browser.py --day 1
   uv run --with playwright python scripts/publish_carousel_browser.py --day 1 --publish
-  ... --profile "D:\\Projects\\opencode-chrome\\.edge-profile"   # default
-
-One-time setup: open that profile (or any Edge profile you control), sign in
-to LinkedIn manually once, then close the browser and run this script.
+  ... --browser chromium --profile "D:/path/to/profile"
 """
 from __future__ import annotations
 
@@ -29,7 +34,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 POSTS_JSON = ROOT / "linkedin_assets" / "30-days" / "posts.json"
-DEFAULT_PROFILE = Path(r"D:\Projects\opencode-chrome\.edge-profile")
+DEFAULT_PROFILE = Path(r"D:\Projects\opencode-chrome\.linkedin-profile")
 
 # Locale-tolerant candidates. LinkedIn ships en / ru / be UI; we try both.
 START_POST = [
@@ -90,7 +95,10 @@ def main() -> int:
     ap.add_argument("--day", type=int, required=True, help="carousel day from posts.json (1-30)")
     ap.add_argument("--publish", action="store_true", help="actually click Post (default: stop before it)")
     ap.add_argument("--headless", action="store_true", help="run without a visible window (NOT recommended)")
-    ap.add_argument("--profile", type=Path, default=DEFAULT_PROFILE, help="Edge user-data-dir with LinkedIn session")
+    ap.add_argument("--profile", type=Path, default=DEFAULT_PROFILE,
+                    help="Persistent browser user-data-dir with the LinkedIn session")
+    ap.add_argument("--browser", choices=["chrome", "chromium", "firefox"], default="chrome",
+                    help="chrome = system Google Chrome (default); chromium/firefox = Playwright bundles")
     args = ap.parse_args()
 
     post = load_post(args.day)
@@ -107,12 +115,17 @@ def main() -> int:
         )
 
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            user_data_dir=str(args.profile),
-            channel="msedge",
-            headless=args.headless,
-            viewport={"width": 1400, "height": 900},
-        )
+        launch_kwargs = {
+            "user_data_dir": str(args.profile),
+            "headless": args.headless,
+            "viewport": {"width": 1400, "height": 900},
+        }
+        if args.browser == "firefox":
+            ctx = p.firefox.launch_persistent_context(**launch_kwargs)
+        elif args.browser == "chrome":
+            ctx = p.chromium.launch_persistent_context(channel="chrome", **launch_kwargs)
+        else:  # chromium: playwright bundled browser, no channel needed
+            ctx = p.chromium.launch_persistent_context(**launch_kwargs)
         try:
             page = ctx.pages[0] if ctx.pages else ctx.new_page()
             log("opening LinkedIn feed…")
