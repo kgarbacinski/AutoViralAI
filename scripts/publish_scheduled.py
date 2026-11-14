@@ -48,6 +48,28 @@ async def main() -> int:
     )
     try:
         for post, due_at in due:
+            if post.get("format") == "carousel":
+                pdf = Path(post.get("pdf", ""))
+                if not pdf.is_absolute():
+                    pdf = args.schedule.parent / pdf
+                if not pdf.is_file():
+                    print(f"ERROR {post['id']}: carousel PDF missing: {pdf}")
+                    continue
+                state[post["id"]] = {
+                    "status": "manual_attachment_required",
+                    "pdf": str(pdf),
+                    "noted_at": datetime.now(UTC).isoformat(),
+                    "note": (
+                        "Attach this PDF in the LinkedIn post editor as a document/carousel, "
+                        "then mark published via posted.json if desired."
+                    ),
+                }
+                state_path.write_text(
+                    json.dumps(state, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+                print(f"MANUAL {post['id']} due {due_at.isoformat()} -> attach {pdf}")
+                continue
             image = Path(post["image"])
             if not image.is_absolute():
                 image = args.schedule.parent / image

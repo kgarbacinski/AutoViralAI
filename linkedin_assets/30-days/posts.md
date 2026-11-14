@@ -1,5 +1,10 @@
 # LinkedIn 30-day plan — cadence and comments tuned
 
+Days 1–3 are native document carousels (10 slides each). The Share on LinkedIn
+API app has no access to the document recipe (registerUpload -> 403 ACCESS_DENIED),
+so the PDF must be attached manually in the LinkedIn post editor. Everything else
+publishes through scripts/publish_scheduled.py.
+
 ## Day 01 · Tue 17.11 · proof-first agents
 
 A click is not the finish line.
@@ -16,9 +21,10 @@ Which proof condition would make you trust an agent with an irreversible change?
 
 #PythonBackend #AIEngineering #Automation
 
-Visual: `images/01.png`
+Carousel: `carousels/day1/day1.pdf`  (10 slides, attach manually)
+Slides: `carousels/day1/`
 First comment: none
-Alt text: Anton Petnitsky post 1: proof-first agents
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: proof-first agents. Cover: A click is not the finish line.
 
 ## Day 02 · Thu 19.11 · klipper false green
 
@@ -36,9 +42,10 @@ When did your ‘healthy’ dashboard last hide the actual failure?
 
 #Klipper #PythonBackend #Reliability
 
-Visual: `images/02.png`
+Carousel: `carousels/day2/day2.pdf`  (10 slides, attach manually)
+Slides: `carousels/day2/`
 First comment: none
-Alt text: Anton Petnitsky post 2: klipper false green
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: klipper false green. Cover: HTTP 200 lied to me.
 
 ## Day 03 · Sat 21.11 · botka reject before scale
 
@@ -60,9 +67,10 @@ Which kind of content do you reject before it reaches a user?
 
 #Education #PythonBackend #ContentOps
 
-Visual: `images/03.png`
+Carousel: `carousels/day3/day3.pdf`  (10 slides, attach manually)
+Slides: `carousels/day3/`
 First comment: none
-Alt text: Anton Petnitsky post 3: botka reject before scale
+Alt text: 10-slide LinkedIn carousel, Anton Petnitsky, topic: botka reject before scale. Cover: More generation did not make Botka better.
 
 ## Day 04 · Tue 24.11 · automation is not a click
 

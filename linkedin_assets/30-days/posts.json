@@ -5,14 +5,17 @@
     "date": "2026-11-17T11:00:00+03:00",
     "type": "no-ask",
     "pillar": "proof-first agents",
-    "format": "image",
+    "format": "carousel",
     "image": "images/01.png",
     "image_type": "python-agents",
     "caption": "A click is not the finish line.\n\nOne of my most repeated problems with browser automations is not the click itself. It is the lack of a condition that means the task succeeded.\n\nAn opencode-chrome agent can observe the DOM, take a deliberate action, and inspect the result to see whether the intended transition happened. That sounds boring, but it is the entire difference between automation that can be trusted and automation that merely produces logs.\n\nI am interested in Python systems where the agent must explain what changed instead of closing a Jira task with ‘done’.\n\nThe practical test is not whether the pointer moved. It is whether the target state exists afterwards.\n\nWhich proof condition would make you trust an agent with an irreversible change?\n\n#PythonBackend #AIEngineering #Automation",
     "first_comment": "",
     "hashtags": "#PythonBackend #AIEngineering #Automation",
-    "alt_text": "Anton Petnitsky post 1: proof-first agents",
-    "published_id": ""
+    "alt_text": "10-slide LinkedIn carousel, Anton Petnitsky, topic: proof-first agents. Cover: A click is not the finish line.",
+    "published_id": "",
+    "pdf": "carousels/day1/day1.pdf",
+    "slide_count": 10,
+    "notes": "Carousel PDF cannot be posted by the API (Share on LinkedIn app has no document recipe, registerUpload -> 403 ACCESS_DENIED). Attach manually in the LinkedIn editor when publishing. Caption goes in the post body; the PDF carries the slides."
   },
   {
     "id": "day-02",
@@ -20,14 +23,17 @@
     "date": "2026-11-19T11:00:00+03:00",
     "type": "diagnostic",
     "pillar": "klipper false green",
-    "format": "image",
+    "format": "carousel",
     "image": "images/02.png",
     "image_type": "terminal",
     "caption": "HTTP 200 lied to me.\n\nMainsail was loading. Nginx returned the right status. Klipper was in error state because RP2040 had been disabled earlier but its configuration blocks still remained active.\n\nThat taught me a useful rule: a page loading successfully proves nothing about the system doing the actual work.\n\nIt also taught me where to search first. Not always the UI. Not always the reverse proxy. Sometimes the first stop is the exact service in the failure path: Klipper, the MCU, Moonraker, a restart script, or the state file.\n\nThe dashboard is an interface. It is not the process.\n\nWhen did your ‘healthy’ dashboard last hide the actual failure?\n\n#Klipper #PythonBackend #Reliability",
     "first_comment": "",
     "hashtags": "#Klipper #PythonBackend #Reliability",
-    "alt_text": "Anton Petnitsky post 2: klipper false green",
-    "published_id": ""
+    "alt_text": "10-slide LinkedIn carousel, Anton Petnitsky, topic: klipper false green. Cover: HTTP 200 lied to me.",
+    "published_id": "",
+    "pdf": "carousels/day2/day2.pdf",
+    "slide_count": 10,
+    "notes": "Carousel PDF cannot be posted by the API (Share on LinkedIn app has no document recipe, registerUpload -> 403 ACCESS_DENIED). Attach manually in the LinkedIn editor when publishing. Caption goes in the post body; the PDF carries the slides."
   },
   {
     "id": "day-03",
@@ -35,14 +41,17 @@
     "date": "2026-11-21T11:00:00+03:00",
     "type": "curation",
     "pillar": "botka reject before scale",
-    "format": "image",
+    "format": "carousel",
     "image": "images/03.png",
     "image_type": "flow",
     "caption": "More generation did not make Botka better.\n\nThe meaningful improvement was the gate around it:\n\n- source quality check\n- duplicate rejection\n- rule and explanation validation\n- human review before publication\n- deletion of anything we cannot explain cleanly\n\nA learner does not get a better answer because I created more output. They get it because I removed the weak answer first.\n\nThe unglamorous work is why a technical content system should not be evaluated by how much it can generate. It should be evaluated by what it refuses to publish.\n\nWhich kind of content do you reject before it reaches a user?\n\n#Education #PythonBackend #ContentOps",
     "first_comment": "",
     "hashtags": "#Education #PythonBackend #ContentOps",
-    "alt_text": "Anton Petnitsky post 3: botka reject before scale",
-    "published_id": ""
+    "alt_text": "10-slide LinkedIn carousel, Anton Petnitsky, topic: botka reject before scale. Cover: More generation did not make Botka better.",
+    "published_id": "",
+    "pdf": "carousels/day3/day3.pdf",
+    "slide_count": 10,
+    "notes": "Carousel PDF cannot be posted by the API (Share on LinkedIn app has no document recipe, registerUpload -> 403 ACCESS_DENIED). Attach manually in the LinkedIn editor when publishing. Caption goes in the post body; the PDF carries the slides."
   },
   {
     "id": "day-04",
