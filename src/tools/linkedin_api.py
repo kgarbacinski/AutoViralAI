@@ -5,6 +5,7 @@ import logging
 import random
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import quote
 
@@ -14,6 +15,13 @@ from src.messages import LINKEDIN_ACCESS_TOKEN_REQUIRED, LINKEDIN_AUTHOR_URN_REQ
 
 if TYPE_CHECKING:
     from config.settings import Settings
+
+
+def _read_image_bytes(image_path: str) -> bytes:
+    image = Path(image_path)
+    if not image.is_file():
+        raise FileNotFoundError(f"Image not found: {image}")
+    return image.read_bytes()
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +38,10 @@ class LinkedInClient(ABC):
 
     @abstractmethod
     async def publish_post(self, content: str) -> str: ...
+
+    async def publish_image_post(
+        self, content: str, image_path: str, image_title: str = "Post image"
+    ) -> str: ...
 
     @abstractmethod
     async def get_post_metrics(self, post_id: str) -> dict: ...
@@ -146,6 +158,83 @@ class RealLinkedInClient(LinkedInClient):
             "with r_organization_social scope."
         )
         return 0
+
+    async def publish_image_post(
+        self, content: str, image_path: str, image_title: str = "Post image"
+    ) -> str:
+        if not self.author_urn:
+            raise ValueError(LINKEDIN_AUTHOR_URN_REQUIRED)
+
+        image_bytes = await asyncio.to_thread(_read_image_bytes, image_path)
+
+        register_body = {
+            "registerUploadRequest": {
+                "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
+                "owner": self.author_urn,
+                "serviceRelationships": [
+                    {"relationshipType": "OWNER", "identifier": "urn:li:userGeneratedContent"}
+                ],
+            }
+        }
+        register = await self._request_with_retry(
+            "POST",
+            f"{self.base_url}/v2/assets?action=registerUpload",
+            headers=self._headers(),
+            json=register_body,
+        )
+        register_data = register.json()["value"]
+        upload_info = register_data["uploadMechanism"][
+            "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
+        ]
+        asset_urn = register_data["asset"]
+
+        upload_resp = await self._client.put(
+            upload_info["uploadUrl"],
+            content=image_bytes,
+            headers={
+                "Authorization": f"Bearer {self.access_token}",
+                "Content-Type": "image/png",
+                **upload_info.get("headers", {}),
+            },
+        )
+        upload_resp.raise_for_status()
+
+        body = {
+            "author": self.author_urn,
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {"text": content},
+                    "shareMediaCategory": "IMAGE",
+                    "media": [
+                        {
+                            "status": "READY",
+                            "description": {"text": image_title},
+                            "media": asset_urn,
+                            "title": {"text": image_title},
+                        }
+                    ],
+                }
+            },
+            "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+            },
+        }
+        resp = await self._request_with_retry(
+            "POST",
+            f"{self.base_url}/v2/ugcPosts",
+            headers=self._headers(),
+            json=body,
+        )
+        post_id = resp.headers.get("x-restli-id") or resp.headers.get("X-RestLi-Id")
+        if not post_id:
+            data = resp.json() if resp.content else {}
+            post_id = data.get("id", "")
+        if not post_id:
+            raise RuntimeError(
+                f"LinkedIn publish succeeded but no post ID returned: {resp.text[:500]}"
+            )
+        return post_id
 
     async def publish_post(self, content: str) -> str:
         if not self.author_urn:
