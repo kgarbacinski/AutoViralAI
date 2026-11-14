@@ -1,4 +1,4 @@
-# LinkedIn 30-day plan — rewritten for 2026 algorithm
+# LinkedIn 30-day plan — cadence and comments tuned
 
 ## Day 01 · Tue 17.11 · proof-first agents
 
@@ -17,10 +17,10 @@ Which proof condition would make you trust an agent with an irreversible change?
 #PythonBackend #AIEngineering #Automation
 
 Visual: `images/01.png`
-First comment: github.com/Mukller/opencode-chrome
-Alt text: Anton Petnitsky post 01: proof-first agents
+First comment: none
+Alt text: Anton Petnitsky post 1: proof-first agents
 
-## Day 02 · Wed 18.11 · klipper false green
+## Day 02 · Thu 19.11 · klipper false green
 
 HTTP 200 lied to me.
 
@@ -38,9 +38,9 @@ When did your ‘healthy’ dashboard last hide the actual failure?
 
 Visual: `images/02.png`
 First comment: none
-Alt text: Anton Petnitsky post 02: klipper false green
+Alt text: Anton Petnitsky post 2: klipper false green
 
-## Day 03 · Thu 19.11 · botka reject before scale
+## Day 03 · Sat 21.11 · botka reject before scale
 
 More generation did not make Botka better.
 
@@ -62,9 +62,9 @@ Which kind of content do you reject before it reaches a user?
 
 Visual: `images/03.png`
 First comment: none
-Alt text: Anton Petnitsky post 03: botka reject before scale
+Alt text: Anton Petnitsky post 3: botka reject before scale
 
-## Day 04 · Fri 20.11 · automation is not a click
+## Day 04 · Tue 24.11 · automation is not a click
 
 A bot that cannot verify is an expensive clicker.
 
@@ -86,9 +86,9 @@ What would help you decide an automation finished correctly?
 
 Visual: `images/04.png`
 First comment: none
-Alt text: Anton Petnitsky post 04: automation is not a click
+Alt text: Anton Petnitsky post 4: automation is not a click
 
-## Day 05 · Sat 21.11 · Python ownership hiring
+## Day 05 · Thu 26.11 · Python ownership hiring
 
 I’m not interested in another Python headline that could describe any graduate with Flask tutorials.
 
@@ -108,10 +108,10 @@ If that is your team, send me a note about the role.
 #Python #PythonBackend #LLMOps
 
 Visual: `images/05.png`
-First comment: antonpetnitsky.com
-Alt text: Anton Petnitsky post 05: Python ownership hiring
+First comment: none
+Alt text: Anton Petnitsky post 5: Python ownership hiring
 
-## Day 06 · Sun 22.11 · repo memory and agents
+## Day 06 · Sat 28.11 · repo memory and agents
 
 Context should survive the chat window.
 
@@ -133,9 +133,9 @@ Where does your agent lose context most often?
 
 Visual: `images/06.png`
 First comment: none
-Alt text: Anton Petnitsky post 06: repo memory and agents
+Alt text: Anton Petnitsky post 6: repo memory and agents
 
-## Day 07 · Mon 23.11 · verify browser automation
+## Day 07 · Tue 01.12 · verify browser automation
 
 Screenshots are not evidence.
 
@@ -147,15 +147,15 @@ Control without verification is motion. Verification without control is measurem
 
 The browser is still the worst place to pretend a task is simple.
 
-Which browser action in your workflow would you trust an agent with first?
+Save this for the next time you review agent-written browser code.
 
 #AIEngineering #BrowserAutomation #MCP
 
 Visual: `images/07.png`
-First comment: github.com/Mukller/opencode-chrome
-Alt text: Anton Petnitsky post 07: verify browser automation
+First comment: none
+Alt text: Anton Petnitsky post 7: verify browser automation
 
-## Day 08 · Tue 24.11 · voice-notes are not transcription
+## Day 08 · Thu 03.12 · voice-notes are not transcription
 
 Whisper is a boundary, not a destination.
 
@@ -177,9 +177,9 @@ Which part of audio handling breaks first for you?
 
 Visual: `images/08.png`
 First comment: none
-Alt text: Anton Petnitsky post 08: voice-notes are not transcription
+Alt text: Anton Petnitsky post 8: voice-notes are not transcription
 
-## Day 09 · Wed 25.11 · safalife operations
+## Day 09 · Sat 05.12 · safalife operations
 
 My Safalife automation could not fix the existing process by pretending it was a spec.
 
@@ -201,9 +201,9 @@ Where does your ‘complete’ spec miss reality?
 
 Visual: `images/09.png`
 First comment: none
-Alt text: Anton Petnitsky post 09: safalife operations
+Alt text: Anton Petnitsky post 9: safalife operations
 
-## Day 10 · Thu 26.11 · voice-note quality gate
+## Day 10 · Tue 08.12 · voice-note quality gate
 
 No model was the only bottleneck in voice notes.
 
@@ -219,7 +219,7 @@ That is why the useful part of the pipeline was cleanup:
 
 I stopped treating ‘AI wrote the note’ as an endpoint. It is an intermediate step with quality risk attached.
 
-What do you improve before using an LLM output anywhere?
+Save this for the next transcript you have to trust.
 
 #AIEngineering #GarbageIn #PythonBackend
 
@@ -227,7 +227,7 @@ Visual: `images/10.png`
 First comment: none
 Alt text: Anton Petnitsky post 10: voice-note quality gate
 
-## Day 11 · Fri 27.11 · green CI is not correct input
+## Day 11 · Thu 10.12 · green CI is not correct input
 
 Green CI did not protect the system from garbage input.
 
@@ -242,7 +242,7 @@ Testing is evidence for the code you wrote. It is not a warranty for everything 
 
 Input validation matters because the happy test case taught the engineer almost nothing.
 
-Which input does your pipeline handle worst?
+Save this for the next CI run that still ships bad input.
 
 #Testing #Python #Production
 
@@ -250,7 +250,7 @@ Visual: `images/11.png`
 First comment: none
 Alt text: Anton Petnitsky post 11: green CI is not correct input
 
-## Day 12 · Sat 28.11 · service start order
+## Day 12 · Sat 12.12 · service start order
 
 Start order can decide a working system’s fate.
 
@@ -275,7 +275,7 @@ Visual: `images/12.png`
 First comment: none
 Alt text: Anton Petnitsky post 12: service start order
 
-## Day 13 · Sun 29.11 · delete weak content
+## Day 13 · Tue 15.12 · delete weak content
 
 Deleting weak content was the highest-leverage content work I did.
 
@@ -302,7 +302,7 @@ Visual: `images/13.png`
 First comment: none
 Alt text: Anton Petnitsky post 13: delete weak content
 
-## Day 14 · Mon 30.11 · six services are one system
+## Day 14 · Thu 17.12 · six services are one system
 
 One Minecraft server can become six services easily.
 
@@ -320,7 +320,7 @@ Visual: `images/14.png`
 First comment: none
 Alt text: Anton Petnitsky post 14: six services are one system
 
-## Day 15 · Tue 01.12 · ugly 80 percent hiring
+## Day 15 · Sat 19.12 · ugly 80 percent hiring
 
 I’m not looking for Python work that ends with nice screenshots.
 
@@ -340,10 +340,10 @@ Which workflow is currently being held together manually?
 #Python #PythonBackend #Hiring
 
 Visual: `images/15.png`
-First comment: antonpetnitsky.com
+First comment: none
 Alt text: Anton Petnitsky post 15: ugly 80 percent hiring
 
-## Day 16 · Wed 02.12 · transcript fidelity
+## Day 16 · Tue 22.12 · transcript fidelity
 
 A transcript can sound polished and preserve nothing useful.
 
@@ -366,7 +366,7 @@ Visual: `images/16.png`
 First comment: none
 Alt text: Anton Petnitsky post 16: transcript fidelity
 
-## Day 17 · Thu 03.12 · logs over screenshots
+## Day 17 · Thu 24.12 · logs over screenshots
 
 Screenshots don’t tell me why failure happened.
 
@@ -381,7 +381,7 @@ Logs are less pretty but closer to the system’s real conversation.
 
 A screenshot can lie by being taken too late. A log cannot simply look successful if the problem is hidden there.
 
-What would your first inquiry inspect?
+Save this before the next incident review.
 
 #Debugging #Reliability #Backend
 
@@ -389,7 +389,7 @@ Visual: `images/17.png`
 First comment: none
 Alt text: Anton Petnitsky post 17: logs over screenshots
 
-## Day 18 · Fri 04.12 · diff is risk report
+## Day 18 · Sat 26.12 · diff is risk report
 
 A diff is a risk report.
 
@@ -404,7 +404,7 @@ AI-generated code raises the value of review because it increases the amount of 
 
 A clean commit message helps only if the diff can be read without pressure.
 
-How do you read a diff in your team?
+Save this before your next agent-authored diff lands.
 
 #CodeReview #Engineering #Git
 
@@ -412,7 +412,7 @@ Visual: `images/18.png`
 First comment: none
 Alt text: Anton Petnitsky post 18: diff is risk report
 
-## Day 19 · Sat 05.12 · repo as proof hiring
+## Day 19 · Tue 29.12 · repo as proof hiring
 
 A repository isn’t decoration.
 
@@ -432,10 +432,10 @@ Which repository are you most proud of right now?
 #GitHub #PythonBackend #Hiring
 
 Visual: `images/19.png`
-First comment: antonpetnitsky.com
+First comment: none
 Alt text: Anton Petnitsky post 19: repo as proof hiring
 
-## Day 20 · Sun 06.12 · restart isn't repair
+## Day 20 · Thu 31.12 · restart isn't repair
 
 A restart is not a repair.
 
@@ -458,7 +458,7 @@ Visual: `images/20.png`
 First comment: none
 Alt text: Anton Petnitsky post 20: restart isn't repair
 
-## Day 21 · Mon 07.12 · failure as interface
+## Day 21 · Sat 02.01 · failure as interface
 
 Failure is part of the interface.
 
@@ -475,7 +475,7 @@ I care about the error path because that is where real users meet the software.
 
 Failure can’t disappear just because the happy case passes.
 
-How do you describe failure before shipping?
+Save this for the next API contract you review.
 
 #SRE #Backend #Testing
 
@@ -483,7 +483,7 @@ Visual: `images/21.png`
 First comment: none
 Alt text: Anton Petnitsky post 21: failure as interface
 
-## Day 22 · Tue 08.12 · prompting isn't integration
+## Day 22 · Tue 05.01 · prompting isn't integration
 
 Prompting is not integration.
 
@@ -500,7 +500,7 @@ An LLM chosen for language output is not an engineer for reliability.
 
 The system around the model needs retries, identifiers, review and a way home for failure.
 
-What part of your LLM path is still only a demo?
+Save this for the next LLM prompt that needs to survive production.
 
 #LLMOps #Production #AIEngineering
 
@@ -508,7 +508,7 @@ Visual: `images/22.png`
 First comment: none
 Alt text: Anton Petnitsky post 22: prompting isn't integration
 
-## Day 23 · Wed 09.12 · diagnostic before automation
+## Day 23 · Thu 07.01 · diagnostic before automation
 
 Automation cannot rush diagnosis.
 
@@ -531,7 +531,7 @@ Visual: `images/23.png`
 First comment: none
 Alt text: Anton Petnitsky post 23: diagnostic before automation
 
-## Day 24 · Thu 10.12 · content is database contract
+## Day 24 · Sat 09.01 · content is database contract
 
 Botka taught me that good learning content is a database contract.
 
@@ -545,7 +545,7 @@ A schema is not boring bureaucracy. It is where knowledge becomes useful multipl
 
 I’m interested in making the structure impossible to casually violate.
 
-Where does content drift away from the schema in your process?
+Save this for the next content contract review.
 
 #Botka #DataModeling #PythonBackend
 
@@ -553,7 +553,7 @@ Visual: `images/24.png`
 First comment: none
 Alt text: Anton Petnitsky post 24: content is database contract
 
-## Day 25 · Fri 11.12 · control is not correctness
+## Day 25 · Tue 12.01 · control is not correctness
 
 opencode-chrome made me confront control versus correctness.
 
@@ -573,10 +573,10 @@ What can your agent verify after an irreversible action?
 #AIEngineering #BrowserAutomation #PythonBackend
 
 Visual: `images/25.png`
-First comment: github.com/Mukller/opencode-chrome
+First comment: none
 Alt text: Anton Petnitsky post 25: control is not correctness
 
-## Day 26 · Sat 12.12 · ask for Python reliability hiring
+## Day 26 · Thu 14.01 · ask for Python reliability hiring
 
 I’m not looking for ‘AI automation’ with no owner.
 
@@ -593,10 +593,10 @@ If your team needs that kind of Python work, send me a note about the role.
 #Python #Hiring #LLMOps
 
 Visual: `images/26.png`
-First comment: antonpetnitsky.com
+First comment: none
 Alt text: Anton Petnitsky post 26: ask for Python reliability hiring
 
-## Day 27 · Sun 13.12 · one success is luck
+## Day 27 · Sat 16.01 · one success is luck
 
 One successful run can be luck.
 
@@ -617,7 +617,7 @@ Visual: `images/27.png`
 First comment: none
 Alt text: Anton Petnitsky post 27: one success is luck
 
-## Day 28 · Mon 14.12 · ops is source code
+## Day 28 · Tue 19.01 · ops is source code
 
 Operations is the source code in an automated business.
 
@@ -640,7 +640,7 @@ Visual: `images/28.png`
 First comment: none
 Alt text: Anton Petnitsky post 28: ops is source code
 
-## Day 29 · Tue 15.12 · ownership over breadth hiring
+## Day 29 · Thu 21.01 · ownership over breadth hiring
 
 One end-to-end process teaches you more than ten disconnected features.
 
@@ -661,10 +661,10 @@ Which process can you own today, not next sprint?
 #Python #Ownership #PythonBackend
 
 Visual: `images/29.png`
-First comment: antonpetnitsky.com
+First comment: none
 Alt text: Anton Petnitsky post 29: ownership over breadth hiring
 
-## Day 30 · Wed 16.12 · 12 weeks to deliver
+## Day 30 · Sat 23.01 · 12 weeks to deliver
 
 Hire for failure handling, not framework enthusiasm.
 
@@ -684,5 +684,5 @@ If you need a Python/backend engineer who owns the uncomfortable parts, send me 
 #Python #Hiring #Backend
 
 Visual: `images/30.png`
-First comment: antonpetnitsky.com
+First comment: none
 Alt text: Anton Petnitsky post 30: 12 weeks to deliver
