@@ -47,9 +47,14 @@ uv run --with playwright python scripts/publish_carousel_browser.py --day 1
 uv run --with playwright python scripts/publish_carousel_browser.py --day 1 --publish
 ```
 
-One-time setup: run the script, sign into LinkedIn **manually once** in the
-window that opens (use the default profile or `--profile`); the script reuses
-the session afterwards.
+One-time setup — run the login mode, sign in manually in the window, close it:
+
+```powershell
+uv run --with playwright python scripts/publish_carousel_browser.py --day 1 --login
+```
+
+The session persists in the profile; afterwards `--day 1` does the dry-run and
+`--day 1 --publish` actually posts.
 If the session is dead it screenshots the auth-wall and exits with code 2.
 
 Dry-run screenshots land next to the PDF (`dayN_ready.png`,

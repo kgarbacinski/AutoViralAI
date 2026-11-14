@@ -20,8 +20,9 @@ attaches the PDF, and stops before the "Post" button, saving a screenshot
 next to the PDF. Pass --publish to click the real "Post" button.
 
 Usage:
-  uv run --with playwright python scripts/publish_carousel_browser.py --day 1
-  uv run --with playwright python scripts/publish_carousel_browser.py --day 1 --publish
+  uv run --with playwright python scripts/publish_carousel_browser.py --day 1 --login   # one-time manual sign-in
+  uv run --with playwright python scripts/publish_carousel_browser.py --day 1            # dry-run, stops before Post
+  uv run --with playwright python scripts/publish_carousel_browser.py --day 1 --publish  # actually posts
   ... --browser chromium --profile "D:/path/to/profile"
 """
 from __future__ import annotations
@@ -94,12 +95,16 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--day", type=int, required=True, help="carousel day from posts.json (1-30)")
     ap.add_argument("--publish", action="store_true", help="actually click Post (default: stop before it)")
+    ap.add_argument("--login", action="store_true", help="open LinkedIn for one manual sign-in, then exit when the window closes")
     ap.add_argument("--headless", action="store_true", help="run without a visible window (NOT recommended)")
     ap.add_argument("--profile", type=Path, default=DEFAULT_PROFILE,
                     help="Persistent browser user-data-dir with the LinkedIn session")
     ap.add_argument("--browser", choices=["chrome", "chromium", "firefox"], default="chrome",
                     help="chrome = system Google Chrome (default); chromium/firefox = Playwright bundles")
     args = ap.parse_args()
+
+    if args.login and args.headless:
+        raise SystemExit("--login needs a visible window; do not combine with --headless.")
 
     post = load_post(args.day)
     pdf = ROOT / "linkedin_assets" / "30-days" / post.get("pdf", f"carousels/day{args.day}/day{args.day}.pdf")
@@ -128,6 +133,20 @@ def main() -> int:
             ctx = p.chromium.launch_persistent_context(**launch_kwargs)
         try:
             page = ctx.pages[0] if ctx.pages else ctx.new_page()
+
+            if args.login:
+                log("Opening LinkedIn for one manual sign-in.")
+                log("Sign in in the window, then CLOSE it when done. Session persists in the profile.")
+                page.goto("https://www.linkedin.com/login", wait_until="domcontentloaded", timeout=60_000)
+                import time
+                while True:
+                    pages = ctx.pages
+                    if not pages or all(pg.is_closed() for pg in pages):
+                        break
+                    time.sleep(1)
+                log("window closed — session saved to profile. Re-run normally, or with --publish.")
+                return 0
+
             log("opening LinkedIn feed…")
             page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60_000)
             page.wait_for_timeout(2_000)
