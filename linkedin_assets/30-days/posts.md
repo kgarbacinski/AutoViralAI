@@ -1,635 +1,688 @@
-# LinkedIn 30-day plan — rewritten
+# LinkedIn 30-day plan — rewritten for 2026 algorithm
 
-## Day 01 · Tue 17.11 · hiring-signal
+## Day 01 · Tue 17.11 · proof-first agents
 
 A click is not the finish line.
 
-The part that decides whether an automation works is after the click:
+One of my most repeated problems with browser automations is not the click itself. It is the lack of a condition that means the task succeeded.
 
-1. What did the page say?
-2. What changed?
-3. How do we know it changed for the right reason?
+An opencode-chrome agent can observe the DOM, take a deliberate action, and inspect the result to see whether the intended transition happened. That sounds boring, but it is the entire difference between automation that can be trusted and automation that merely produces logs.
 
-I built opencode-chrome around observe → act → verify, because “the button was pressed” is not the same as “the task is done”.
+I am interested in Python systems where the agent must explain what changed instead of closing a Jira task with ‘done’.
 
-What would make you trust a browser agent in production?
+The practical test is not whether the pointer moved. It is whether the target state exists afterwards.
 
-#AIAgents #Automation #Python
+Which proof condition would make you trust an agent with an irreversible change?
+
+#PythonBackend #AIEngineering #Automation
 
 Visual: `images/01.png`
 First comment: github.com/Mukller/opencode-chrome
-Alt text: Anton Petnitsky post 01: hiring-signal
+Alt text: Anton Petnitsky post 01: proof-first agents
 
-## Day 02 · Wed 18.11 · technical-lesson
+## Day 02 · Wed 18.11 · klipper false green
 
 HTTP 200 lied to me.
 
-Mainsail opened. Nginx returned 200. Klipper was in error state because an RP2040 module had been disabled but still had active autoconfig blocks.
+Mainsail was loading. Nginx returned the right status. Klipper was in error state because RP2040 had been disabled earlier but its configuration blocks still remained active.
 
-The system answering was not the system doing the work.
+That taught me a useful rule: a page loading successfully proves nothing about the system doing the actual work.
 
-Before you touch a dashboard, ask the control plane what happened.
+It also taught me where to search first. Not always the UI. Not always the reverse proxy. Sometimes the first stop is the exact service in the failure path: Klipper, the MCU, Moonraker, a restart script, or the state file.
 
-Which component do you trust first when the page loads?
+The dashboard is an interface. It is not the process.
 
-#Klipper #EmbeddedSystems #Engineering
+When did your ‘healthy’ dashboard last hide the actual failure?
+
+#Klipper #PythonBackend #Reliability
 
 Visual: `images/02.png`
 First comment: none
-Alt text: Anton Petnitsky post 02: technical-lesson
+Alt text: Anton Petnitsky post 02: klipper false green
 
-## Day 03 · Thu 19.11 · portfolio-deep-dive
+## Day 03 · Thu 19.11 · botka reject before scale
 
 More generation did not make Botka better.
 
-The useful part was the pipeline around it:
+The meaningful improvement was the gate around it:
 
-- reject duplicates and weak questions
-- enforce answer rules before publication
-- keep review before the learner
-- remove anything we cannot explain cleanly
+- source quality check
+- duplicate rejection
+- rule and explanation validation
+- human review before publication
+- deletion of anything we cannot explain cleanly
 
-The unglamorous job was deciding what not to ship.
+A learner does not get a better answer because I created more output. They get it because I removed the weak answer first.
 
-What input do you reject most often?
+The unglamorous work is why a technical content system should not be evaluated by how much it can generate. It should be evaluated by what it refuses to publish.
 
-#Python #ContentPipeline #Education
+Which kind of content do you reject before it reaches a user?
+
+#Education #PythonBackend #ContentOps
 
 Visual: `images/03.png`
 First comment: none
-Alt text: Anton Petnitsky post 03: portfolio-deep-dive
+Alt text: Anton Petnitsky post 03: botka reject before scale
 
-## Day 04 · Fri 20.11 · builder-product
+## Day 04 · Fri 20.11 · automation is not a click
 
 A bot that cannot verify is an expensive clicker.
 
-Obvious until you watch an agent failing:
+I have seen agents celebrate task completion after driving a browser to the exact place where nothing happened. The click was real. The result was imaginary.
 
-- it opens the page
-- it taps something
-- it exits with “done”
-- the intended action never happened
+That is why I keep coming back to three stages in every automation:
 
-Automation needs an outcome condition. Otherwise the log is just theatre.
+- observe the current state
+- choose one specific action
+- verify the transition happened
 
-What proves an action actually worked for you?
+Python can automate the action. A reliable system has to automate the follow-up question: did it work?
 
-#AIAgents #Reliability #Automation
+Without that question, the agent only moves the pointer and writes a confident log line.
+
+What would help you decide an automation finished correctly?
+
+#AIEngineering #Reliability #PythonBackend
 
 Visual: `images/04.png`
 First comment: none
-Alt text: Anton Petnitsky post 04: builder-product
+Alt text: Anton Petnitsky post 04: automation is not a click
 
-## Day 05 · Sat 21.11 · hiring-signal
+## Day 05 · Sat 21.11 · Python ownership hiring
 
-I’m not interested in another “Python dev wanted” headline.
+I’m not interested in another Python headline that could describe any graduate with Flask tutorials.
 
-I’m looking for teams that own the place where things usually break:
+The work I want:
 
-- LLM pipelines with IDs, retries and failure states
-- backend APIs connected to real operations
-- Python automation inside a system people still use badly
-- investigative debugging, not framework enthusiasm
+- backend services behind real operational flow
+- Python LLM pipelines that include retries and failure states
+- automation inside messy workflows
+- debugging where business logic, data quality and humans collide
 
-My lane: backend, automation, agents, embedded-adjacent diagnostics.
+Frameworks are the easy part. What matters is understanding why the broken path exists and being able to own it once it reaches production.
 
-Would your team own the broken pipeline nobody wants?
+Python is not a finish line. It is a practical language for solving a broken system.
 
-#Python #LLM #Backend
+If that is your team, send me a note about the role.
+
+#Python #PythonBackend #LLMOps
 
 Visual: `images/05.png`
 First comment: antonpetnitsky.com
-Alt text: Anton Petnitsky post 05: hiring-signal
+Alt text: Anton Petnitsky post 05: Python ownership hiring
 
-## Day 06 · Sun 22.11 · builder-product
+## Day 06 · Sun 22.11 · repo memory and agents
 
 Context should survive the chat window.
 
-If the agent starts from “what were we doing again?”, your repository is not ready for automation.
+A serious coding agent needs more than a vague reminder that work happened last week. It needs to inspect current reality:
 
-My preferred loop:
+- the tracked files
+- the untracked diagnostic scripts
+- the documented decisions
+- the verification that failed yesterday
+- the evidence that matters next
 
-- inspect current state
-- save real discoveries
-- verify against code
-- make next session start from evidence
+That is what repository memory is supposed to capture: not a diary, but the state that prevents the agent from redoing discoveries.
 
-Repo memory is not cosmetic book-keeping. It is the operating system for follow-up work.
+This is why I treat .github and design notes as real dependencies. They are part of the product input, not just recruiter decorations.
 
-Where do your agents usually lose context?
+Where does your agent lose context most often?
 
-#AgentWorkflow #Python #OpenClaw
+#AIEngineering #Engineering #LLM
 
 Visual: `images/06.png`
 First comment: none
-Alt text: Anton Petnitsky post 06: builder-product
+Alt text: Anton Petnitsky post 06: repo memory and agents
 
-## Day 07 · Mon 23.11 · technical-proof
+## Day 07 · Mon 23.11 · verify browser automation
 
-“opencode-chrome” made me stop trusting screenshots as evidence.
+Screenshots are not evidence.
 
-Screenshots show a frozen view. Agents need proof one event changed the application.
+They show a frozen view. They do not prove the action changed the application.
 
-The loop that works:
+opencode-chrome exists because I wanted a browser tool that could inspect what an agent had actually done. 62 MCP tools were useful, but only if the agent could see the live DOM, target a specific node, and check the resulting state.
 
-- read the live state
-- act on a specific element
-- check the resulting state
-- log what changed
+Control without verification is motion. Verification without control is measurement. The combination is automation.
 
-That is how browser automation becomes debuggable instead of hopeful.
+The browser is still the worst place to pretend a task is simple.
 
-Which tool would you trust with a production action?
+Which browser action in your workflow would you trust an agent with first?
 
-#BrowserAutomation #AI #MCP
+#AIEngineering #BrowserAutomation #MCP
 
 Visual: `images/07.png`
 First comment: github.com/Mukller/opencode-chrome
-Alt text: Anton Petnitsky post 07: technical-proof
+Alt text: Anton Petnitsky post 07: verify browser automation
 
-## Day 08 · Tue 24.11 · technical-proof
+## Day 08 · Tue 24.11 · voice-notes are not transcription
 
 Whisper is a boundary, not a destination.
 
-My voice-notes pipeline only became useful after the text got:
+A voice-notes pipeline that ends at raw text is only storing the problem. The real work begins afterward:
 
-- speaker separation
-- timestamp cleanup
-- hallucination removal
-- topic extraction
-- Obsidian-ready output
+- separating speakers
+- removing likely hallucinations
+- tagging tasks and decisions
+- linking artifacts in Obsidian
+- making the future search work without asking people to remember details
 
-Transcribing more is easy. Making it retrievable later is the hard bit.
+I made the pipeline for myself first because generic transcription could not answer the question I actually had: can I trust what it heard?
 
-What stops your audio notes from becoming useful knowledge?
+A bad note isn’t a failed file. It is an interrupted promise to you.
 
-#LocalAI #VoiceNotes #Whisper
+Which part of audio handling breaks first for you?
+
+#VoiceNotes #AIEngineering #PythonBackend
 
 Visual: `images/08.png`
 First comment: none
-Alt text: Anton Petnitsky post 08: technical-proof
+Alt text: Anton Petnitsky post 08: voice-notes are not transcription
 
-## Day 09 · Wed 25.11 · product-story
+## Day 09 · Wed 25.11 · safalife operations
 
-My courier app learned from the user before I asked the spec to describe everything.
+My Safalife automation could not fix the existing process by pretending it was a spec.
 
-Ops reality:
+Operations showed up in every edge case:
 
-- abandoned fields
-- partial addresses
-- phone-first interaction
+- incomplete addresses
+- partial phone numbers
+- ad hoc dispatch changes
 - Russian and Uzbek usage
-- orders nobody wanted to automate
+- real workers making decisions under time pressure
 
-A polished UI cannot save a workflow that ignores the people running it.
+A shipping product does not erase operational reality. It exposes where the human system was always flexible.
 
-Where does your process depend on tribal knowledge?
+The most valuable engineering move was not another architecture layer. It was designing for missing and unreliable input.
 
-#Safalife #Product #Operations
+Where does your ‘complete’ spec miss reality?
+
+#Operations #Product #PythonBackend
 
 Visual: `images/09.png`
 First comment: none
-Alt text: Anton Petnitsky post 09: product-story
+Alt text: Anton Petnitsky post 09: safalife operations
 
-## Day 10 · Thu 26.11 · technical-proof
+## Day 10 · Thu 26.11 · voice-note quality gate
 
-No model was ever the only bottleneck in voice notes.
+No model was the only bottleneck in voice notes.
 
-Whisper gave noisy text. Full context was still missing. Speaker separation changed the usefulness of everything downstream.
+A transcription model can produce polished paragraphs and still preserve nothing useful. It can get the words right while losing the context, the speaker, or the reason the note existed.
 
-Before asking a model to think, first build the notes a human would want to read later.
+That is why the useful part of the pipeline was cleanup:
 
-Storage without review is just an audio archive.
+- hallucination filters
+- segment deduplication
+- speaker separation
+- structured output
+- a person checking whether it feels right
 
-What part of transcription fails for you?
+I stopped treating ‘AI wrote the note’ as an endpoint. It is an intermediate step with quality risk attached.
 
-#VoiceNotes #LLM #DataPipeline
+What do you improve before using an LLM output anywhere?
+
+#AIEngineering #GarbageIn #PythonBackend
 
 Visual: `images/10.png`
 First comment: none
-Alt text: Anton Petnitsky post 10: technical-proof
+Alt text: Anton Petnitsky post 10: voice-note quality gate
 
-## Day 11 · Fri 27.11 · technical-lesson
+## Day 11 · Fri 27.11 · green CI is not correct input
 
-Green CI did not protect me from garbage input.
+Green CI did not protect the system from garbage input.
 
-A suite can pass perfectly and still send:
+I can get a batch of tests passing and still feed the application:
 
 - malformed records
 - incomplete order data
-- stale feature flags
-- invalid LLM output
+- stale configuration
+- contradictory generated answers
 
-Tests prove code paths. Input quality is a separate problem.
+Testing is evidence for the code you wrote. It is not a warranty for everything that enters the pipe.
 
-CI is a filter, not a warranty.
+Input validation matters because the happy test case taught the engineer almost nothing.
 
-Where does your clean pipeline meet dirty input?
+Which input does your pipeline handle worst?
 
-#Testing #Python #CI
+#Testing #Python #Production
 
 Visual: `images/11.png`
 First comment: none
-Alt text: Anton Petnitsky post 11: technical-lesson
+Alt text: Anton Petnitsky post 11: green CI is not correct input
 
-## Day 12 · Sat 28.11 · technical-lesson
+## Day 12 · Sat 28.11 · service start order
 
-Start order can break a working system.
+Start order can decide a working system’s fate.
 
-If one service starts before the thing it depends on, the failure looks random afterwards.
+A network of six services can look broken for one boring reason: one service started before its dependency.
 
-Minecraft network, Klipper, and ordinary APIs all hit the same rule:
+The failure pattern repeats everywhere:
 
-- dependency stays down
-- consumer retries around stale state
-- logs point at the obvious victim
+- Velocity starts without the backend
+- a backend starts before postgres
+- a consumer accepts stale data because its dependency wasn’t warmed up
+- a restart makes it look intermittent
 
-A restart can hide timing defects.
+Once I saw the pattern, I stopped saying ‘random’ and started asking what had to exist first.
 
-Which service usually starts before it should?
+Operationally, timing is part of the contract.
 
-#Backend #EmbeddedSystems #Debugging
+Which dependency still starts on hope?
+
+#Backend #EmbeddedSystems #Reliability
 
 Visual: `images/12.png`
 First comment: none
-Alt text: Anton Petnitsky post 12: technical-lesson
+Alt text: Anton Petnitsky post 12: service start order
 
-## Day 13 · Sun 29.11 · builder-product
+## Day 13 · Sun 29.11 · delete weak content
 
-Deleting weak questions was the highest-leverage content work.
+Deleting weak content was the highest-leverage content work I did.
 
-Not fixing grammar.
-Not adding examples.
-Not choosing a prettier template.
+Not formatting it.
+Not adding more examples.
+Not ‘make it sound professional’.
 
-Defining what fails review — duplicates, ambiguity, unreadable prompts — protected every learner from the weakest output.
+The useful decision was rejection:
 
-Curation is engineering, not taste.
+- duplicate questions
+- ambiguous explanations
+- misleading answers
+- source data nobody can verify
 
-What gets rejected most in your pipeline?
+Facturability beats volume. A learner is better served by one sound answer than by ten forgettable, confident screens.
 
-#EdTech #ContentOps #Python
+Curation is not taste. It is guardrails.
+
+What content reaches production before you review it?
+
+#Education #ContentOps #PythonBackend
 
 Visual: `images/13.png`
 First comment: none
-Alt text: Anton Petnitsky post 13: builder-product
+Alt text: Anton Petnitsky post 13: delete weak content
 
-## Day 14 · Mon 30.11 · technical-proof
+## Day 14 · Mon 30.11 · six services are one system
 
-One Minecraft server can easily become six services.
+One Minecraft server can become six services easily.
 
-Velocity. Lobby. Survival. Limbo. Anarchy. Minigames.
+Velocity handles traffic. Lobby, Survival, Limbo, Anarchy and Minigames split the behavior. Translation, authorization, ordering, restarts — they are all observable differently.
 
-If one starts late, or the wrong port is unavailable, players blame the whole system.
+But the user does not experience six services. They experience one world that loads, fails to load, or never matches the doorway they expected.
 
-Reliability is having one predictable path from login to the thing they wanted.
+Reliability here is not a single restart. It is knowing which service failed first and why the next one cannot recover.
 
-It was never just a restart.
+Which system have you merged into one boundary too early?
 
-How many services does your stack start from scratch?
-
-#Minecraft #Systems #Reliability
+#Backend #Reliability #Systems
 
 Visual: `images/14.png`
 First comment: none
-Alt text: Anton Petnitsky post 14: technical-proof
+Alt text: Anton Petnitsky post 14: six services are one system
 
-## Day 15 · Tue 01.12 · hiring-signal
+## Day 15 · Tue 01.12 · ugly 80 percent hiring
 
-I’m not looking for the glamorous version of Python work.
+I’m not looking for Python work that ends with nice screenshots.
 
-I want:
+The work I want:
 
-- the API whose failures nobody wants to explain
-- the import that fails only in production
-- the bot that handles odd input 
-- the workflow stuck between two tools
+- imported exports nobody wants to touch
+- Python automation between two systems that never agreed on format
+- the LLM endpoint that fails when the input is half-filled
+- the support process entering users into a broken schema
 
-The useful work begins where the demo ends.
+Most of the value lies in the 80% that looks unimportant.
 
-Can your process survive ugly inputs?
+If your broken process requires someone to trace it without glamor, I would take that responsibility.
 
-#Python #Backend #Automation
+Which workflow is currently being held together manually?
+
+#Python #PythonBackend #Hiring
 
 Visual: `images/15.png`
 First comment: antonpetnitsky.com
-Alt text: Anton Petnitsky post 15: hiring-signal
+Alt text: Anton Petnitsky post 15: ugly 80 percent hiring
 
-## Day 16 · Wed 02.12 · technical-lesson
+## Day 16 · Wed 02.12 · transcript fidelity
 
-A transcript can look polished and still be useless.
+A transcript can sound polished and preserve nothing useful.
 
-Well-formatted paragraphs can hide:
+The words are not the lesson. A fluent answer can still lose:
 
-- the wrong speaker
-- missing decisions
-- invented details
-- searches nobody can find later
+- the decision that was made
+- the assumption underneath it
+- the weird exception the speaker remembered
+- the speaker’s confidence in the result
 
-Before trusting AI notes, inspect whether they preserve ownership and context.
+When I write notes this way, the next reviewer is guessing, not working.
 
-Storage is cheap. Reusable understanding is rare.
+A polished sentence is not necessarily a faithful note.
 
-What would you read before keeping one transcript?
+What would you inspect before keeping a transcript?
 
-#VoiceNotes #DataQuality #AI
+#KnowledgeManagement #AIEngineering #PythonBackend
 
 Visual: `images/16.png`
 First comment: none
-Alt text: Anton Petnitsky post 16: technical-lesson
+Alt text: Anton Petnitsky post 16: transcript fidelity
 
-## Day 17 · Thu 03.12 · technical-proof
+## Day 17 · Thu 03.12 · logs over screenshots
 
 Screenshots don’t tell me why failure happened.
 
-I need the sequence:
+They show the final surface. They don’t show:
 
-- first error in the log
-- timestamp before the user noticed
-- command that reproduced it
-- invariant that changed
+- the first error that occurred
+- the timestamp where the application diverged
+- the command that reproduced it
+- the state that existed two minutes earlier
 
-If your debugging is screenshots first, you’re recording outcomes, not finding root cause.
+Logs are less pretty but closer to the system’s real conversation.
 
-Where does your next incident usually start?
+A screenshot can lie by being taken too late. A log cannot simply look successful if the problem is hidden there.
 
-#Debugging #Logs #Reliability
+What would your first inquiry inspect?
+
+#Debugging #Reliability #Backend
 
 Visual: `images/17.png`
 First comment: none
-Alt text: Anton Petnitsky post 17: technical-proof
+Alt text: Anton Petnitsky post 17: logs over screenshots
 
-## Day 18 · Fri 04.12 · builder-product
+## Day 18 · Fri 04.12 · diff is risk report
 
 A diff is a risk report.
 
-I don’t only ask what changed. I ask:
+I read it for:
 
-- which invariant broke
-- who sees the side effect first
-- why this dependency moved
-- what tests can’t describe
+- which invariant changed
+- which side effect moved first
+- who sees the regression
+- why this dependency was touched now
 
-AI-generated code makes this review useful, not optional.
+AI-generated code raises the value of review because it increases the amount of plausible-looking change.
 
-How do you read diffs in your team?
+A clean commit message helps only if the diff can be read without pressure.
+
+How do you read a diff in your team?
 
 #CodeReview #Engineering #Git
 
 Visual: `images/18.png`
 First comment: none
-Alt text: Anton Petnitsky post 18: builder-product
+Alt text: Anton Petnitsky post 18: diff is risk report
 
-## Day 19 · Sat 05.12 · hiring-signal
+## Day 19 · Sat 05.12 · repo as proof hiring
 
 A repository isn’t decoration.
 
-I expect it to show:
+It proves:
 
-- how I run the project
-- what state it reproduces
-- where the sharp edges live
-- how contributions fail
+- how you run the project
+- how you document tradeoffs
+- how tests surface error conditions
+- how you revert a wrong route
 
-The repo is the work sample when nobody trusts your résumé bullet.
+When nobody trusts your CV bullet, GitHub is the piece that shows what happens before or during production.
 
-Which repository are you most proud of?
+It doesn’t need to be huge. It needs clear documentation and working failure cases.
 
-#GitHub #Python #OpenSource
+Which repository are you most proud of right now?
+
+#GitHub #PythonBackend #Hiring
 
 Visual: `images/19.png`
 First comment: antonpetnitsky.com
-Alt text: Anton Petnitsky post 19: hiring-signal
+Alt text: Anton Petnitsky post 19: repo as proof hiring
 
-## Day 20 · Sun 06.12 · technical-lesson
+## Day 20 · Sun 06.12 · restart isn't repair
 
-A restart is not repair.
+A restart is not a repair.
 
-It clears one visible symptom. It does not remove:
+It clears one visible symptom and leaves the cause waiting:
 
-- the bad migration
-- the missing env var
-- the stale state
-- the incorrect config file
+- bad migration
+- missing environment variable
+- stale state file
+- old parser handling new schema
 
-Every restart buys time but does not change the underlying code path.
+Every restart buys time. None of it changed the code path.
 
-What did your last restart actually fix?
+If your reliability metric ignores the cause and only tracks process uptime, you don’t know whether the issue is fixed.
 
-#Backend #Operations #Debugging
+What did your last restart actually resolve?
+
+#Operations #Backend #Reliability
 
 Visual: `images/20.png`
 First comment: none
-Alt text: Anton Petnitsky post 20: technical-lesson
+Alt text: Anton Petnitsky post 20: restart isn't repair
 
-## Day 21 · Mon 07.12 · builder-product
+## Day 21 · Mon 07.12 · failure as interface
 
 Failure is part of the interface.
 
-If nobody defines:
+If your contract never says what happens with:
 
 - invalid input
-- timeout behaviour
+- timeout
 - partial success
 - unknown state
 
-then the agent cannot fail predictably, and nobody can recover safely.
+then the function doesn’t have a complete API. It has a wish.
 
-Good automation describes what breaks, not just what works.
+I care about the error path because that is where real users meet the software.
 
-How do you specify failure in your systems?
+Failure can’t disappear just because the happy case passes.
 
-#Automation #Reliability #SRE
+How do you describe failure before shipping?
+
+#SRE #Backend #Testing
 
 Visual: `images/21.png`
 First comment: none
-Alt text: Anton Petnitsky post 21: builder-product
+Alt text: Anton Petnitsky post 21: failure as interface
 
-## Day 22 · Tue 08.12 · builder-product
+## Day 22 · Tue 08.12 · prompting isn't integration
 
 Prompting is not integration.
 
-A beautiful example with one prompt does not solve production concerns:
+I have seen spectacular prompts disappear on contact with:
 
+- malformed input
+- repetitive requests
+- invalid JSON
+- schema drift
 - rate limits
-- invalid output
-- retries
-- schema changes
-- recurring failures
+- duplicate execution
 
-The model owns language. The system must own behavior.
+An LLM chosen for language output is not an engineer for reliability.
 
-What part of your LLM workflow is still only a demo?
+The system around the model needs retries, identifiers, review and a way home for failure.
 
-#LLM #Production #Engineering
+What part of your LLM path is still only a demo?
+
+#LLMOps #Production #AIEngineering
 
 Visual: `images/22.png`
 First comment: none
-Alt text: Anton Petnitsky post 22: builder-product
+Alt text: Anton Petnitsky post 22: prompting isn't integration
 
-## Day 23 · Wed 09.12 · technical-proof
+## Day 23 · Wed 09.12 · diagnostic before automation
 
 Automation cannot rush diagnosis.
 
-Usually the fastest route is:
+As Klipper taught me, the right order is:
 
-- get the error
-- find the first thing that diverged
+- locate the service state instead of clicking ‘restart’
+- verify the component you suspect first
 - change one variable
-- see which condition stopped matching
+- see which assumption still holds afterward
 
-Speed arrives after you stop solving the wrong symptom.
+Do that before touching a repair path. Otherwise your system becomes a series of confident guesses.
 
-What do you investigate before touching the code?
+Diagnosis is the part people try to skip because it isn’t entertaining.
 
-#Klipper #Debugging #Python
+What do you inspect before touching production?
+
+#Klipper #Diagnostics #Backend
 
 Visual: `images/23.png`
 First comment: none
-Alt text: Anton Petnitsky post 23: technical-proof
+Alt text: Anton Petnitsky post 23: diagnostic before automation
 
-## Day 24 · Thu 10.12 · technical-lesson
+## Day 24 · Thu 10.12 · content is database contract
 
-Good learning content is a database contract.
+Botka taught me that good learning content is a database contract.
 
-If the question and explanation don’t match the schema, the learner meets the bug before the engineer does.
+If the schema does not match the answer logic, the learner meets the defect first:
 
-A stable contract means:
+- broken variants
+- mismatch explanation
+- reviewer unable to decide
 
-- testable input
-- explicit output
-- reviewable explanation
+A schema is not boring bureaucracy. It is where knowledge becomes useful multiple times without being remembered between incidents.
 
-Python cannot fix what the content model never clarifies.
+I’m interested in making the structure impossible to casually violate.
 
-Who owns content schema in your pipeline?
+Where does content drift away from the schema in your process?
 
-#Botka #DataModeling #Python
+#Botka #DataModeling #PythonBackend
 
 Visual: `images/24.png`
 First comment: none
-Alt text: Anton Petnitsky post 24: technical-lesson
+Alt text: Anton Petnitsky post 24: content is database contract
 
-## Day 25 · Fri 11.12 · technical-proof
+## Day 25 · Fri 11.12 · control is not correctness
 
 opencode-chrome made me confront control versus correctness.
 
-I can command an agent to click, but I still need to know:
+A modern agent can click a button. That is not the same problem as:
 
-- did the right page change
-- did the intended field set
-- did the operation persist
+- did the intended field update
+- did the request complete
+- did the backend save it
+- can someone prove it later
 
-That last proof is the product, not the button action.
+I learned that the browser is not the task. It is a boundary of observable state.
 
-What can your automation prove after the click?
+Safe automation ends with proof.
 
-#AIAgents #Chrome #Automation
+What can your agent verify after an irreversible action?
+
+#AIEngineering #BrowserAutomation #PythonBackend
 
 Visual: `images/25.png`
 First comment: github.com/Mukller/opencode-chrome
-Alt text: Anton Petnitsky post 25: technical-proof
+Alt text: Anton Petnitsky post 25: control is not correctness
 
-## Day 26 · Sat 12.12 · hiring-signal
+## Day 26 · Sat 12.12 · ask for Python reliability hiring
 
-I’m not looking for “AI automation” with no useful owner.
+I’m not looking for ‘AI automation’ with no owner.
 
-I want Python work with one clear mandate:
+I want:
 
-- LLM pipelines with recovery
-- backend services with measurable failure states
-- operations automation tied to current users
+- LLM pipelines with recovery logic
+- automation connected to real operations
+- backend services with measurable error paths
 
-The work combines backend judgment and proof of reliability.
+Titles vary. What matters is being accountable for what happens after the happy path is broken.
 
-Which one does your team actually need?
+If your team needs that kind of Python work, send me a note about the role.
 
-#Python #LLM #Hiring
+#Python #Hiring #LLMOps
 
 Visual: `images/26.png`
 First comment: antonpetnitsky.com
-Alt text: Anton Petnitsky post 26: hiring-signal
+Alt text: Anton Petnitsky post 26: ask for Python reliability hiring
 
-## Day 27 · Sun 13.12 · builder-product
+## Day 27 · Sun 13.12 · one success is luck
 
-One successful run is luck.
+One successful run can be luck.
 
-An integration is durable only when:
+A regular job is only regular when:
 
-- retries don’t create duplicate side effects
-- timeouts fail safely
-- logs identify context
-- verification survives redeploys
+- retries don’t multiply side effects
+- timeouts fail without corrupting state
+- logs identify the incident
+- the sequence can be replayed after release
 
- automation needs repetition, not performance on a lucky Tuesday.
+This is where automation stops being clever and becomes operational.
 
-What does your code do on attempt five?
+What does your code do on attempt five, not attempt one?
 
 #Automation #Backend #Reliability
 
 Visual: `images/27.png`
 First comment: none
-Alt text: Anton Petnitsky post 27: builder-product
+Alt text: Anton Petnitsky post 27: one success is luck
 
-## Day 28 · Mon 14.12 · product-story
+## Day 28 · Mon 14.12 · ops is source code
 
 Operations is the source code in an automated business.
 
-In Safalife, you cannot automate what the field already does manually:
+Safalife made that painfully clear:
 
-- incomplete details
-- manual route exceptions
-- phone-only confirmations
-- workflows users know better than the spec
+- users wrote missing values
+- real exceptions arrived faster than specs
+- dispatch decisions happened under pressure
+- phone calls carried context the database never saw
 
-Design the software around those flaws or don’t call it reliable.
+A product built for this reality has to preserve the messy signal.
 
-Where does your spec miss real operations?
+Automating operations means designing around what actually occurs.
 
-#Safalife #Product #Operations
+Where does your spec miss operational truth?
+
+#Operations #Product #PythonBackend
 
 Visual: `images/28.png`
 First comment: none
-Alt text: Anton Petnitsky post 28: product-story
+Alt text: Anton Petnitsky post 28: ops is source code
 
-## Day 29 · Tue 15.12 · technical-proof
+## Day 29 · Tue 15.12 · ownership over breadth hiring
 
-One end-to-end process teaches you more than ten random features.
+One end-to-end process teaches you more than ten disconnected features.
 
-Own the loop — from weird input to recovery.
+Own the loop:
 
-- understand who enters data
-- find the break point
-- rewrite one contract
-- watch the fix in real use
+- trace the input source
+- reproduce the incident
+- identify the contract violation
+- fix one boundary
+- monitor the correction in reality
 
-That path is visible to every reviewer.
+That makes review obvious to anyone who reads the commit.
 
-Which process can you own end-to-end?
+Visible ownership beats scattered skill claims.
 
-#Python #Ownership #Engineering
+Which process can you own today, not next sprint?
+
+#Python #Ownership #PythonBackend
 
 Visual: `images/29.png`
-First comment: none
-Alt text: Anton Petnitsky post 29: technical-proof
+First comment: antonpetnitsky.com
+Alt text: Anton Petnitsky post 29: ownership over breadth hiring
 
-## Day 30 · Wed 16.12 · hiring-signal
+## Day 30 · Wed 16.12 · 12 weeks to deliver
 
 Hire for failure handling, not framework enthusiasm.
 
-First 90 days should look like:
+A credible first arc looks like:
 
-1. Map production paths
-2. Fix one recurring failure
-3. Own a subsystem
-4. Leave it observable
+1. map the environment
+2. fix one recurring failure
+3. own one operational boundary
+4. make the outcome observable
 
-That’s backend judgment, not CV decoration.
+That beats replacing an API simply because a newer framework exists.
 
-If you need Python ownership, I’m glad to talk.
+Python, backend systems and LLM pipelines are useful only when failure modes are understood.
 
-#Python #Backend #Hiring
+If you need a Python/backend engineer who owns the uncomfortable parts, send me a note.
+
+#Python #Hiring #Backend
 
 Visual: `images/30.png`
 First comment: antonpetnitsky.com
-Alt text: Anton Petnitsky post 30: hiring-signal
+Alt text: Anton Petnitsky post 30: 12 weeks to deliver
